@@ -1,0 +1,59 @@
+<core:FragmentDefinition
+  xmlns="sap.ui.comp.valuehelpdialog"
+  xmlns:m="sap.m"
+  xmlns:fb="sap.ui.comp.filterbar"
+  xmlns:core="sap.ui.core">
+  <ValueHelpDialog
+    title="{i18n>vhVimDoc}"
+    ok=".onDocValueHelpOkPress"
+    cancel=".onDocValueHelpCancelPress"
+    afterClose=".onDocValueHelpAfterClose"
+    supportMultiselect="false"
+    supportRanges="false"
+    supportRangesOnly="false"
+    key="Docid"
+    descriptionKey="Docid">
+    <filterBar>
+      <fb:FilterBar id="docVHFB" advancedMode="true" filterBarExpanded="true" search=".onDocFilterBarSearch">
+        <fb:filterGroupItems>
+          <fb:FilterGroupItem
+            groupName="__$INTERNAL$"
+            label="{i18n>vhVimDoc}"
+            name="Docid"
+            visibleInFilterBar="true">
+            <fb:control>
+              <m:Input name="Docid" placeholder="{i18n>vhPlaceHolderCPNumber}" />
+            </fb:control>
+          </fb:FilterGroupItem>          
+          <fb:FilterGroupItem
+            groupName="__$INTERNAL$"
+            label="{i18n>vhPO}"
+            name="Ebeln"
+            visibleInFilterBar="true">
+            <fb:control>
+              <m:Input name="Ebeln" placeholder="{i18n>vhPlaceHolderCPNumber}" />
+            </fb:control>
+          </fb:FilterGroupItem>
+          <fb:FilterGroupItem
+            groupName="__$INTERNAL$"
+            name="Lifnr"
+            label="{i18n>vhVendor}"
+            visibleInFilterBar="true">
+            <fb:control>
+              <m:Input name="Lifnr" placeholder="{i18n>vhPlaceHolderCPNumber}" />
+            </fb:control>
+          </fb:FilterGroupItem>
+          <fb:FilterGroupItem
+            groupName="__$INTERNAL$"
+            name="VendName"
+            label="{i18n>vhVendorName}"
+            visibleInFilterBar="true">
+            <fb:control>
+              <m:Input name="VendName" placeholder="{i18n>vhPlaceHolderCPName}"/>
+            </fb:control>
+          </fb:FilterGroupItem>
+        </fb:filterGroupItems>
+      </fb:FilterBar>
+    </filterBar>
+  </ValueHelpDialog>
+</core:FragmentDefinition>

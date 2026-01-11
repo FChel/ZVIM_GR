@@ -1,0 +1,20 @@
+<mvc:View
+	controllerName="au.gov.defence.roman.zvim.gr.controller.App"
+	displayBlock="true"	
+	xmlns="sap.m"
+	xmlns:mvc="sap.ui.core.mvc">
+	<!--<Shell id="shell"-->
+	<!--	homeIcon="{-->
+ <!--         icon: 'images/logo.png',-->
+ <!--         favicon: 'images/logo.png',-->
+ <!--         precomposed: false-->
+ <!--       }">	-->
+		<App id="app"
+			busy="{appView>/busy}"
+			busyIndicatorDelay="{appView>/delay}">
+			
+			<!--<mvc:XMLView id="MainView" viewName="au.gov.defence.roman.zvim.gr.view.Main"></mvc:XMLView>	-->
+			
+		</App>
+	<!--</Shell>-->
+</mvc:View>

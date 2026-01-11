@@ -1,0 +1,17 @@
+<core:FragmentDefinition 
+xmlns="sap.m"
+xmlns:core="sap.ui.core">
+<ViewSettingsDialog
+confirm="onSortDialogConfirm"
+class="sapUiSizeCompact" sortDescending="true">
+<sortItems>
+        <ViewSettingsItem text="Line Description" key="ShortText" selected="true" />
+        <ViewSettingsItem text="Quantity Ordered" key="Quantity" />
+        <!--<ViewSettingsItem text="{i18n>matchQtyDelLabel}" key="Quantitydelivered" />-->
+        <ViewSettingsItem text="{i18n>matchUnitPriceLabel}" key="NetPrice" />
+        <ViewSettingsItem text="{i18n>matchTaxCodeLabel}" key="TaxCode"     />                          
+        <ViewSettingsItem text="{i18n>itemValueLabel}" key="EffectiveValue" />
+</sortItems>
+</ViewSettingsDialog>
+                                                                        
+</core:FragmentDefinition>

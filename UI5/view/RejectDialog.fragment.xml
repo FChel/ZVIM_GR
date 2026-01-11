@@ -1,0 +1,53 @@
+<core:FragmentDefinition
+  xmlns="sap.m"
+  xmlns:core="sap.ui.core"
+  xmlns:f="sap.ui.layout.form"
+  xmlns:html="http://www.w3.org/1999/xhtml"
+  xmlns:customData="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1" >
+  <Dialog
+    id="rejectDialog"
+    title="{i18n>rejectTitle}"
+    class="sapUiContentPadding sapUiSizeCompact"
+    type="Message">
+    <content>
+
+      <VBox>
+        <Label text = "{i18n>rejectText}" required="true"/>
+        <ComboBox selectedKey="{/RejectReasonCode}"
+          required="true" 
+          width="25rem" 
+          items="{path : 'reasonModel>/ReasonCodes', 
+              sorter: {path: 'Key', descending: false}, 
+                filters: [{ path : 'DataType', operator : 'EQ', value1 : 'Reject'}]}">
+          <core:ListItem key="{reasonModel>Key}" 
+            text="{reasonModel>Value}"/>
+        </ComboBox>
+
+        <Label text = "{i18n>rejectComment}" required="{= ${/RejectReasonCode} === 'ZA' || ${/RejectReasonCode} === 'AD' || ${/RejectReasonCode} === 'AA'}" class="sapUiSmallMarginTop"/>
+        <TextArea 
+          valueLiveUpdate="true"
+          id="rejectionReason" 
+          value="{/RejectReason}"
+          rows="4"
+          width="100%"
+          growing="false"
+          maxLength="255"
+          showExceededText="true"
+          placeholder="{i18n>rejectPlaceholder}"/>
+      </VBox>
+    </content>
+    <beginButton> 
+      <Button
+        text="Reject / Amend"
+        press="onRejectOK"
+        enabled="{= ${/RejectReasonCode}.length > 0 &amp;&amp; 
+            ( ((${/RejectReasonCode} === 'ZA' || ${/RejectReasonCode} === 'AD' || ${/RejectReasonCode} === 'AA') &amp;&amp; ${/RejectReason}.length > 0) 
+            || ( ${/RejectReasonCode} !== 'ZA' &amp;&amp; ${/RejectReasonCode} !== 'AD' &amp;&amp; ${/RejectReasonCode} !== 'AA'))}"/>
+    </beginButton>
+    <endButton>
+      <Button
+        text="Cancel"
+        press="onRejectCancel"/> 
+    </endButton>
+  </Dialog>
+</core:FragmentDefinition>

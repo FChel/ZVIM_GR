@@ -1,0 +1,21 @@
+<core:FragmentDefinition
+	xmlns="sap.m"
+	xmlns:core="sap.ui.core">
+	<ViewSettingsDialog
+		confirm="onSortDialogConfirm"
+		class="sapUiSizeCompact" sortDescending="true">
+		<sortItems>
+			<ViewSettingsItem text="{i18n>matchNumberLabel}" key="Grdocnumber" selected="true" />
+			<ViewSettingsItem text="{i18n>matchYearLabel}" key="Grdocyear" />
+			<ViewSettingsItem text="{i18n>matchEntryDateLabel}" key="Entrydate" />
+			<ViewSettingsItem text="{i18n>matchDeliveryDateLabel}" key="Deliverydate" />
+			<ViewSettingsItem text="{i18n>matchHeaderTextLabel}" key="Headertext" />
+			<ViewSettingsItem text="{i18n>matchDelNoteLabel}" key="Deliverynote" />
+			<ViewSettingsItem text="{i18n>matchQtyDelLabel}" key="Quantitydelivered" />
+			<ViewSettingsItem text="{i18n>matchUomLabel}" key="Uom" />
+			<ViewSettingsItem text="{i18n>matchUnitPriceLabel}" key="Unitprice" />
+			<ViewSettingsItem text="{i18n>matchTaxCodeLabel}" key="Taxcode"	/>		
+			<ViewSettingsItem text="{i18n>matchValueLabel}" key="Valueextax" />
+		</sortItems>
+	</ViewSettingsDialog>
+</core:FragmentDefinition>

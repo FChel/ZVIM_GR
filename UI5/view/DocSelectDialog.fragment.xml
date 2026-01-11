@@ -1,0 +1,26 @@
+<core:FragmentDefinition
+	class="sapUiSizeCompact"
+	xmlns="sap.m"	
+	xmlns:core="sap.ui.core">
+    <Dialog title="{i18n>docSelectTitle}"
+		type="Message"
+		resizable="true"
+		draggable="true"
+		initialFocus="docSelectInput"
+		stretch="{= !!${device>/system/phone}}">
+		<content>			
+			<VBox class="sapUiSmallMargin" alignContent="Center">
+				<Label text="{i18n>docSelectLabel}" labelFor="docSelectInput" required="true" tooltip="{i18n>docSelectInputTooltip}"/>
+				<Input id="docSelectInput" value="{viewModel>/docSelectInput}" maxLength="12"
+					submit="onDocSelectOK" placeholder="{i18n>vhPlaceHolderCNumber}"
+					showValueHelp="true" valueHelpRequest=".onDocValueHelpRequested"/>
+			</VBox>	
+		</content>
+		<beginButton>
+			<Button id="docSelectOKButton" text="{i18n>docSelectOKButton}" press="onDocSelectOK" type="Emphasized" />
+		</beginButton>
+		<endButton>
+			<Button text="{i18n>docSelectCancelButton}" press="onDocSelectCancel" />			
+		</endButton>
+	</Dialog>
+</core:FragmentDefinition>

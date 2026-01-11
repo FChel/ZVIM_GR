@@ -1,0 +1,137 @@
+{		
+	"invGr":{
+		"entitySet": "GoodsReceipts",
+		"fieldList": {
+			"Grdocnumber": {
+				"label": "filter.grNumber",
+				"filterOperator": "Contains"
+			},
+			"Grdocyear": {
+				"label": "filter.grYear",
+				"filterOperator": "Contains"
+			},			
+			"Entrydate": {
+				"label": "filter.entryDate",
+				"controlType": "range",
+				"filterOperator": "BT",
+				"type": "date",
+				"oType": "sap.ui.model.type.Date"
+			},
+			"Deliverydate": {
+				"label": "filter.delDate",
+				"controlType": "range",
+				"filterOperator": "BT",
+				"type": "date",
+				"oType": "sap.ui.model.type.Date"
+			},
+			"Deliverynote": {
+				"label": "filter.delNote",
+				"filterOperator": "Contains"
+			},
+			"Headertext": {
+				"label": "filter.headerText",
+				"filterOperator": "Contains"
+			},
+			"Quantitydelivered": {
+				"label": "filter.qtyDel",				
+				"controlType": "range",
+				"filterOperator": "BT",
+				"type": "number"
+			},
+			"Uom": {
+				"label": "filter.uom",
+				"filterOperator": "EQ",
+				"controlType": "comboBox",
+				"items": "dropDownModel>/OrderUnits",
+				"itemsSorter": "path: 'Key', descending: false",
+				"itemKey":"dropDownModel>Key",
+				"formatter": "valueHelpDisplay",
+				"itemValue": "dropDownModel>Value"
+			},
+			"Unitprice": {
+				"label": "filter.unitPrice",				
+				"controlType": "range",
+				"filterOperator": "BT",
+				"type": "number"
+			},
+			"Taxcode": {
+				"label": "filter.taxCode",
+				"filterOperator": "EQ",
+				"controlType": "comboBox",
+				"items": "dropDownModel>/TaxCodes",
+				"itemsSorter": "path: 'Key', descending: false",
+				"itemKey":"dropDownModel>Key",
+				"formatter": "valueHelpDisplay",
+				"itemValue": "dropDownModel>Value"
+			},
+			"Valueextax": {
+				"label": "filter.valueExTax",				
+				"controlType": "range",
+				"filterOperator": "BT",
+				"type": "number"
+			}	
+		}
+	},
+	
+	"creditGr": {
+		"parent": "invGr",
+	
+		"fieldList":
+		{
+			"ShowReversalInd": {
+				"label": "filter.showReversal",
+				"controlType": "boolean",
+				"type": "boolean",
+				"filterOperator": "EQ",
+				"default": true
+			}
+		}
+	},
+	
+	"items":{
+		"entitySet": "Items",
+		"fieldList":
+		{
+			"ShortText": {
+				"label": "filter.shortText",
+				"filterOperator": "Contains"
+			},
+			"TaxCode": {
+				"label": "filter.taxCode",
+				"filterOperator": "EQ",
+				"controlType": "comboBox",
+				"items": "dropDownModel>/TaxCodes",
+				"itemsSorter": "path: 'Key', descending: false",
+				"itemKey":"dropDownModel>Key",
+				"formatter": "valueHelpDisplay",
+				"itemValue": "dropDownModel>Value"
+			},
+			"Quantity": {
+				"label": "filter.qtyOrder",				
+				"controlType": "range",
+				"filterOperator": "BT",
+				"type": "number"
+			},
+			
+			"NetPrice": {
+				"label": "filter.netPrice",				
+				"controlType": "range",
+				"filterOperator": "BT",
+				"type": "number"
+			},
+			"EffectiveValue": {
+				"label": "filter.valueIncTax",				
+				"controlType": "range",
+				"filterOperator": "BT",
+				"type": "number"
+			},
+			"QuantityRemaining": {
+				"label": "filter.qtyUnDel",				
+				"controlType": "range",
+				"filterOperator": "BT",
+				"type": "number"
+			}
+			
+		}
+	}
+}

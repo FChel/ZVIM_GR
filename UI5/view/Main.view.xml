@@ -1,0 +1,344 @@
+<mvc:View
+  xmlns="sap.m"
+  xmlns:core="sap.ui.core"
+  xmlns:mvc="sap.ui.core.mvc"
+  xmlns:f="sap.ui.layout.form"
+  xmlns:l="sap.ui.layout"
+  xmlns:html="http://www.w3.org/1999/xhtml"
+  height="100%"
+  xmlns:customData="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1"
+  controllerName="au.gov.defence.roman.zvim.gr.controller.Main">
+  <Page class="sapUiSizeCompact" busy="{viewModel>/busy}" busyIndicatorDelay="{viewModel>/delay}" showFooter="true">
+    <customHeader>
+      <Bar>
+        <contentLeft>
+          <Button icon="sap-icon://nav-back" press="._onNavBack" tooltip="{i18n>navBackButtonTooltip}" enabled="false"
+            visible="{= !${componentModel>/inFLP}}" />
+          <Button icon="sap-icon://home" press="._onNavHome" tooltip="{i18n>navHomeButtonTooltip}"
+            visible="{= !${componentModel>/inFLP}}"/>
+        </contentLeft>
+        <contentMiddle>
+          <Title text="{= ${Creditmemo} === true ? ${i18n>appCmTitle} : ${i18n>invPageTitle}}"/>
+        </contentMiddle>
+        <contentRight>
+          <Button icon="sap-icon://sys-help" press=".onNavHelp" tooltip="{i18n>navHelpButtonTooltip}"
+            visible="{= !${componentModel>/inFLP}}"/>
+          <Button id="viewImgBtn" press=".onViewImage" type="Emphasized" text="{i18n>navViewInvoiceButtonText}"
+            tooltip="{i18n>navViewInvoiceButtonText}" enabled="{= ${viewModel>/enableBtns} === true}"/>
+          <Button icon="sap-icon://customer" text="{userModel>/FullName}" press=".onToggleUserPopover" tooltip="{i18n>userDetailsButtonTooltip}"
+            visible="{= !${componentModel>/inFLP}}" />
+          <Button icon="sap-icon://overflow" press=".onOverflow" tooltip="{i18n>overflowButtonTooltip}" enabled="false"
+            />
+        </contentRight>
+      </Bar>
+    </customHeader>
+    <content>
+      <l:FixFlex fixFirst="false" fixContentSize="5rem" minFlexSize="500">
+        <l:flexContent>
+          <VBox>
+            <ObjectHeader visible="true" title="{= ${Creditmemo} === true ? ${i18n>creditMemoDetailsTitle} : ${i18n>invDetailsTitle}}"
+              number="{parts: [{path: 'Grossamount'}, {path:'Currency'}], type:'sap.ui.model.type.Currency', formatOptions:{showMeasure: false}}"
+              numberUnit="{Currency}" responsive="true" class="sapUiSizeCompact">
+              <attributes>
+                <ObjectAttribute title="{i18n>vendorLabel}"
+                  text="{parts: [{path: 'VendorNo'}, {path:'Vendname'}], formatter: '.formatter.valueHelpDisplay'}"
+                  tooltip="{parts: [{path: 'VendorNo'}, {path:'Vendname'}], formatter: '.formatter.valueHelpDisplay'}" />
+                <ObjectAttribute title="{i18n>invoiceRefLabel}" text="{Invnumber}"/>
+                <ObjectAttribute id="PoNumber" title="{i18n>poLabel}" text="{PoNumber}" active="{= ${PoIsMyFi} === true}" press="onPurchaseOrderPress"/>
+                <ObjectAttribute title="{i18n>paymentTermsLabel}"
+                  text="{parts: [{path: 'Paymentterms'}, {path:'PaymenttermsDesc'}], formatter: '.formatter.valueHelpDisplay'}"/>
+                <ObjectAttribute title="{i18n>receivedDateLabel}"
+                  text="{path: 'Receiveddt', type: 'sap.ui.model.type.Date', formatOptions: {pattern:'dd.MM.yyyy', strictParsing:true, UTC: true} }"/>
+                <ObjectAttribute title="{i18n>vimDocumentIdLabel}" text="{Vimdocid}"/>
+              </attributes>
+            </ObjectHeader>
+            <Table showNoData="false">
+              <headerToolbar>
+                <Toolbar>
+                  <Title visible="{= ${Creditmemo} === true}" text="{i18n>creditMemoTableTitle} {viewModel>/movtLineCount}" level="H2"/>
+                  <Title visible="{= ${Creditmemo} === false}" text="{i18n>matchTableTitle} {viewModel>/movtLineCount}" level="H2"/>
+                  <core:Icon src="sap-icon://sys-help-2" class="sapMBtnIcon" hoverColor="Contrast"
+                    tooltip="{= ${Creditmemo} === true ? ${i18n>creditMemoTableTooltip} : ${i18n>matchTableTooltip}}"></core:Icon>
+                  <ToolbarSpacer/>
+                  <ToolbarSpacer/>
+                  <Button tooltip="{i18n>sortTooltip}" icon="sap-icon://sort" enabled="{= ${viewModel>/enableBtns}}" press="onGRSortClick" type="Ghost"/>
+                  <!--<Button tooltip="{i18n>filterTooltip}" icon="sap-icon://filter" enabled="{= ${viewModel>/enableBtns}}" press="onInvoiceGRFilterClick" type="Ghost"/>-->
+                  <Button tooltip="{i18n>filterTooltip}" icon="sap-icon://filter" enabled="{= ${viewModel>/enableBtns}}" press="onFilterClick" type="Ghost"
+                    customData:dlgName="{= ${Creditmemo} === true ? 'creditGr' : 'invGr'}" customData:tabelName="movementsTable"/>
+                  <Button icon="sap-icon://add" text="{i18n>matchCreatePurRcptButtonText}" tooltip="{i18n>matchAddButtonTooltip}" type="Emphasized"
+                    press=".onAddGr" enabled="{= ${disableModel>/DisableFlag} !== true &amp;&amp; ${viewModel>/enableBtns}}" visible="{= ${Creditmemo} === false }"/>
+                </Toolbar>
+              </headerToolbar>
+              <columns>
+                <Column hAlign="Left" width="1.5rem"
+                  visible="{parts: [{path: 'Creditmemo'}, {path:'viewModel>/enableBtns'}], formatter: '.formatter.tableColDisplay'}"/>
+                <Column hAlign="Left" width="10rem">
+                  <Label text="{i18n>matchNumberYrLabel}" wrapping="true"/>
+                </Column>
+                <Column hAlign="Left" width="6em">
+                  <Label text="{i18n>matchItemLabel}" wrapping="true"/>
+                </Column>
+                <Column hAlign="Left" width="auto">
+                  <Label text="{i18n>matchEntryDateLabel}" wrapping="true"/>
+                </Column>
+                <Column hAlign="Left" width="auto">
+                  <Label text="{i18n>matchDeliveryDateLabel}" wrapping="true"/>
+                </Column>
+                <Column hAlign="Left" width="auto">
+                  <Label text="{i18n>matchDelNoteLabel}" wrapping="true"/>
+                </Column>
+                <Column hAlign="Left" width="auto">
+                  <Label text="{i18n>matchHeaderTextLabel}" wrapping="true"/>
+                </Column>
+                <Column width="auto">
+                  <Label text="{i18n>matchQtyDelUomLabel}" wrapping="true"/>
+                </Column>
+                <Column hAlign="Left" width="4rem">
+                  <Label text="{i18n>matchTaxCodeLabel}" wrapping="true"/>
+                </Column>
+                <Column hAlign="Right" width="auto">
+                  <Label text="{i18n>matchUnitPriceLabel}" textAlign="Right" wrapping="true"/>
+                </Column>
+                <Column hAlign="Right" width="auto" visible="{= ${Creditmemo} === false }">
+                  <Label text="{i18n>matchValueLabel}" textAlign="Right" wrapping="true"/>
+                </Column>
+                <Column hAlign="Right" width="auto" visible="{= ${Creditmemo} === true }">
+                  <Label text="{i18n>creditMemoCreditQtyLabel}" textAlign="Right" wrapping="true"/>
+                </Column>
+              </columns>
+            </Table>
+            <ScrollContainer vertical="true" focusable="false" height="{= ${Creditmemo} === true ? '30rem' : '12rem'}" class="sapUiMediumMarginBottom">
+              <Table id="movementsTable" items="{path: 'GoodsReceipts', parameters: {operationMode: 'Server'}}" selectionChange="onItemSelectionChanged"
+                alternateRowColors="true" updateFinished="onGRTableUpdateFinished"
+                mode="{parts: [{path: 'Creditmemo'}, {path:'viewModel>/enableBtns'}], formatter: '.formatter.tableMode'}" busyIndicatorDelay="0">
+                <columns>
+                  <Column width="10rem"></Column>
+                  <Column width="6em"></Column>
+                  <Column width="auto"></Column>
+                  <Column width="auto"></Column>
+                  <Column width="auto"></Column>
+                  <Column width="auto"></Column>
+                  <Column width="auto"></Column>
+                  <Column width="4rem"></Column>
+                  <Column hAlign="Right" width="auto"></Column>
+                  <Column hAlign="Right" width="auto" visible="{= ${Creditmemo} === false }"></Column>
+                  <Column hAlign="Right" width="auto" visible="{= ${Creditmemo} === true }"></Column>
+                </columns>
+                <items>
+                  <ColumnListItem selected="{Selectedgr}" highlight="{LineStatus}">
+                    <cells>
+                      <!-- <Text text="{Selectedgr}"/> -->
+                      <Link text="{Grdocnumber} / {Grdocyear}" press="onGrDocPress" wrapping="true"/>
+                      <Text text="{path: 'Poitem', formatter: '.formatter.removeLeadingZero'}"/>
+                      <Text text="{path: 'Entrydate', type: 'sap.ui.model.type.Date',
+                          formatOptions: {pattern:'dd.MM.yyyy', strictParsing:true, UTC: true} }"/>
+                      <Text text="{path: 'Deliverydate', type: 'sap.ui.model.type.Date',
+                          formatOptions: {pattern:'dd.MM.yyyy', strictParsing:true, UTC: true} }"/>
+                      <Text text="{Deliverynote}"/>
+                      <Text text="{Headertext}"/>
+                      <HBox>
+                        <Text text="{Quantitydelivered} {Uom}" visible="{= ${ShowReversalInd} !== true}"/>
+                        <ObjectStatus text="{Quantitydelivered} {Uom}" state="Error" visible="{= ${ShowReversalInd} === true}"/>
+                      </HBox>
+                      <Text text="{Taxcode}" tooltip="{path: 'Taxcode', formatter: '.formatter.taxCodeDescription'}"/>
+                      <Text text="{parts: [{path: 'Unitprice'}, {path:'viewModel>/Currency'}],
+                          type:'sap.ui.model.type.Currency', formatOptions:{showMeasure: false}}"/>
+                      <!-- <Text text="{Valueextax}"/> -->
+                      <Text text="{parts: [{path: 'Valueextax'}, {path:'viewModel>/Currency'}],
+                          type:'sap.ui.model.type.Currency', formatOptions:{showMeasure: false}}"/>
+                      <Input type="Number" id="creditQty"
+                        value="{path:'Creditquantity', type:'sap.ui.model.odata.type.Decimal',
+                          formatOptions:{decimals: 3, groupingEnabled: false}, constraints:{scale: 'variable', minimum: '0'}}"
+                        liveChange="onQtyLiveChange" change="onQtyChange" enabled="{= ${viewModel>/enableBtns}}"/>
+                      <!--           <Input-->
+                      <!--          id="creditQty" -->
+                      <!--value="{Creditquantity}" -->
+                      <!--customData:liveChangeAllow="digits" -->
+                      <!--customData:liveChangeMsgOnInvalidInput="# is not allowed" -->
+                      <!--customData:liveChangeMaxLength="14" -->
+                      <!--change="handleCodeLiveChange"  />-->
+                    </cells>
+                  </ColumnListItem>
+                </items>
+              </Table>
+            </ScrollContainer>
+            <Table growing="false" showNoData="false" visible="{= ${Creditmemo} === false }">
+              <headerToolbar>
+                <OverflowToolbar>
+                  <Title text="{i18n>itemsTableTitle} {viewModel>/itemsCount}" level="H2"/>
+                  <ToolbarSpacer></ToolbarSpacer>
+                  <Button tooltip="{i18n>sortTooltip}" icon="sap-icon://sort" enabled="{= ${viewModel>/enableBtns}}" press="onItemsSortClick" type="Ghost">
+                    <!-- <customData>
+                <core:CustomData key="table" value="contractTable"/>
+              </customData> -->
+                  </Button>
+                  <Button tooltip="{i18n>filterTooltip}" icon="sap-icon://filter" enabled="{= ${viewModel>/enableBtns}}" press="onFilterClick" type="Ghost"
+                    customData:tabelName="itemsTable" customData:dlgName="items">
+                    <!-- <customData>
+                <core:CustomData key="table" value="contractTable"/>
+              </customData> -->
+                  </Button>
+                </OverflowToolbar>
+              </headerToolbar>
+              <columns>
+                <Column width="6rem">
+                  <Label text="{i18n>itemLabel}" wrapping="true"/>
+                </Column>
+                <Column width="18rem">
+                  <Label text="{i18n>itemDescriptionLabel}" wrapping="true"/>
+                </Column>
+                <Column width="4rem">
+                  <Label text="{i18n>itemTaxCodeLabel}" wrapping="true"/>
+                </Column>
+                <Column hAlign="Right">
+                  <Label text="{i18n>itemQuantityLabel}" wrapping="true"/>
+                </Column>
+                <Column hAlign="Right">
+                  <Label text="{i18n>itemUnitPriceLabel}" wrapping="true"/>
+                </Column>
+                <Column hAlign="Right">
+                  <Label text="{i18n>itemValueLabel}" wrapping="true"/>
+                </Column>
+                <Column hAlign="Right">
+                  <Label text="{i18n>itemQuantityRemainingLabel}" textAlign="Right" wrapping="true"/>
+                </Column>
+              </columns>
+            </Table>
+            <ScrollContainer visible="{= ${Creditmemo} === false }" vertical="true" focusable="false" height="12rem">
+              <Table id="itemsTable" visible="{= ${Creditmemo} === false }" alternateRowColors="true"
+                items="{path: 'Items', parameters: {operationMode: 'Server'}}" updateFinished="onPOTableUpdateFinished" growing="false">
+                <columns>
+                  <Column width="6rem"/>
+                  <Column width="18rem"/>
+                  <Column width="4rem"/>
+                  <Column hAlign="Right"/>
+                  <Column hAlign="Right"/>
+                  <Column hAlign="Right"/>
+                  <Column hAlign="Right"/>
+                </columns>
+                <items>
+                  <ColumnListItem>
+                    <cells>
+                      <Text text="{path:'PoItem', formatter: '.formatter.removeLeadingZero'}"/>
+                      <Text text="{ShortText}"/>
+                      <Text text="{TaxCode}" tooltip="{path: 'TaxCode', formatter: '.formatter.taxCodeDescription'}"/>
+                      <Text text="{path: 'Quantity', type: 'sap.ui.model.odata.type.Decimal',
+                          formatOptions: {decimals: 3, groupingEnabled: false}, constraints:{scale: 'variable'}}"/>
+                      <Text text="{parts: [{path: 'NetPrice'}, {path:'viewModel>/Currency'}],
+                          type:'sap.ui.model.type.Currency', formatOptions:{showMeasure: false}}"/>
+                      <Text text="{parts: [{path: 'EffectiveValue'}, {path:'viewModel>/Currency'}],
+                          type:'sap.ui.model.type.Currency', formatOptions:{showMeasure: false}}"/>
+                      <Text text="{path: 'QuantityRemaining', type: 'sap.ui.model.odata.type.Decimal',
+                          formatOptions: {decimals: 3, groupingEnabled: false}, constraints:{scale: 'variable'}}"/>
+                    </cells>
+                  </ColumnListItem>
+                </items>
+              </Table>
+            </ScrollContainer>
+          </VBox>
+        </l:flexContent>
+
+        <l:fixContent>
+          <!--<f:SimpleForm -->
+          <!--  editable="true"-->
+          <!--  layout="ColumnLayout"-->
+          <!--  columnsM="2"-->
+          <!--  columnsL="3"-->
+          <!--  columnsXL="4"-->
+          <!--  labelSpanXL="4"-->
+          <!--  labelSpanL="5"-->
+          <!--  labelSpanM="5">-->
+          <!--  <f:toolbar>-->
+          <!--    <Toolbar>-->
+          <!--      <Title class="sapUiTinyMarginBegin" text="{i18n>balanceTableTitle}" level="H2" titleStyle="H2"/>-->
+          <!--      <core:Icon src="sap-icon://sys-help-2" class="sapMBtnIcon" hoverColor="Contrast" press=".onAddMovtLine"-->
+          <!--        tooltip="{i18n>balanceInvTableTooltip}"/>-->
+          <!--    </Toolbar>  -->
+          <!--  </f:toolbar>-->
+          <!--  <f:content>-->
+          <!--    <Label wrapping="true" text="{i18n>balanceSumExTaxLabel}" />-->
+          <!--    <Text text="{parts: [{path: 'BalanceCheck/Calculatednet'}, {path:'Currency'}], type:'sap.ui.model.type.Currency', formatOptions:{showMeasure: false}}"/>-->
+
+          <!--    <Label wrapping="true" text="{i18n>balanceTaxLabel}" />-->
+          <!--    <Text text="{parts: [{path: 'BalanceCheck/Calculatedtax'}, {path:'Currency'}], type:'sap.ui.model.type.Currency', formatOptions:{showMeasure: false}}"/>-->
+
+          <!--    <Label wrapping="true" text="{i18n>calculatedgross}" />-->
+          <!--    <Text text="{parts: [{path: 'BalanceCheck/Calculatedgross'}, {path:'Currency'}], type:'sap.ui.model.type.Currency', formatOptions:{showMeasure: false}}"/>-->
+
+          <!--    <Label wrapping="true" text="{i18n>balanceBalanceLabel}" />-->
+          <!--    <ObjectStatus state="{path: 'BalanceCheck/IsWithinTolerance', formatter: '.formatter.balanceStatus'}"-->
+          <!--        text="{parts: [{path: 'BalanceCheck/Balance'}, {path:'Currency'}], type:'sap.ui.model.type.Currency', formatOptions:{showMeasure: false}}"/>-->
+          <!--  </f:content>-->
+          <!--  </f:SimpleForm>-->
+          <Toolbar>
+            <Title class="sapUiTinyMarginBegin" text="{i18n>balanceTableTitle}" level="H2" titleStyle="H2"/>
+            <core:Icon src="sap-icon://sys-help-2" class="sapMBtnIcon" hoverColor="Contrast" press=".onAddMovtLine"
+              tooltip="{i18n>balanceInvTableTooltip}"/>
+          </Toolbar>
+          <f:Form id="CheckBalancesData" editable="false">
+            <f:layout>
+              <f:ResponsiveGridLayout labelSpanXL="8" labelSpanL="8" labelSpanM="8" labelSpanS="12" adjustLabelSpan="false" emptySpanXL="0" emptySpanL="0"
+                emptySpanM="0" emptySpanS="0" columnsXL="4" columnsL="4" columnsM="4" singleContainerFullSize="false"/>
+            </f:layout>
+            <f:formContainers>
+              <f:FormContainer >
+                <f:formElements>
+                  <f:FormElement label="{i18n>balanceSumExTaxLabel}">
+                    <f:fields>
+                      <Text text="{parts: [{path: 'BalanceCheck/Calculatednet'}, {path:'Currency'}],
+                          type:'sap.ui.model.type.Currency', formatOptions:{showMeasure: false}}"/>
+                    </f:fields>
+                  </f:FormElement>
+                </f:formElements>
+              </f:FormContainer>
+              <f:FormContainer >
+                <f:formElements>
+                  <f:FormElement label="{i18n>balanceTaxLabel}">
+                    <f:fields>
+                      <Text text="{parts: [{path: 'BalanceCheck/Calculatedtax'}, {path:'Currency'}],
+                          type:'sap.ui.model.type.Currency', formatOptions:{showMeasure: false}}"/>
+                    </f:fields>
+                  </f:FormElement>
+                </f:formElements>
+              </f:FormContainer>
+              <f:FormContainer >
+                <f:formElements>
+                  <f:FormElement label="{i18n>balanceSumIncTaxLabel}">
+                    <f:fields>
+                      <Text text="{parts: [{path: 'BalanceCheck/Calculatedgross'}, {path:'Currency'}],
+                            type:'sap.ui.model.type.Currency', formatOptions:{showMeasure: false}}"/>
+                    </f:fields>
+                  </f:FormElement>
+                </f:formElements>
+              </f:FormContainer>
+              <f:FormContainer >
+                <f:formElements>
+                  <f:FormElement label="{i18n>balanceBalanceLabel}">
+                    <f:fields>
+                      <ObjectStatus state="{path: 'BalanceCheck/IsWithinTolerance', formatter: '.formatter.balanceStatus'}"
+                          text="{parts: [{path: 'BalanceCheck/Balance'}, {path:'Currency'}],
+                          type:'sap.ui.model.type.Currency', formatOptions:{showMeasure: false}}"/>
+                    </f:fields>
+                  </f:FormElement>
+                </f:formElements>
+              </f:FormContainer>
+            </f:formContainers>
+          </f:Form>
+        </l:fixContent>
+      </l:FixFlex>
+    </content>
+    <footer>
+      <Toolbar>
+        <content>
+          <Button id="validateBtn" press=".onValidate" type="Emphasized" text="{i18n>poGrValidateButtonText}"
+            tooltip="{i18n>poGrValidateButtonTooltip}" enabled="{= ${disableModel>/DisableFlag} !== true &amp;&amp; ${viewModel>/enableValidateBtn} &amp;&amp; ${viewModel>/enableBtns}}"/>
+          <ToolbarSpacer/>
+          <Button id="submitBtn" press=".onSubmit" type="Emphasized" text="{i18n>poGrSubmitButtonText}" tooltip="{i18n>poGrSubmitButtonTooltip}"
+            enabled="{= ${disableModel>/DisableFlag} !== true &amp;&amp; ${viewModel>/enableBtns} === true &amp;&amp; ${viewModel>/enableSubmitBtn} === true}"/>
+          <Button id="rejectBtn" press=".onReject" type="Emphasized" text="{i18n>poGrRejectButtonText}" tooltip="{i18n>poGrRejectButtonTooltip}"
+            enabled="{= ${disableModel>/DisableFlag} !== true &amp;&amp; ${viewModel>/enableBtns}}"/>
+        </content>
+      </Toolbar>
+    </footer>
+  </Page>
+</mvc:View>
