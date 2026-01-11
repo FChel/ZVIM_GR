@@ -1,0 +1,58 @@
+class ZCL_BADI_MYFI_MB_GOODSMVT_CRE definition
+  public
+  final
+  create public .
+
+public section.
+
+  interfaces IF_BADI_INTERFACE .
+  interfaces IF_EX_MB_BAPI_GOODSMVT_CREATE .
+protected section.
+private section.
+ENDCLASS.
+
+
+
+CLASS ZCL_BADI_MYFI_MB_GOODSMVT_CRE IMPLEMENTATION.
+
+
+  METHOD IF_EX_MB_BAPI_GOODSMVT_CREATE~EXTENSIONIN_TO_MATDOC.
+*----------------------------------------------------------------------*
+* Activity ID        : AD-35-02-02
+* Development Script : DS-35-02-02-01
+*----------------------------------------------------------------------*
+*  DESCRIPTION
+*    BADI : Translate data passed into Goods Movement Creation function
+*    module BAPI_GOODSMVT_CREATE using extension mechnism
+*    and pass this data into into structures related to tables MKPF and MSEG.
+*----------------------------------------------------------------------*
+* History       :
+*----------------------------------------------------------------------*
+* DATE       AUTHOR    CTS REQ     DESCRIPTION
+*----------------------------------------------------------------------*
+* 25.03.2021 180876KNS RD2K920868  S 6000002322: VIM 2021 April Changes
+*   Initial Implementation
+*----------------------------------------------------------------------*
+
+* DATA : data line from custom data extension table
+    DATA: ls_extension_in       TYPE bapiparex,
+          ls_zbapi2017_gm_zmyfi TYPE zbapi2017_gm_zmyfi. " ZCL_FVIM_CONSTANTS=>GC_BAPI2017_GM_ZMYFI_EXTENSION
+
+
+*
+    LOOP AT extension_in INTO ls_extension_in.
+      CASE ls_extension_in-structure.
+        WHEN zcl_fvim_constants=>gc_bapi2017_gm_zmyfi_extension.
+          " MyFi related data field ZZVIM_CREATED_VIA_MATCHING was passed into calling of FM
+          " BAPI_GOODSMVT_CREATE using extension data mechnism.
+          " This method will pass that field into goods moveement data structure
+          " IMKPF (Material Document header) on the way to database tables.
+          ls_zbapi2017_gm_zmyfi = ls_extension_in-valuepart1.
+          cs_imkpf-zzvim_created_via_matching = ls_zbapi2017_gm_zmyfi-zzvim_created_via_matching.
+        WHEN OTHERS.
+          " This Extension structure not handled in this method.
+      ENDCASE.
+    ENDLOOP.
+
+  ENDMETHOD.
+ENDCLASS.

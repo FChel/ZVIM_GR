@@ -1,0 +1,50 @@
+CLASS zcl_zedm_vim_gr_create_mpc_ext DEFINITION
+  PUBLIC
+  INHERITING FROM zcl_zedm_vim_gr_create_mpc
+  CREATE PUBLIC .
+
+  PUBLIC SECTION.
+    METHODS define
+        REDEFINITION .
+  PROTECTED SECTION.
+  PRIVATE SECTION.
+ENDCLASS.
+
+
+
+CLASS ZCL_ZEDM_VIM_GR_CREATE_MPC_EXT IMPLEMENTATION.
+
+
+  METHOD define.
+* METHOD ID:          DEFINE
+* DESCRIPTION:        This method is used by the VIM UI5 Goods
+*                     Receipting application.  The method sets the
+*                     Mimetype property for the CreateGrImg entity so
+*                     that the Get STream method can retrieve and pass
+*                     back the Open Text image data to the calling app.
+*                     The oData Service ZEDM_VIM_GR_CREATE_SRV is used.
+*
+* AUTHOR:             James Southwell
+* CREATE DATE:        25 Feb 2019
+* R/3 RELEASE VERSION: ECC6
+*
+* ACTIVITY:           AD-11-32-01 - Goods Receipting
+* CR Number:          6000001457 - VIM UI5 Applications
+*-----------------------------------------------------------------------
+* The following statement must be included to ensure that the
+* definitions of the oData service entities are not "lost".
+    super->define( ).
+
+    DATA:
+      lo_entity   TYPE REF TO /iwbep/if_mgw_odata_entity_typ,
+      lo_property TYPE REF TO /iwbep/if_mgw_odata_property.
+
+    lo_entity = model->get_entity_type( iv_entity_name = 'VimImage' ).
+
+    IF lo_entity IS BOUND.
+      lo_property = lo_entity->get_property( iv_property_name =
+                    'Mimetype' ).
+      lo_property->set_as_content_type( ).
+    ENDIF.
+  ENDMETHOD.
+ENDCLASS.

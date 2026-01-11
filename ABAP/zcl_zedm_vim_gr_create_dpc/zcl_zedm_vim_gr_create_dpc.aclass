@@ -1,0 +1,3246 @@
+class ZCL_ZEDM_VIM_GR_CREATE_DPC definition
+  public
+  inheriting from /IWBEP/CL_MGW_PUSH_ABS_DATA
+  abstract
+  create public .
+
+public section.
+
+  interfaces /IWBEP/IF_SB_DPC_COMM_SERVICES .
+  interfaces /IWBEP/IF_SB_GENDPC_SHLP_DATA .
+  interfaces /IWBEP/IF_SB_GEN_DPC_INJECTION .
+
+  methods /IWBEP/IF_MGW_APPL_SRV_RUNTIME~GET_ENTITYSET
+    redefinition .
+  methods /IWBEP/IF_MGW_APPL_SRV_RUNTIME~GET_ENTITY
+    redefinition .
+  methods /IWBEP/IF_MGW_APPL_SRV_RUNTIME~UPDATE_ENTITY
+    redefinition .
+  methods /IWBEP/IF_MGW_APPL_SRV_RUNTIME~CREATE_ENTITY
+    redefinition .
+  methods /IWBEP/IF_MGW_APPL_SRV_RUNTIME~DELETE_ENTITY
+    redefinition .
+protected section.
+
+  data mo_injection type ref to /IWBEP/IF_SB_GEN_DPC_INJECTION .
+
+  methods REASONCODES_GET_ENTITYSET
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_FILTER_SELECT_OPTIONS type /IWBEP/T_MGW_SELECT_OPTION
+      !IS_PAGING type /IWBEP/S_MGW_PAGING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+      !IT_ORDER type /IWBEP/T_MGW_SORTING_ORDER
+      !IV_FILTER_STRING type STRING
+      !IV_SEARCH_STRING type STRING
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITYSET optional
+    exporting
+      !ET_ENTITYSET type ZCL_ZEDM_VIM_GR_CREATE_MPC=>TT_REASONCODE
+      !ES_RESPONSE_CONTEXT type /IWBEP/IF_MGW_APPL_SRV_RUNTIME=>TY_S_MGW_RESPONSE_CONTEXT
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods REASONCODES_UPDATE_ENTITY
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITY_U optional
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+      !IO_DATA_PROVIDER type ref to /IWBEP/IF_MGW_ENTRY_PROVIDER optional
+    exporting
+      !ER_ENTITY type ZCL_ZEDM_VIM_GR_CREATE_MPC=>TS_REASONCODE
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods USERDETAILS_CREATE_ENTITY
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITY_C optional
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+      !IO_DATA_PROVIDER type ref to /IWBEP/IF_MGW_ENTRY_PROVIDER optional
+    exporting
+      !ER_ENTITY type ZCL_ZEDM_VIM_GR_CREATE_MPC=>TS_USERDETAIL
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods USERDETAILS_DELETE_ENTITY
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITY_D optional
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods USERDETAILS_GET_ENTITY
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IO_REQUEST_OBJECT type ref to /IWBEP/IF_MGW_REQ_ENTITY optional
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITY optional
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+    exporting
+      !ER_ENTITY type ZCL_ZEDM_VIM_GR_CREATE_MPC=>TS_USERDETAIL
+      !ES_RESPONSE_CONTEXT type /IWBEP/IF_MGW_APPL_SRV_RUNTIME=>TY_S_MGW_RESPONSE_ENTITY_CNTXT
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods USERDETAILS_GET_ENTITYSET
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_FILTER_SELECT_OPTIONS type /IWBEP/T_MGW_SELECT_OPTION
+      !IS_PAGING type /IWBEP/S_MGW_PAGING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+      !IT_ORDER type /IWBEP/T_MGW_SORTING_ORDER
+      !IV_FILTER_STRING type STRING
+      !IV_SEARCH_STRING type STRING
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITYSET optional
+    exporting
+      !ET_ENTITYSET type ZCL_ZEDM_VIM_GR_CREATE_MPC=>TT_USERDETAIL
+      !ES_RESPONSE_CONTEXT type /IWBEP/IF_MGW_APPL_SRV_RUNTIME=>TY_S_MGW_RESPONSE_CONTEXT
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods USERDETAILS_UPDATE_ENTITY
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITY_U optional
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+      !IO_DATA_PROVIDER type ref to /IWBEP/IF_MGW_ENTRY_PROVIDER optional
+    exporting
+      !ER_ENTITY type ZCL_ZEDM_VIM_GR_CREATE_MPC=>TS_USERDETAIL
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods VIMDOCHEADERS_CREATE_ENTITY
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITY_C optional
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+      !IO_DATA_PROVIDER type ref to /IWBEP/IF_MGW_ENTRY_PROVIDER optional
+    exporting
+      !ER_ENTITY type ZCL_ZEDM_VIM_GR_CREATE_MPC=>TS_VIMDOCHEADER
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods VIMDOCHEADERS_DELETE_ENTITY
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITY_D optional
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods VIMDOCHEADERS_GET_ENTITY
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IO_REQUEST_OBJECT type ref to /IWBEP/IF_MGW_REQ_ENTITY optional
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITY optional
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+    exporting
+      !ER_ENTITY type ZCL_ZEDM_VIM_GR_CREATE_MPC=>TS_VIMDOCHEADER
+      !ES_RESPONSE_CONTEXT type /IWBEP/IF_MGW_APPL_SRV_RUNTIME=>TY_S_MGW_RESPONSE_ENTITY_CNTXT
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods VIMDOCHEADERS_GET_ENTITYSET
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_FILTER_SELECT_OPTIONS type /IWBEP/T_MGW_SELECT_OPTION
+      !IS_PAGING type /IWBEP/S_MGW_PAGING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+      !IT_ORDER type /IWBEP/T_MGW_SORTING_ORDER
+      !IV_FILTER_STRING type STRING
+      !IV_SEARCH_STRING type STRING
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITYSET optional
+    exporting
+      !ET_ENTITYSET type ZCL_ZEDM_VIM_GR_CREATE_MPC=>TT_VIMDOCHEADER
+      !ES_RESPONSE_CONTEXT type /IWBEP/IF_MGW_APPL_SRV_RUNTIME=>TY_S_MGW_RESPONSE_CONTEXT
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods VIMDOCHEADERS_UPDATE_ENTITY
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITY_U optional
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+      !IO_DATA_PROVIDER type ref to /IWBEP/IF_MGW_ENTRY_PROVIDER optional
+    exporting
+      !ER_ENTITY type ZCL_ZEDM_VIM_GR_CREATE_MPC=>TS_VIMDOCHEADER
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods VIMDOCIDS_CREATE_ENTITY
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITY_C optional
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+      !IO_DATA_PROVIDER type ref to /IWBEP/IF_MGW_ENTRY_PROVIDER optional
+    exporting
+      !ER_ENTITY type ZCL_ZEDM_VIM_GR_CREATE_MPC=>TS_VIMDOCID
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods VIMDOCIDS_DELETE_ENTITY
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITY_D optional
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods VIMDOCIDS_GET_ENTITY
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IO_REQUEST_OBJECT type ref to /IWBEP/IF_MGW_REQ_ENTITY optional
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITY optional
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+    exporting
+      !ER_ENTITY type ZCL_ZEDM_VIM_GR_CREATE_MPC=>TS_VIMDOCID
+      !ES_RESPONSE_CONTEXT type /IWBEP/IF_MGW_APPL_SRV_RUNTIME=>TY_S_MGW_RESPONSE_ENTITY_CNTXT
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods VIMDOCIDS_GET_ENTITYSET
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_FILTER_SELECT_OPTIONS type /IWBEP/T_MGW_SELECT_OPTION
+      !IS_PAGING type /IWBEP/S_MGW_PAGING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+      !IT_ORDER type /IWBEP/T_MGW_SORTING_ORDER
+      !IV_FILTER_STRING type STRING
+      !IV_SEARCH_STRING type STRING
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITYSET optional
+    exporting
+      !ET_ENTITYSET type ZCL_ZEDM_VIM_GR_CREATE_MPC=>TT_VIMDOCID
+      !ES_RESPONSE_CONTEXT type /IWBEP/IF_MGW_APPL_SRV_RUNTIME=>TY_S_MGW_RESPONSE_CONTEXT
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods VIMDOCIDS_UPDATE_ENTITY
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITY_U optional
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+      !IO_DATA_PROVIDER type ref to /IWBEP/IF_MGW_ENTRY_PROVIDER optional
+    exporting
+      !ER_ENTITY type ZCL_ZEDM_VIM_GR_CREATE_MPC=>TS_VIMDOCID
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods VIMDOCSHSET_CREATE_ENTITY
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITY_C optional
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+      !IO_DATA_PROVIDER type ref to /IWBEP/IF_MGW_ENTRY_PROVIDER optional
+    exporting
+      !ER_ENTITY type ZCL_ZEDM_VIM_GR_CREATE_MPC=>TS_VIMDOCSH
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods VIMDOCSHSET_DELETE_ENTITY
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITY_D optional
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods VIMDOCSHSET_GET_ENTITY
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IO_REQUEST_OBJECT type ref to /IWBEP/IF_MGW_REQ_ENTITY optional
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITY optional
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+    exporting
+      !ER_ENTITY type ZCL_ZEDM_VIM_GR_CREATE_MPC=>TS_VIMDOCSH
+      !ES_RESPONSE_CONTEXT type /IWBEP/IF_MGW_APPL_SRV_RUNTIME=>TY_S_MGW_RESPONSE_ENTITY_CNTXT
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods VIMDOCSHSET_GET_ENTITYSET
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_FILTER_SELECT_OPTIONS type /IWBEP/T_MGW_SELECT_OPTION
+      !IS_PAGING type /IWBEP/S_MGW_PAGING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+      !IT_ORDER type /IWBEP/T_MGW_SORTING_ORDER
+      !IV_FILTER_STRING type STRING
+      !IV_SEARCH_STRING type STRING
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITYSET optional
+    exporting
+      !ET_ENTITYSET type ZCL_ZEDM_VIM_GR_CREATE_MPC=>TT_VIMDOCSH
+      !ES_RESPONSE_CONTEXT type /IWBEP/IF_MGW_APPL_SRV_RUNTIME=>TY_S_MGW_RESPONSE_CONTEXT
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods VIMDOCSHSET_UPDATE_ENTITY
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITY_U optional
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+      !IO_DATA_PROVIDER type ref to /IWBEP/IF_MGW_ENTRY_PROVIDER optional
+    exporting
+      !ER_ENTITY type ZCL_ZEDM_VIM_GR_CREATE_MPC=>TS_VIMDOCSH
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods VIMIMAGESET_CREATE_ENTITY
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITY_C optional
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+      !IO_DATA_PROVIDER type ref to /IWBEP/IF_MGW_ENTRY_PROVIDER optional
+    exporting
+      !ER_ENTITY type ZCL_ZEDM_VIM_GR_CREATE_MPC=>TS_VIMIMAGE
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods VIMIMAGESET_DELETE_ENTITY
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITY_D optional
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods VIMIMAGESET_GET_ENTITY
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IO_REQUEST_OBJECT type ref to /IWBEP/IF_MGW_REQ_ENTITY optional
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITY optional
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+    exporting
+      !ER_ENTITY type ZCL_ZEDM_VIM_GR_CREATE_MPC=>TS_VIMIMAGE
+      !ES_RESPONSE_CONTEXT type /IWBEP/IF_MGW_APPL_SRV_RUNTIME=>TY_S_MGW_RESPONSE_ENTITY_CNTXT
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods VIMIMAGESET_GET_ENTITYSET
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_FILTER_SELECT_OPTIONS type /IWBEP/T_MGW_SELECT_OPTION
+      !IS_PAGING type /IWBEP/S_MGW_PAGING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+      !IT_ORDER type /IWBEP/T_MGW_SORTING_ORDER
+      !IV_FILTER_STRING type STRING
+      !IV_SEARCH_STRING type STRING
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITYSET optional
+    exporting
+      !ET_ENTITYSET type ZCL_ZEDM_VIM_GR_CREATE_MPC=>TT_VIMIMAGE
+      !ES_RESPONSE_CONTEXT type /IWBEP/IF_MGW_APPL_SRV_RUNTIME=>TY_S_MGW_RESPONSE_CONTEXT
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods VIMIMAGESET_UPDATE_ENTITY
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITY_U optional
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+      !IO_DATA_PROVIDER type ref to /IWBEP/IF_MGW_ENTRY_PROVIDER optional
+    exporting
+      !ER_ENTITY type ZCL_ZEDM_VIM_GR_CREATE_MPC=>TS_VIMIMAGE
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods REASONCODES_GET_ENTITY
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IO_REQUEST_OBJECT type ref to /IWBEP/IF_MGW_REQ_ENTITY optional
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITY optional
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+    exporting
+      !ER_ENTITY type ZCL_ZEDM_VIM_GR_CREATE_MPC=>TS_REASONCODE
+      !ES_RESPONSE_CONTEXT type /IWBEP/IF_MGW_APPL_SRV_RUNTIME=>TY_S_MGW_RESPONSE_ENTITY_CNTXT
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods ACTIONS_CREATE_ENTITY
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITY_C optional
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+      !IO_DATA_PROVIDER type ref to /IWBEP/IF_MGW_ENTRY_PROVIDER optional
+    exporting
+      !ER_ENTITY type ZCL_ZEDM_VIM_GR_CREATE_MPC=>TS_ACTION
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods ACTIONS_DELETE_ENTITY
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITY_D optional
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods ACTIONS_GET_ENTITY
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IO_REQUEST_OBJECT type ref to /IWBEP/IF_MGW_REQ_ENTITY optional
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITY optional
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+    exporting
+      !ER_ENTITY type ZCL_ZEDM_VIM_GR_CREATE_MPC=>TS_ACTION
+      !ES_RESPONSE_CONTEXT type /IWBEP/IF_MGW_APPL_SRV_RUNTIME=>TY_S_MGW_RESPONSE_ENTITY_CNTXT
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods ACTIONS_GET_ENTITYSET
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_FILTER_SELECT_OPTIONS type /IWBEP/T_MGW_SELECT_OPTION
+      !IS_PAGING type /IWBEP/S_MGW_PAGING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+      !IT_ORDER type /IWBEP/T_MGW_SORTING_ORDER
+      !IV_FILTER_STRING type STRING
+      !IV_SEARCH_STRING type STRING
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITYSET optional
+    exporting
+      !ET_ENTITYSET type ZCL_ZEDM_VIM_GR_CREATE_MPC=>TT_ACTION
+      !ES_RESPONSE_CONTEXT type /IWBEP/IF_MGW_APPL_SRV_RUNTIME=>TY_S_MGW_RESPONSE_CONTEXT
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods ACTIONS_UPDATE_ENTITY
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITY_U optional
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+      !IO_DATA_PROVIDER type ref to /IWBEP/IF_MGW_ENTRY_PROVIDER optional
+    exporting
+      !ER_ENTITY type ZCL_ZEDM_VIM_GR_CREATE_MPC=>TS_ACTION
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods BALANCECHECKSET_CREATE_ENTITY
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITY_C optional
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+      !IO_DATA_PROVIDER type ref to /IWBEP/IF_MGW_ENTRY_PROVIDER optional
+    exporting
+      !ER_ENTITY type ZCL_ZEDM_VIM_GR_CREATE_MPC=>TS_BALANCECHECK
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods BALANCECHECKSET_DELETE_ENTITY
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITY_D optional
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods BALANCECHECKSET_GET_ENTITY
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IO_REQUEST_OBJECT type ref to /IWBEP/IF_MGW_REQ_ENTITY optional
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITY optional
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+    exporting
+      !ER_ENTITY type ZCL_ZEDM_VIM_GR_CREATE_MPC=>TS_BALANCECHECK
+      !ES_RESPONSE_CONTEXT type /IWBEP/IF_MGW_APPL_SRV_RUNTIME=>TY_S_MGW_RESPONSE_ENTITY_CNTXT
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods BALANCECHECKSET_GET_ENTITYSET
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_FILTER_SELECT_OPTIONS type /IWBEP/T_MGW_SELECT_OPTION
+      !IS_PAGING type /IWBEP/S_MGW_PAGING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+      !IT_ORDER type /IWBEP/T_MGW_SORTING_ORDER
+      !IV_FILTER_STRING type STRING
+      !IV_SEARCH_STRING type STRING
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITYSET optional
+    exporting
+      !ET_ENTITYSET type ZCL_ZEDM_VIM_GR_CREATE_MPC=>TT_BALANCECHECK
+      !ES_RESPONSE_CONTEXT type /IWBEP/IF_MGW_APPL_SRV_RUNTIME=>TY_S_MGW_RESPONSE_CONTEXT
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods BALANCECHECKSET_UPDATE_ENTITY
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITY_U optional
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+      !IO_DATA_PROVIDER type ref to /IWBEP/IF_MGW_ENTRY_PROVIDER optional
+    exporting
+      !ER_ENTITY type ZCL_ZEDM_VIM_GR_CREATE_MPC=>TS_BALANCECHECK
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods GOODSRECEIPTSSET_CREATE_ENTITY
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITY_C optional
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+      !IO_DATA_PROVIDER type ref to /IWBEP/IF_MGW_ENTRY_PROVIDER optional
+    exporting
+      !ER_ENTITY type ZCL_ZEDM_VIM_GR_CREATE_MPC=>TS_GOODSRECEIPT
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods GOODSRECEIPTSSET_DELETE_ENTITY
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITY_D optional
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods GOODSRECEIPTSSET_GET_ENTITY
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IO_REQUEST_OBJECT type ref to /IWBEP/IF_MGW_REQ_ENTITY optional
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITY optional
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+    exporting
+      !ER_ENTITY type ZCL_ZEDM_VIM_GR_CREATE_MPC=>TS_GOODSRECEIPT
+      !ES_RESPONSE_CONTEXT type /IWBEP/IF_MGW_APPL_SRV_RUNTIME=>TY_S_MGW_RESPONSE_ENTITY_CNTXT
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods GOODSRECEIPTSSET_GET_ENTITYSET
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_FILTER_SELECT_OPTIONS type /IWBEP/T_MGW_SELECT_OPTION
+      !IS_PAGING type /IWBEP/S_MGW_PAGING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+      !IT_ORDER type /IWBEP/T_MGW_SORTING_ORDER
+      !IV_FILTER_STRING type STRING
+      !IV_SEARCH_STRING type STRING
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITYSET optional
+    exporting
+      !ET_ENTITYSET type ZCL_ZEDM_VIM_GR_CREATE_MPC=>TT_GOODSRECEIPT
+      !ES_RESPONSE_CONTEXT type /IWBEP/IF_MGW_APPL_SRV_RUNTIME=>TY_S_MGW_RESPONSE_CONTEXT
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods GOODSRECEIPTSSET_UPDATE_ENTITY
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITY_U optional
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+      !IO_DATA_PROVIDER type ref to /IWBEP/IF_MGW_ENTRY_PROVIDER optional
+    exporting
+      !ER_ENTITY type ZCL_ZEDM_VIM_GR_CREATE_MPC=>TS_GOODSRECEIPT
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods LOCKINGACTIONS_CREATE_ENTITY
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITY_C optional
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+      !IO_DATA_PROVIDER type ref to /IWBEP/IF_MGW_ENTRY_PROVIDER optional
+    exporting
+      !ER_ENTITY type ZCL_ZEDM_VIM_GR_CREATE_MPC=>TS_LOCKINGACTION
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods LOCKINGACTIONS_DELETE_ENTITY
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITY_D optional
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods LOCKINGACTIONS_GET_ENTITY
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IO_REQUEST_OBJECT type ref to /IWBEP/IF_MGW_REQ_ENTITY optional
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITY optional
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+    exporting
+      !ER_ENTITY type ZCL_ZEDM_VIM_GR_CREATE_MPC=>TS_LOCKINGACTION
+      !ES_RESPONSE_CONTEXT type /IWBEP/IF_MGW_APPL_SRV_RUNTIME=>TY_S_MGW_RESPONSE_ENTITY_CNTXT
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods LOCKINGACTIONS_GET_ENTITYSET
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_FILTER_SELECT_OPTIONS type /IWBEP/T_MGW_SELECT_OPTION
+      !IS_PAGING type /IWBEP/S_MGW_PAGING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+      !IT_ORDER type /IWBEP/T_MGW_SORTING_ORDER
+      !IV_FILTER_STRING type STRING
+      !IV_SEARCH_STRING type STRING
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITYSET optional
+    exporting
+      !ET_ENTITYSET type ZCL_ZEDM_VIM_GR_CREATE_MPC=>TT_LOCKINGACTION
+      !ES_RESPONSE_CONTEXT type /IWBEP/IF_MGW_APPL_SRV_RUNTIME=>TY_S_MGW_RESPONSE_CONTEXT
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods LOCKINGACTIONS_UPDATE_ENTITY
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITY_U optional
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+      !IO_DATA_PROVIDER type ref to /IWBEP/IF_MGW_ENTRY_PROVIDER optional
+    exporting
+      !ER_ENTITY type ZCL_ZEDM_VIM_GR_CREATE_MPC=>TS_LOCKINGACTION
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods PURCHASEORDERITE_CREATE_ENTITY
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITY_C optional
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+      !IO_DATA_PROVIDER type ref to /IWBEP/IF_MGW_ENTRY_PROVIDER optional
+    exporting
+      !ER_ENTITY type ZCL_ZEDM_VIM_GR_CREATE_MPC=>TS_PURCHASEORDERITEM
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods PURCHASEORDERITE_DELETE_ENTITY
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITY_D optional
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods PURCHASEORDERITE_GET_ENTITY
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IO_REQUEST_OBJECT type ref to /IWBEP/IF_MGW_REQ_ENTITY optional
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITY optional
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+    exporting
+      !ER_ENTITY type ZCL_ZEDM_VIM_GR_CREATE_MPC=>TS_PURCHASEORDERITEM
+      !ES_RESPONSE_CONTEXT type /IWBEP/IF_MGW_APPL_SRV_RUNTIME=>TY_S_MGW_RESPONSE_ENTITY_CNTXT
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods PURCHASEORDERITE_GET_ENTITYSET
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_FILTER_SELECT_OPTIONS type /IWBEP/T_MGW_SELECT_OPTION
+      !IS_PAGING type /IWBEP/S_MGW_PAGING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+      !IT_ORDER type /IWBEP/T_MGW_SORTING_ORDER
+      !IV_FILTER_STRING type STRING
+      !IV_SEARCH_STRING type STRING
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITYSET optional
+    exporting
+      !ET_ENTITYSET type ZCL_ZEDM_VIM_GR_CREATE_MPC=>TT_PURCHASEORDERITEM
+      !ES_RESPONSE_CONTEXT type /IWBEP/IF_MGW_APPL_SRV_RUNTIME=>TY_S_MGW_RESPONSE_CONTEXT
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods PURCHASEORDERITE_UPDATE_ENTITY
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITY_U optional
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+      !IO_DATA_PROVIDER type ref to /IWBEP/IF_MGW_ENTRY_PROVIDER optional
+    exporting
+      !ER_ENTITY type ZCL_ZEDM_VIM_GR_CREATE_MPC=>TS_PURCHASEORDERITEM
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods REASONCODES_CREATE_ENTITY
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITY_C optional
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+      !IO_DATA_PROVIDER type ref to /IWBEP/IF_MGW_ENTRY_PROVIDER optional
+    exporting
+      !ER_ENTITY type ZCL_ZEDM_VIM_GR_CREATE_MPC=>TS_REASONCODE
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+  methods REASONCODES_DELETE_ENTITY
+    importing
+      !IV_ENTITY_NAME type STRING
+      !IV_ENTITY_SET_NAME type STRING
+      !IV_SOURCE_NAME type STRING
+      !IT_KEY_TAB type /IWBEP/T_MGW_NAME_VALUE_PAIR
+      !IO_TECH_REQUEST_CONTEXT type ref to /IWBEP/IF_MGW_REQ_ENTITY_D optional
+      !IT_NAVIGATION_PATH type /IWBEP/T_MGW_NAVIGATION_PATH
+    raising
+      /IWBEP/CX_MGW_BUSI_EXCEPTION
+      /IWBEP/CX_MGW_TECH_EXCEPTION .
+
+  methods CHECK_SUBSCRIPTION_AUTHORITY
+    redefinition .
+private section.
+ENDCLASS.
+
+
+
+CLASS ZCL_ZEDM_VIM_GR_CREATE_DPC IMPLEMENTATION.
+
+
+  method /IWBEP/IF_MGW_APPL_SRV_RUNTIME~CREATE_ENTITY.
+*&----------------------------------------------------------------------------------------------*
+*&  Include           /IWBEP/DPC_TEMP_CRT_ENTITY_BASE
+*&* This class has been generated on 19.01.2022 15:46:55 in client 100
+*&*
+*&*       WARNING--> NEVER MODIFY THIS CLASS <--WARNING
+*&*   If you want to change the DPC implementation, use the
+*&*   generated methods inside the DPC provider subclass - ZCL_ZEDM_VIM_GR_CREATE_DPC_EXT
+*&-----------------------------------------------------------------------------------------------*
+
+ DATA lockingactions_create_entity TYPE zcl_zedm_vim_gr_create_mpc=>ts_lockingaction.
+ DATA reasoncodes_create_entity TYPE zcl_zedm_vim_gr_create_mpc=>ts_reasoncode.
+ DATA vimimageset_create_entity TYPE zcl_zedm_vim_gr_create_mpc=>ts_vimimage.
+ DATA actions_create_entity TYPE zcl_zedm_vim_gr_create_mpc=>ts_action.
+ DATA balancecheckset_create_entity TYPE zcl_zedm_vim_gr_create_mpc=>ts_balancecheck.
+ DATA vimdocshset_create_entity TYPE zcl_zedm_vim_gr_create_mpc=>ts_vimdocsh.
+ DATA vimdocids_create_entity TYPE zcl_zedm_vim_gr_create_mpc=>ts_vimdocid.
+ DATA userdetails_create_entity TYPE zcl_zedm_vim_gr_create_mpc=>ts_userdetail.
+ DATA purchaseorderite_create_entity TYPE zcl_zedm_vim_gr_create_mpc=>ts_purchaseorderitem.
+ DATA vimdocheaders_create_entity TYPE zcl_zedm_vim_gr_create_mpc=>ts_vimdocheader.
+ DATA goodsreceiptsset_create_entity TYPE zcl_zedm_vim_gr_create_mpc=>ts_goodsreceipt.
+ DATA lv_entityset_name TYPE string.
+
+lv_entityset_name = io_tech_request_context->get_entity_set_name( ).
+
+CASE lv_entityset_name.
+*-------------------------------------------------------------------------*
+*             EntitySet -  LockingActions
+*-------------------------------------------------------------------------*
+     WHEN 'LockingActions'.
+*     Call the entity set generated method
+    lockingactions_create_entity(
+         EXPORTING iv_entity_name     = iv_entity_name
+                   iv_entity_set_name = iv_entity_set_name
+                   iv_source_name     = iv_source_name
+                   io_data_provider   = io_data_provider
+                   it_key_tab         = it_key_tab
+                   it_navigation_path = it_navigation_path
+                   io_tech_request_context = io_tech_request_context
+       	 IMPORTING er_entity          = lockingactions_create_entity
+    ).
+*     Send specific entity data to the caller interfaces
+    copy_data_to_ref(
+      EXPORTING
+        is_data = lockingactions_create_entity
+      CHANGING
+        cr_data = er_entity
+   ).
+
+*-------------------------------------------------------------------------*
+*             EntitySet -  ReasonCodes
+*-------------------------------------------------------------------------*
+     WHEN 'ReasonCodes'.
+*     Call the entity set generated method
+    reasoncodes_create_entity(
+         EXPORTING iv_entity_name     = iv_entity_name
+                   iv_entity_set_name = iv_entity_set_name
+                   iv_source_name     = iv_source_name
+                   io_data_provider   = io_data_provider
+                   it_key_tab         = it_key_tab
+                   it_navigation_path = it_navigation_path
+                   io_tech_request_context = io_tech_request_context
+       	 IMPORTING er_entity          = reasoncodes_create_entity
+    ).
+*     Send specific entity data to the caller interfaces
+    copy_data_to_ref(
+      EXPORTING
+        is_data = reasoncodes_create_entity
+      CHANGING
+        cr_data = er_entity
+   ).
+
+*-------------------------------------------------------------------------*
+*             EntitySet -  VimImages
+*-------------------------------------------------------------------------*
+     WHEN 'VimImages'.
+*     Call the entity set generated method
+    vimimageset_create_entity(
+         EXPORTING iv_entity_name     = iv_entity_name
+                   iv_entity_set_name = iv_entity_set_name
+                   iv_source_name     = iv_source_name
+                   io_data_provider   = io_data_provider
+                   it_key_tab         = it_key_tab
+                   it_navigation_path = it_navigation_path
+                   io_tech_request_context = io_tech_request_context
+       	 IMPORTING er_entity          = vimimageset_create_entity
+    ).
+*     Send specific entity data to the caller interfaces
+    copy_data_to_ref(
+      EXPORTING
+        is_data = vimimageset_create_entity
+      CHANGING
+        cr_data = er_entity
+   ).
+
+*-------------------------------------------------------------------------*
+*             EntitySet -  Actions
+*-------------------------------------------------------------------------*
+     WHEN 'Actions'.
+*     Call the entity set generated method
+    actions_create_entity(
+         EXPORTING iv_entity_name     = iv_entity_name
+                   iv_entity_set_name = iv_entity_set_name
+                   iv_source_name     = iv_source_name
+                   io_data_provider   = io_data_provider
+                   it_key_tab         = it_key_tab
+                   it_navigation_path = it_navigation_path
+                   io_tech_request_context = io_tech_request_context
+       	 IMPORTING er_entity          = actions_create_entity
+    ).
+*     Send specific entity data to the caller interfaces
+    copy_data_to_ref(
+      EXPORTING
+        is_data = actions_create_entity
+      CHANGING
+        cr_data = er_entity
+   ).
+
+*-------------------------------------------------------------------------*
+*             EntitySet -  BalanceCheckSet
+*-------------------------------------------------------------------------*
+     WHEN 'BalanceCheckSet'.
+*     Call the entity set generated method
+    balancecheckset_create_entity(
+         EXPORTING iv_entity_name     = iv_entity_name
+                   iv_entity_set_name = iv_entity_set_name
+                   iv_source_name     = iv_source_name
+                   io_data_provider   = io_data_provider
+                   it_key_tab         = it_key_tab
+                   it_navigation_path = it_navigation_path
+                   io_tech_request_context = io_tech_request_context
+       	 IMPORTING er_entity          = balancecheckset_create_entity
+    ).
+*     Send specific entity data to the caller interfaces
+    copy_data_to_ref(
+      EXPORTING
+        is_data = balancecheckset_create_entity
+      CHANGING
+        cr_data = er_entity
+   ).
+
+*-------------------------------------------------------------------------*
+*             EntitySet -  VimDocSHSet
+*-------------------------------------------------------------------------*
+     WHEN 'VimDocSHSet'.
+*     Call the entity set generated method
+    vimdocshset_create_entity(
+         EXPORTING iv_entity_name     = iv_entity_name
+                   iv_entity_set_name = iv_entity_set_name
+                   iv_source_name     = iv_source_name
+                   io_data_provider   = io_data_provider
+                   it_key_tab         = it_key_tab
+                   it_navigation_path = it_navigation_path
+                   io_tech_request_context = io_tech_request_context
+       	 IMPORTING er_entity          = vimdocshset_create_entity
+    ).
+*     Send specific entity data to the caller interfaces
+    copy_data_to_ref(
+      EXPORTING
+        is_data = vimdocshset_create_entity
+      CHANGING
+        cr_data = er_entity
+   ).
+
+*-------------------------------------------------------------------------*
+*             EntitySet -  VimDocIds
+*-------------------------------------------------------------------------*
+     WHEN 'VimDocIds'.
+*     Call the entity set generated method
+    vimdocids_create_entity(
+         EXPORTING iv_entity_name     = iv_entity_name
+                   iv_entity_set_name = iv_entity_set_name
+                   iv_source_name     = iv_source_name
+                   io_data_provider   = io_data_provider
+                   it_key_tab         = it_key_tab
+                   it_navigation_path = it_navigation_path
+                   io_tech_request_context = io_tech_request_context
+       	 IMPORTING er_entity          = vimdocids_create_entity
+    ).
+*     Send specific entity data to the caller interfaces
+    copy_data_to_ref(
+      EXPORTING
+        is_data = vimdocids_create_entity
+      CHANGING
+        cr_data = er_entity
+   ).
+
+*-------------------------------------------------------------------------*
+*             EntitySet -  UserDetails
+*-------------------------------------------------------------------------*
+     WHEN 'UserDetails'.
+*     Call the entity set generated method
+    userdetails_create_entity(
+         EXPORTING iv_entity_name     = iv_entity_name
+                   iv_entity_set_name = iv_entity_set_name
+                   iv_source_name     = iv_source_name
+                   io_data_provider   = io_data_provider
+                   it_key_tab         = it_key_tab
+                   it_navigation_path = it_navigation_path
+                   io_tech_request_context = io_tech_request_context
+       	 IMPORTING er_entity          = userdetails_create_entity
+    ).
+*     Send specific entity data to the caller interfaces
+    copy_data_to_ref(
+      EXPORTING
+        is_data = userdetails_create_entity
+      CHANGING
+        cr_data = er_entity
+   ).
+
+*-------------------------------------------------------------------------*
+*             EntitySet -  PurchaseOrderItems
+*-------------------------------------------------------------------------*
+     WHEN 'PurchaseOrderItems'.
+*     Call the entity set generated method
+    purchaseorderite_create_entity(
+         EXPORTING iv_entity_name     = iv_entity_name
+                   iv_entity_set_name = iv_entity_set_name
+                   iv_source_name     = iv_source_name
+                   io_data_provider   = io_data_provider
+                   it_key_tab         = it_key_tab
+                   it_navigation_path = it_navigation_path
+                   io_tech_request_context = io_tech_request_context
+       	 IMPORTING er_entity          = purchaseorderite_create_entity
+    ).
+*     Send specific entity data to the caller interfaces
+    copy_data_to_ref(
+      EXPORTING
+        is_data = purchaseorderite_create_entity
+      CHANGING
+        cr_data = er_entity
+   ).
+
+*-------------------------------------------------------------------------*
+*             EntitySet -  VimDocHeaders
+*-------------------------------------------------------------------------*
+     WHEN 'VimDocHeaders'.
+*     Call the entity set generated method
+    vimdocheaders_create_entity(
+         EXPORTING iv_entity_name     = iv_entity_name
+                   iv_entity_set_name = iv_entity_set_name
+                   iv_source_name     = iv_source_name
+                   io_data_provider   = io_data_provider
+                   it_key_tab         = it_key_tab
+                   it_navigation_path = it_navigation_path
+                   io_tech_request_context = io_tech_request_context
+       	 IMPORTING er_entity          = vimdocheaders_create_entity
+    ).
+*     Send specific entity data to the caller interfaces
+    copy_data_to_ref(
+      EXPORTING
+        is_data = vimdocheaders_create_entity
+      CHANGING
+        cr_data = er_entity
+   ).
+
+*-------------------------------------------------------------------------*
+*             EntitySet -  GoodsReceipts
+*-------------------------------------------------------------------------*
+     WHEN 'GoodsReceipts'.
+*     Call the entity set generated method
+    goodsreceiptsset_create_entity(
+         EXPORTING iv_entity_name     = iv_entity_name
+                   iv_entity_set_name = iv_entity_set_name
+                   iv_source_name     = iv_source_name
+                   io_data_provider   = io_data_provider
+                   it_key_tab         = it_key_tab
+                   it_navigation_path = it_navigation_path
+                   io_tech_request_context = io_tech_request_context
+       	 IMPORTING er_entity          = goodsreceiptsset_create_entity
+    ).
+*     Send specific entity data to the caller interfaces
+    copy_data_to_ref(
+      EXPORTING
+        is_data = goodsreceiptsset_create_entity
+      CHANGING
+        cr_data = er_entity
+   ).
+
+  when others.
+    super->/iwbep/if_mgw_appl_srv_runtime~create_entity(
+       EXPORTING
+         iv_entity_name = iv_entity_name
+         iv_entity_set_name = iv_entity_set_name
+         iv_source_name = iv_source_name
+         io_data_provider   = io_data_provider
+         it_key_tab = it_key_tab
+         it_navigation_path = it_navigation_path
+      IMPORTING
+        er_entity = er_entity
+  ).
+ENDCASE.
+  endmethod.
+
+
+  method /IWBEP/IF_MGW_APPL_SRV_RUNTIME~DELETE_ENTITY.
+*&----------------------------------------------------------------------------------------------*
+*&  Include           /IWBEP/DPC_TEMP_DEL_ENTITY_BASE
+*&* This class has been generated on 19.01.2022 15:46:55 in client 100
+*&*
+*&*       WARNING--> NEVER MODIFY THIS CLASS <--WARNING
+*&*   If you want to change the DPC implementation, use the
+*&*   generated methods inside the DPC provider subclass - ZCL_ZEDM_VIM_GR_CREATE_DPC_EXT
+*&-----------------------------------------------------------------------------------------------*
+
+ DATA lv_entityset_name TYPE string.
+
+lv_entityset_name = io_tech_request_context->get_entity_set_name( ).
+
+CASE lv_entityset_name.
+*-------------------------------------------------------------------------*
+*             EntitySet -  LockingActions
+*-------------------------------------------------------------------------*
+      when 'LockingActions'.
+*     Call the entity set generated method
+     lockingactions_delete_entity(
+          EXPORTING iv_entity_name     = iv_entity_name
+                    iv_entity_set_name = iv_entity_set_name
+                    iv_source_name     = iv_source_name
+                    it_key_tab         = it_key_tab
+                    it_navigation_path = it_navigation_path
+                    io_tech_request_context = io_tech_request_context
+     ).
+
+*-------------------------------------------------------------------------*
+*             EntitySet -  VimImages
+*-------------------------------------------------------------------------*
+      when 'VimImages'.
+*     Call the entity set generated method
+     vimimageset_delete_entity(
+          EXPORTING iv_entity_name     = iv_entity_name
+                    iv_entity_set_name = iv_entity_set_name
+                    iv_source_name     = iv_source_name
+                    it_key_tab         = it_key_tab
+                    it_navigation_path = it_navigation_path
+                    io_tech_request_context = io_tech_request_context
+     ).
+
+*-------------------------------------------------------------------------*
+*             EntitySet -  UserDetails
+*-------------------------------------------------------------------------*
+      when 'UserDetails'.
+*     Call the entity set generated method
+     userdetails_delete_entity(
+          EXPORTING iv_entity_name     = iv_entity_name
+                    iv_entity_set_name = iv_entity_set_name
+                    iv_source_name     = iv_source_name
+                    it_key_tab         = it_key_tab
+                    it_navigation_path = it_navigation_path
+                    io_tech_request_context = io_tech_request_context
+     ).
+
+*-------------------------------------------------------------------------*
+*             EntitySet -  GoodsReceipts
+*-------------------------------------------------------------------------*
+      when 'GoodsReceipts'.
+*     Call the entity set generated method
+     goodsreceiptsset_delete_entity(
+          EXPORTING iv_entity_name     = iv_entity_name
+                    iv_entity_set_name = iv_entity_set_name
+                    iv_source_name     = iv_source_name
+                    it_key_tab         = it_key_tab
+                    it_navigation_path = it_navigation_path
+                    io_tech_request_context = io_tech_request_context
+     ).
+
+*-------------------------------------------------------------------------*
+*             EntitySet -  PurchaseOrderItems
+*-------------------------------------------------------------------------*
+      when 'PurchaseOrderItems'.
+*     Call the entity set generated method
+     purchaseorderite_delete_entity(
+          EXPORTING iv_entity_name     = iv_entity_name
+                    iv_entity_set_name = iv_entity_set_name
+                    iv_source_name     = iv_source_name
+                    it_key_tab         = it_key_tab
+                    it_navigation_path = it_navigation_path
+                    io_tech_request_context = io_tech_request_context
+     ).
+
+*-------------------------------------------------------------------------*
+*             EntitySet -  VimDocIds
+*-------------------------------------------------------------------------*
+      when 'VimDocIds'.
+*     Call the entity set generated method
+     vimdocids_delete_entity(
+          EXPORTING iv_entity_name     = iv_entity_name
+                    iv_entity_set_name = iv_entity_set_name
+                    iv_source_name     = iv_source_name
+                    it_key_tab         = it_key_tab
+                    it_navigation_path = it_navigation_path
+                    io_tech_request_context = io_tech_request_context
+     ).
+
+*-------------------------------------------------------------------------*
+*             EntitySet -  VimDocHeaders
+*-------------------------------------------------------------------------*
+      when 'VimDocHeaders'.
+*     Call the entity set generated method
+     vimdocheaders_delete_entity(
+          EXPORTING iv_entity_name     = iv_entity_name
+                    iv_entity_set_name = iv_entity_set_name
+                    iv_source_name     = iv_source_name
+                    it_key_tab         = it_key_tab
+                    it_navigation_path = it_navigation_path
+                    io_tech_request_context = io_tech_request_context
+     ).
+
+*-------------------------------------------------------------------------*
+*             EntitySet -  ReasonCodes
+*-------------------------------------------------------------------------*
+      when 'ReasonCodes'.
+*     Call the entity set generated method
+     reasoncodes_delete_entity(
+          EXPORTING iv_entity_name     = iv_entity_name
+                    iv_entity_set_name = iv_entity_set_name
+                    iv_source_name     = iv_source_name
+                    it_key_tab         = it_key_tab
+                    it_navigation_path = it_navigation_path
+                    io_tech_request_context = io_tech_request_context
+     ).
+
+*-------------------------------------------------------------------------*
+*             EntitySet -  VimDocSHSet
+*-------------------------------------------------------------------------*
+      when 'VimDocSHSet'.
+*     Call the entity set generated method
+     vimdocshset_delete_entity(
+          EXPORTING iv_entity_name     = iv_entity_name
+                    iv_entity_set_name = iv_entity_set_name
+                    iv_source_name     = iv_source_name
+                    it_key_tab         = it_key_tab
+                    it_navigation_path = it_navigation_path
+                    io_tech_request_context = io_tech_request_context
+     ).
+
+*-------------------------------------------------------------------------*
+*             EntitySet -  Actions
+*-------------------------------------------------------------------------*
+      when 'Actions'.
+*     Call the entity set generated method
+     actions_delete_entity(
+          EXPORTING iv_entity_name     = iv_entity_name
+                    iv_entity_set_name = iv_entity_set_name
+                    iv_source_name     = iv_source_name
+                    it_key_tab         = it_key_tab
+                    it_navigation_path = it_navigation_path
+                    io_tech_request_context = io_tech_request_context
+     ).
+
+*-------------------------------------------------------------------------*
+*             EntitySet -  BalanceCheckSet
+*-------------------------------------------------------------------------*
+      when 'BalanceCheckSet'.
+*     Call the entity set generated method
+     balancecheckset_delete_entity(
+          EXPORTING iv_entity_name     = iv_entity_name
+                    iv_entity_set_name = iv_entity_set_name
+                    iv_source_name     = iv_source_name
+                    it_key_tab         = it_key_tab
+                    it_navigation_path = it_navigation_path
+                    io_tech_request_context = io_tech_request_context
+     ).
+
+   when others.
+     super->/iwbep/if_mgw_appl_srv_runtime~delete_entity(
+        EXPORTING
+          iv_entity_name = iv_entity_name
+          iv_entity_set_name = iv_entity_set_name
+          iv_source_name = iv_source_name
+          it_key_tab = it_key_tab
+          it_navigation_path = it_navigation_path
+ ).
+ ENDCASE.
+  endmethod.
+
+
+  method /IWBEP/IF_MGW_APPL_SRV_RUNTIME~GET_ENTITY.
+*&-----------------------------------------------------------------------------------------------*
+*&  Include           /IWBEP/DPC_TEMP_GETENTITY_BASE
+*&* This class has been generated  on 19.01.2022 15:46:55 in client 100
+*&*
+*&*       WARNING--> NEVER MODIFY THIS CLASS <--WARNING
+*&*   If you want to change the DPC implementation, use the
+*&*   generated methods inside the DPC provider subclass - ZCL_ZEDM_VIM_GR_CREATE_DPC_EXT
+*&-----------------------------------------------------------------------------------------------*
+
+ DATA lockingactions_get_entity TYPE zcl_zedm_vim_gr_create_mpc=>ts_lockingaction.
+ DATA vimdocheaders_get_entity TYPE zcl_zedm_vim_gr_create_mpc=>ts_vimdocheader.
+ DATA userdetails_get_entity TYPE zcl_zedm_vim_gr_create_mpc=>ts_userdetail.
+ DATA vimdocshset_get_entity TYPE zcl_zedm_vim_gr_create_mpc=>ts_vimdocsh.
+ DATA vimimageset_get_entity TYPE zcl_zedm_vim_gr_create_mpc=>ts_vimimage.
+ DATA purchaseorderite_get_entity TYPE zcl_zedm_vim_gr_create_mpc=>ts_purchaseorderitem.
+ DATA goodsreceiptsset_get_entity TYPE zcl_zedm_vim_gr_create_mpc=>ts_goodsreceipt.
+ DATA vimdocids_get_entity TYPE zcl_zedm_vim_gr_create_mpc=>ts_vimdocid.
+ DATA actions_get_entity TYPE zcl_zedm_vim_gr_create_mpc=>ts_action.
+ DATA balancecheckset_get_entity TYPE zcl_zedm_vim_gr_create_mpc=>ts_balancecheck.
+ DATA reasoncodes_get_entity TYPE zcl_zedm_vim_gr_create_mpc=>ts_reasoncode.
+ DATA lv_entityset_name TYPE string.
+ DATA lr_entity TYPE REF TO data.       "#EC NEEDED
+
+lv_entityset_name = io_tech_request_context->get_entity_set_name( ).
+
+CASE lv_entityset_name.
+*-------------------------------------------------------------------------*
+*             EntitySet -  LockingActions
+*-------------------------------------------------------------------------*
+      WHEN 'LockingActions'.
+*     Call the entity set generated method
+          lockingactions_get_entity(
+               EXPORTING iv_entity_name     = iv_entity_name
+                         iv_entity_set_name = iv_entity_set_name
+                         iv_source_name     = iv_source_name
+                         it_key_tab         = it_key_tab
+                         it_navigation_path = it_navigation_path
+                         io_tech_request_context = io_tech_request_context
+             	 IMPORTING er_entity          = lockingactions_get_entity
+                         es_response_context = es_response_context
+          ).
+
+        IF lockingactions_get_entity IS NOT INITIAL.
+*     Send specific entity data to the caller interface
+          copy_data_to_ref(
+            EXPORTING
+              is_data = lockingactions_get_entity
+            CHANGING
+              cr_data = er_entity
+          ).
+        ELSE.
+*         In case of initial values - unbind the entity reference
+          er_entity = lr_entity.
+        ENDIF.
+*-------------------------------------------------------------------------*
+*             EntitySet -  VimDocHeaders
+*-------------------------------------------------------------------------*
+      WHEN 'VimDocHeaders'.
+*     Call the entity set generated method
+          vimdocheaders_get_entity(
+               EXPORTING iv_entity_name     = iv_entity_name
+                         iv_entity_set_name = iv_entity_set_name
+                         iv_source_name     = iv_source_name
+                         it_key_tab         = it_key_tab
+                         it_navigation_path = it_navigation_path
+                         io_tech_request_context = io_tech_request_context
+             	 IMPORTING er_entity          = vimdocheaders_get_entity
+                         es_response_context = es_response_context
+          ).
+
+        IF vimdocheaders_get_entity IS NOT INITIAL.
+*     Send specific entity data to the caller interface
+          copy_data_to_ref(
+            EXPORTING
+              is_data = vimdocheaders_get_entity
+            CHANGING
+              cr_data = er_entity
+          ).
+        ELSE.
+*         In case of initial values - unbind the entity reference
+          er_entity = lr_entity.
+        ENDIF.
+*-------------------------------------------------------------------------*
+*             EntitySet -  UserDetails
+*-------------------------------------------------------------------------*
+      WHEN 'UserDetails'.
+*     Call the entity set generated method
+          userdetails_get_entity(
+               EXPORTING iv_entity_name     = iv_entity_name
+                         iv_entity_set_name = iv_entity_set_name
+                         iv_source_name     = iv_source_name
+                         it_key_tab         = it_key_tab
+                         it_navigation_path = it_navigation_path
+                         io_tech_request_context = io_tech_request_context
+             	 IMPORTING er_entity          = userdetails_get_entity
+                         es_response_context = es_response_context
+          ).
+
+        IF userdetails_get_entity IS NOT INITIAL.
+*     Send specific entity data to the caller interface
+          copy_data_to_ref(
+            EXPORTING
+              is_data = userdetails_get_entity
+            CHANGING
+              cr_data = er_entity
+          ).
+        ELSE.
+*         In case of initial values - unbind the entity reference
+          er_entity = lr_entity.
+        ENDIF.
+*-------------------------------------------------------------------------*
+*             EntitySet -  VimDocSHSet
+*-------------------------------------------------------------------------*
+      WHEN 'VimDocSHSet'.
+*     Call the entity set generated method
+          vimdocshset_get_entity(
+               EXPORTING iv_entity_name     = iv_entity_name
+                         iv_entity_set_name = iv_entity_set_name
+                         iv_source_name     = iv_source_name
+                         it_key_tab         = it_key_tab
+                         it_navigation_path = it_navigation_path
+                         io_tech_request_context = io_tech_request_context
+             	 IMPORTING er_entity          = vimdocshset_get_entity
+                         es_response_context = es_response_context
+          ).
+
+        IF vimdocshset_get_entity IS NOT INITIAL.
+*     Send specific entity data to the caller interface
+          copy_data_to_ref(
+            EXPORTING
+              is_data = vimdocshset_get_entity
+            CHANGING
+              cr_data = er_entity
+          ).
+        ELSE.
+*         In case of initial values - unbind the entity reference
+          er_entity = lr_entity.
+        ENDIF.
+*-------------------------------------------------------------------------*
+*             EntitySet -  VimImages
+*-------------------------------------------------------------------------*
+      WHEN 'VimImages'.
+*     Call the entity set generated method
+          vimimageset_get_entity(
+               EXPORTING iv_entity_name     = iv_entity_name
+                         iv_entity_set_name = iv_entity_set_name
+                         iv_source_name     = iv_source_name
+                         it_key_tab         = it_key_tab
+                         it_navigation_path = it_navigation_path
+                         io_tech_request_context = io_tech_request_context
+             	 IMPORTING er_entity          = vimimageset_get_entity
+                         es_response_context = es_response_context
+          ).
+
+        IF vimimageset_get_entity IS NOT INITIAL.
+*     Send specific entity data to the caller interface
+          copy_data_to_ref(
+            EXPORTING
+              is_data = vimimageset_get_entity
+            CHANGING
+              cr_data = er_entity
+          ).
+        ELSE.
+*         In case of initial values - unbind the entity reference
+          er_entity = lr_entity.
+        ENDIF.
+*-------------------------------------------------------------------------*
+*             EntitySet -  PurchaseOrderItems
+*-------------------------------------------------------------------------*
+      WHEN 'PurchaseOrderItems'.
+*     Call the entity set generated method
+          purchaseorderite_get_entity(
+               EXPORTING iv_entity_name     = iv_entity_name
+                         iv_entity_set_name = iv_entity_set_name
+                         iv_source_name     = iv_source_name
+                         it_key_tab         = it_key_tab
+                         it_navigation_path = it_navigation_path
+                         io_tech_request_context = io_tech_request_context
+             	 IMPORTING er_entity          = purchaseorderite_get_entity
+                         es_response_context = es_response_context
+          ).
+
+        IF purchaseorderite_get_entity IS NOT INITIAL.
+*     Send specific entity data to the caller interface
+          copy_data_to_ref(
+            EXPORTING
+              is_data = purchaseorderite_get_entity
+            CHANGING
+              cr_data = er_entity
+          ).
+        ELSE.
+*         In case of initial values - unbind the entity reference
+          er_entity = lr_entity.
+        ENDIF.
+*-------------------------------------------------------------------------*
+*             EntitySet -  GoodsReceipts
+*-------------------------------------------------------------------------*
+      WHEN 'GoodsReceipts'.
+*     Call the entity set generated method
+          goodsreceiptsset_get_entity(
+               EXPORTING iv_entity_name     = iv_entity_name
+                         iv_entity_set_name = iv_entity_set_name
+                         iv_source_name     = iv_source_name
+                         it_key_tab         = it_key_tab
+                         it_navigation_path = it_navigation_path
+                         io_tech_request_context = io_tech_request_context
+             	 IMPORTING er_entity          = goodsreceiptsset_get_entity
+                         es_response_context = es_response_context
+          ).
+
+        IF goodsreceiptsset_get_entity IS NOT INITIAL.
+*     Send specific entity data to the caller interface
+          copy_data_to_ref(
+            EXPORTING
+              is_data = goodsreceiptsset_get_entity
+            CHANGING
+              cr_data = er_entity
+          ).
+        ELSE.
+*         In case of initial values - unbind the entity reference
+          er_entity = lr_entity.
+        ENDIF.
+*-------------------------------------------------------------------------*
+*             EntitySet -  VimDocIds
+*-------------------------------------------------------------------------*
+      WHEN 'VimDocIds'.
+*     Call the entity set generated method
+          vimdocids_get_entity(
+               EXPORTING iv_entity_name     = iv_entity_name
+                         iv_entity_set_name = iv_entity_set_name
+                         iv_source_name     = iv_source_name
+                         it_key_tab         = it_key_tab
+                         it_navigation_path = it_navigation_path
+                         io_tech_request_context = io_tech_request_context
+             	 IMPORTING er_entity          = vimdocids_get_entity
+                         es_response_context = es_response_context
+          ).
+
+        IF vimdocids_get_entity IS NOT INITIAL.
+*     Send specific entity data to the caller interface
+          copy_data_to_ref(
+            EXPORTING
+              is_data = vimdocids_get_entity
+            CHANGING
+              cr_data = er_entity
+          ).
+        ELSE.
+*         In case of initial values - unbind the entity reference
+          er_entity = lr_entity.
+        ENDIF.
+*-------------------------------------------------------------------------*
+*             EntitySet -  Actions
+*-------------------------------------------------------------------------*
+      WHEN 'Actions'.
+*     Call the entity set generated method
+          actions_get_entity(
+               EXPORTING iv_entity_name     = iv_entity_name
+                         iv_entity_set_name = iv_entity_set_name
+                         iv_source_name     = iv_source_name
+                         it_key_tab         = it_key_tab
+                         it_navigation_path = it_navigation_path
+                         io_tech_request_context = io_tech_request_context
+             	 IMPORTING er_entity          = actions_get_entity
+                         es_response_context = es_response_context
+          ).
+
+        IF actions_get_entity IS NOT INITIAL.
+*     Send specific entity data to the caller interface
+          copy_data_to_ref(
+            EXPORTING
+              is_data = actions_get_entity
+            CHANGING
+              cr_data = er_entity
+          ).
+        ELSE.
+*         In case of initial values - unbind the entity reference
+          er_entity = lr_entity.
+        ENDIF.
+*-------------------------------------------------------------------------*
+*             EntitySet -  BalanceCheckSet
+*-------------------------------------------------------------------------*
+      WHEN 'BalanceCheckSet'.
+*     Call the entity set generated method
+          balancecheckset_get_entity(
+               EXPORTING iv_entity_name     = iv_entity_name
+                         iv_entity_set_name = iv_entity_set_name
+                         iv_source_name     = iv_source_name
+                         it_key_tab         = it_key_tab
+                         it_navigation_path = it_navigation_path
+                         io_tech_request_context = io_tech_request_context
+             	 IMPORTING er_entity          = balancecheckset_get_entity
+                         es_response_context = es_response_context
+          ).
+
+        IF balancecheckset_get_entity IS NOT INITIAL.
+*     Send specific entity data to the caller interface
+          copy_data_to_ref(
+            EXPORTING
+              is_data = balancecheckset_get_entity
+            CHANGING
+              cr_data = er_entity
+          ).
+        ELSE.
+*         In case of initial values - unbind the entity reference
+          er_entity = lr_entity.
+        ENDIF.
+*-------------------------------------------------------------------------*
+*             EntitySet -  ReasonCodes
+*-------------------------------------------------------------------------*
+      WHEN 'ReasonCodes'.
+*     Call the entity set generated method
+          reasoncodes_get_entity(
+               EXPORTING iv_entity_name     = iv_entity_name
+                         iv_entity_set_name = iv_entity_set_name
+                         iv_source_name     = iv_source_name
+                         it_key_tab         = it_key_tab
+                         it_navigation_path = it_navigation_path
+                         io_tech_request_context = io_tech_request_context
+             	 IMPORTING er_entity          = reasoncodes_get_entity
+                         es_response_context = es_response_context
+          ).
+
+        IF reasoncodes_get_entity IS NOT INITIAL.
+*     Send specific entity data to the caller interface
+          copy_data_to_ref(
+            EXPORTING
+              is_data = reasoncodes_get_entity
+            CHANGING
+              cr_data = er_entity
+          ).
+        ELSE.
+*         In case of initial values - unbind the entity reference
+          er_entity = lr_entity.
+        ENDIF.
+
+      WHEN OTHERS.
+        super->/iwbep/if_mgw_appl_srv_runtime~get_entity(
+           EXPORTING
+             iv_entity_name = iv_entity_name
+             iv_entity_set_name = iv_entity_set_name
+             iv_source_name = iv_source_name
+             it_key_tab = it_key_tab
+             it_navigation_path = it_navigation_path
+          IMPORTING
+            er_entity = er_entity
+    ).
+ ENDCASE.
+  endmethod.
+
+
+  method /IWBEP/IF_MGW_APPL_SRV_RUNTIME~GET_ENTITYSET.
+*&----------------------------------------------------------------------------------------------*
+*&  Include           /IWBEP/DPC_TMP_ENTITYSET_BASE
+*&* This class has been generated on 19.01.2022 15:46:55 in client 100
+*&*
+*&*       WARNING--> NEVER MODIFY THIS CLASS <--WARNING
+*&*   If you want to change the DPC implementation, use the
+*&*   generated methods inside the DPC provider subclass - ZCL_ZEDM_VIM_GR_CREATE_DPC_EXT
+*&-----------------------------------------------------------------------------------------------*
+ DATA userdetails_get_entityset TYPE zcl_zedm_vim_gr_create_mpc=>tt_userdetail.
+ DATA purchaseorderite_get_entityset TYPE zcl_zedm_vim_gr_create_mpc=>tt_purchaseorderitem.
+ DATA actions_get_entityset TYPE zcl_zedm_vim_gr_create_mpc=>tt_action.
+ DATA balancecheckset_get_entityset TYPE zcl_zedm_vim_gr_create_mpc=>tt_balancecheck.
+ DATA lockingactions_get_entityset TYPE zcl_zedm_vim_gr_create_mpc=>tt_lockingaction.
+ DATA vimdocshset_get_entityset TYPE zcl_zedm_vim_gr_create_mpc=>tt_vimdocsh.
+ DATA vimdocheaders_get_entityset TYPE zcl_zedm_vim_gr_create_mpc=>tt_vimdocheader.
+ DATA vimimageset_get_entityset TYPE zcl_zedm_vim_gr_create_mpc=>tt_vimimage.
+ DATA goodsreceiptsset_get_entityset TYPE zcl_zedm_vim_gr_create_mpc=>tt_goodsreceipt.
+ DATA vimdocids_get_entityset TYPE zcl_zedm_vim_gr_create_mpc=>tt_vimdocid.
+ DATA reasoncodes_get_entityset TYPE zcl_zedm_vim_gr_create_mpc=>tt_reasoncode.
+ DATA lv_entityset_name TYPE string.
+
+lv_entityset_name = io_tech_request_context->get_entity_set_name( ).
+
+CASE lv_entityset_name.
+*-------------------------------------------------------------------------*
+*             EntitySet -  UserDetails
+*-------------------------------------------------------------------------*
+   WHEN 'UserDetails'.
+*     Call the entity set generated method
+      userdetails_get_entityset(
+        EXPORTING
+         iv_entity_name = iv_entity_name
+         iv_entity_set_name = iv_entity_set_name
+         iv_source_name = iv_source_name
+         it_filter_select_options = it_filter_select_options
+         it_order = it_order
+         is_paging = is_paging
+         it_navigation_path = it_navigation_path
+         it_key_tab = it_key_tab
+         iv_filter_string = iv_filter_string
+         iv_search_string = iv_search_string
+         io_tech_request_context = io_tech_request_context
+       IMPORTING
+         et_entityset = userdetails_get_entityset
+         es_response_context = es_response_context
+       ).
+*     Send specific entity data to the caller interface
+      copy_data_to_ref(
+        EXPORTING
+          is_data = userdetails_get_entityset
+        CHANGING
+          cr_data = er_entityset
+      ).
+
+*-------------------------------------------------------------------------*
+*             EntitySet -  PurchaseOrderItems
+*-------------------------------------------------------------------------*
+   WHEN 'PurchaseOrderItems'.
+*     Call the entity set generated method
+      purchaseorderite_get_entityset(
+        EXPORTING
+         iv_entity_name = iv_entity_name
+         iv_entity_set_name = iv_entity_set_name
+         iv_source_name = iv_source_name
+         it_filter_select_options = it_filter_select_options
+         it_order = it_order
+         is_paging = is_paging
+         it_navigation_path = it_navigation_path
+         it_key_tab = it_key_tab
+         iv_filter_string = iv_filter_string
+         iv_search_string = iv_search_string
+         io_tech_request_context = io_tech_request_context
+       IMPORTING
+         et_entityset = purchaseorderite_get_entityset
+         es_response_context = es_response_context
+       ).
+*     Send specific entity data to the caller interface
+      copy_data_to_ref(
+        EXPORTING
+          is_data = purchaseorderite_get_entityset
+        CHANGING
+          cr_data = er_entityset
+      ).
+
+*-------------------------------------------------------------------------*
+*             EntitySet -  Actions
+*-------------------------------------------------------------------------*
+   WHEN 'Actions'.
+*     Call the entity set generated method
+      actions_get_entityset(
+        EXPORTING
+         iv_entity_name = iv_entity_name
+         iv_entity_set_name = iv_entity_set_name
+         iv_source_name = iv_source_name
+         it_filter_select_options = it_filter_select_options
+         it_order = it_order
+         is_paging = is_paging
+         it_navigation_path = it_navigation_path
+         it_key_tab = it_key_tab
+         iv_filter_string = iv_filter_string
+         iv_search_string = iv_search_string
+         io_tech_request_context = io_tech_request_context
+       IMPORTING
+         et_entityset = actions_get_entityset
+         es_response_context = es_response_context
+       ).
+*     Send specific entity data to the caller interface
+      copy_data_to_ref(
+        EXPORTING
+          is_data = actions_get_entityset
+        CHANGING
+          cr_data = er_entityset
+      ).
+
+*-------------------------------------------------------------------------*
+*             EntitySet -  BalanceCheckSet
+*-------------------------------------------------------------------------*
+   WHEN 'BalanceCheckSet'.
+*     Call the entity set generated method
+      balancecheckset_get_entityset(
+        EXPORTING
+         iv_entity_name = iv_entity_name
+         iv_entity_set_name = iv_entity_set_name
+         iv_source_name = iv_source_name
+         it_filter_select_options = it_filter_select_options
+         it_order = it_order
+         is_paging = is_paging
+         it_navigation_path = it_navigation_path
+         it_key_tab = it_key_tab
+         iv_filter_string = iv_filter_string
+         iv_search_string = iv_search_string
+         io_tech_request_context = io_tech_request_context
+       IMPORTING
+         et_entityset = balancecheckset_get_entityset
+         es_response_context = es_response_context
+       ).
+*     Send specific entity data to the caller interface
+      copy_data_to_ref(
+        EXPORTING
+          is_data = balancecheckset_get_entityset
+        CHANGING
+          cr_data = er_entityset
+      ).
+
+*-------------------------------------------------------------------------*
+*             EntitySet -  LockingActions
+*-------------------------------------------------------------------------*
+   WHEN 'LockingActions'.
+*     Call the entity set generated method
+      lockingactions_get_entityset(
+        EXPORTING
+         iv_entity_name = iv_entity_name
+         iv_entity_set_name = iv_entity_set_name
+         iv_source_name = iv_source_name
+         it_filter_select_options = it_filter_select_options
+         it_order = it_order
+         is_paging = is_paging
+         it_navigation_path = it_navigation_path
+         it_key_tab = it_key_tab
+         iv_filter_string = iv_filter_string
+         iv_search_string = iv_search_string
+         io_tech_request_context = io_tech_request_context
+       IMPORTING
+         et_entityset = lockingactions_get_entityset
+         es_response_context = es_response_context
+       ).
+*     Send specific entity data to the caller interface
+      copy_data_to_ref(
+        EXPORTING
+          is_data = lockingactions_get_entityset
+        CHANGING
+          cr_data = er_entityset
+      ).
+
+*-------------------------------------------------------------------------*
+*             EntitySet -  VimDocSHSet
+*-------------------------------------------------------------------------*
+   WHEN 'VimDocSHSet'.
+*     Call the entity set generated method
+      vimdocshset_get_entityset(
+        EXPORTING
+         iv_entity_name = iv_entity_name
+         iv_entity_set_name = iv_entity_set_name
+         iv_source_name = iv_source_name
+         it_filter_select_options = it_filter_select_options
+         it_order = it_order
+         is_paging = is_paging
+         it_navigation_path = it_navigation_path
+         it_key_tab = it_key_tab
+         iv_filter_string = iv_filter_string
+         iv_search_string = iv_search_string
+         io_tech_request_context = io_tech_request_context
+       IMPORTING
+         et_entityset = vimdocshset_get_entityset
+         es_response_context = es_response_context
+       ).
+*     Send specific entity data to the caller interface
+      copy_data_to_ref(
+        EXPORTING
+          is_data = vimdocshset_get_entityset
+        CHANGING
+          cr_data = er_entityset
+      ).
+
+*-------------------------------------------------------------------------*
+*             EntitySet -  VimDocHeaders
+*-------------------------------------------------------------------------*
+   WHEN 'VimDocHeaders'.
+*     Call the entity set generated method
+      vimdocheaders_get_entityset(
+        EXPORTING
+         iv_entity_name = iv_entity_name
+         iv_entity_set_name = iv_entity_set_name
+         iv_source_name = iv_source_name
+         it_filter_select_options = it_filter_select_options
+         it_order = it_order
+         is_paging = is_paging
+         it_navigation_path = it_navigation_path
+         it_key_tab = it_key_tab
+         iv_filter_string = iv_filter_string
+         iv_search_string = iv_search_string
+         io_tech_request_context = io_tech_request_context
+       IMPORTING
+         et_entityset = vimdocheaders_get_entityset
+         es_response_context = es_response_context
+       ).
+*     Send specific entity data to the caller interface
+      copy_data_to_ref(
+        EXPORTING
+          is_data = vimdocheaders_get_entityset
+        CHANGING
+          cr_data = er_entityset
+      ).
+
+*-------------------------------------------------------------------------*
+*             EntitySet -  VimImages
+*-------------------------------------------------------------------------*
+   WHEN 'VimImages'.
+*     Call the entity set generated method
+      vimimageset_get_entityset(
+        EXPORTING
+         iv_entity_name = iv_entity_name
+         iv_entity_set_name = iv_entity_set_name
+         iv_source_name = iv_source_name
+         it_filter_select_options = it_filter_select_options
+         it_order = it_order
+         is_paging = is_paging
+         it_navigation_path = it_navigation_path
+         it_key_tab = it_key_tab
+         iv_filter_string = iv_filter_string
+         iv_search_string = iv_search_string
+         io_tech_request_context = io_tech_request_context
+       IMPORTING
+         et_entityset = vimimageset_get_entityset
+         es_response_context = es_response_context
+       ).
+*     Send specific entity data to the caller interface
+      copy_data_to_ref(
+        EXPORTING
+          is_data = vimimageset_get_entityset
+        CHANGING
+          cr_data = er_entityset
+      ).
+
+*-------------------------------------------------------------------------*
+*             EntitySet -  GoodsReceipts
+*-------------------------------------------------------------------------*
+   WHEN 'GoodsReceipts'.
+*     Call the entity set generated method
+      goodsreceiptsset_get_entityset(
+        EXPORTING
+         iv_entity_name = iv_entity_name
+         iv_entity_set_name = iv_entity_set_name
+         iv_source_name = iv_source_name
+         it_filter_select_options = it_filter_select_options
+         it_order = it_order
+         is_paging = is_paging
+         it_navigation_path = it_navigation_path
+         it_key_tab = it_key_tab
+         iv_filter_string = iv_filter_string
+         iv_search_string = iv_search_string
+         io_tech_request_context = io_tech_request_context
+       IMPORTING
+         et_entityset = goodsreceiptsset_get_entityset
+         es_response_context = es_response_context
+       ).
+*     Send specific entity data to the caller interface
+      copy_data_to_ref(
+        EXPORTING
+          is_data = goodsreceiptsset_get_entityset
+        CHANGING
+          cr_data = er_entityset
+      ).
+
+*-------------------------------------------------------------------------*
+*             EntitySet -  VimDocIds
+*-------------------------------------------------------------------------*
+   WHEN 'VimDocIds'.
+*     Call the entity set generated method
+      vimdocids_get_entityset(
+        EXPORTING
+         iv_entity_name = iv_entity_name
+         iv_entity_set_name = iv_entity_set_name
+         iv_source_name = iv_source_name
+         it_filter_select_options = it_filter_select_options
+         it_order = it_order
+         is_paging = is_paging
+         it_navigation_path = it_navigation_path
+         it_key_tab = it_key_tab
+         iv_filter_string = iv_filter_string
+         iv_search_string = iv_search_string
+         io_tech_request_context = io_tech_request_context
+       IMPORTING
+         et_entityset = vimdocids_get_entityset
+         es_response_context = es_response_context
+       ).
+*     Send specific entity data to the caller interface
+      copy_data_to_ref(
+        EXPORTING
+          is_data = vimdocids_get_entityset
+        CHANGING
+          cr_data = er_entityset
+      ).
+
+*-------------------------------------------------------------------------*
+*             EntitySet -  ReasonCodes
+*-------------------------------------------------------------------------*
+   WHEN 'ReasonCodes'.
+*     Call the entity set generated method
+      reasoncodes_get_entityset(
+        EXPORTING
+         iv_entity_name = iv_entity_name
+         iv_entity_set_name = iv_entity_set_name
+         iv_source_name = iv_source_name
+         it_filter_select_options = it_filter_select_options
+         it_order = it_order
+         is_paging = is_paging
+         it_navigation_path = it_navigation_path
+         it_key_tab = it_key_tab
+         iv_filter_string = iv_filter_string
+         iv_search_string = iv_search_string
+         io_tech_request_context = io_tech_request_context
+       IMPORTING
+         et_entityset = reasoncodes_get_entityset
+         es_response_context = es_response_context
+       ).
+*     Send specific entity data to the caller interface
+      copy_data_to_ref(
+        EXPORTING
+          is_data = reasoncodes_get_entityset
+        CHANGING
+          cr_data = er_entityset
+      ).
+
+    WHEN OTHERS.
+      super->/iwbep/if_mgw_appl_srv_runtime~get_entityset(
+        EXPORTING
+          iv_entity_name = iv_entity_name
+          iv_entity_set_name = iv_entity_set_name
+          iv_source_name = iv_source_name
+          it_filter_select_options = it_filter_select_options
+          it_order = it_order
+          is_paging = is_paging
+          it_navigation_path = it_navigation_path
+          it_key_tab = it_key_tab
+          iv_filter_string = iv_filter_string
+          iv_search_string = iv_search_string
+          io_tech_request_context = io_tech_request_context
+       IMPORTING
+         er_entityset = er_entityset ).
+ ENDCASE.
+  endmethod.
+
+
+  method /IWBEP/IF_MGW_APPL_SRV_RUNTIME~UPDATE_ENTITY.
+*&----------------------------------------------------------------------------------------------*
+*&  Include           /IWBEP/DPC_TEMP_UPD_ENTITY_BASE
+*&* This class has been generated on 19.01.2022 15:46:55 in client 100
+*&*
+*&*       WARNING--> NEVER MODIFY THIS CLASS <--WARNING
+*&*   If you want to change the DPC implementation, use the
+*&*   generated methods inside the DPC provider subclass - ZCL_ZEDM_VIM_GR_CREATE_DPC_EXT
+*&-----------------------------------------------------------------------------------------------*
+
+ DATA vimdocshset_update_entity TYPE zcl_zedm_vim_gr_create_mpc=>ts_vimdocsh.
+ DATA balancecheckset_update_entity TYPE zcl_zedm_vim_gr_create_mpc=>ts_balancecheck.
+ DATA actions_update_entity TYPE zcl_zedm_vim_gr_create_mpc=>ts_action.
+ DATA purchaseorderite_update_entity TYPE zcl_zedm_vim_gr_create_mpc=>ts_purchaseorderitem.
+ DATA userdetails_update_entity TYPE zcl_zedm_vim_gr_create_mpc=>ts_userdetail.
+ DATA lockingactions_update_entity TYPE zcl_zedm_vim_gr_create_mpc=>ts_lockingaction.
+ DATA vimdocheaders_update_entity TYPE zcl_zedm_vim_gr_create_mpc=>ts_vimdocheader.
+ DATA vimimageset_update_entity TYPE zcl_zedm_vim_gr_create_mpc=>ts_vimimage.
+ DATA goodsreceiptsset_update_entity TYPE zcl_zedm_vim_gr_create_mpc=>ts_goodsreceipt.
+ DATA vimdocids_update_entity TYPE zcl_zedm_vim_gr_create_mpc=>ts_vimdocid.
+ DATA reasoncodes_update_entity TYPE zcl_zedm_vim_gr_create_mpc=>ts_reasoncode.
+ DATA lv_entityset_name TYPE string.
+ DATA lr_entity TYPE REF TO data. "#EC NEEDED
+
+lv_entityset_name = io_tech_request_context->get_entity_set_name( ).
+
+CASE lv_entityset_name.
+*-------------------------------------------------------------------------*
+*             EntitySet -  VimDocSHSet
+*-------------------------------------------------------------------------*
+      WHEN 'VimDocSHSet'.
+*     Call the entity set generated method
+          vimdocshset_update_entity(
+               EXPORTING iv_entity_name     = iv_entity_name
+                         iv_entity_set_name = iv_entity_set_name
+                         iv_source_name     = iv_source_name
+                         io_data_provider   = io_data_provider
+                         it_key_tab         = it_key_tab
+                         it_navigation_path = it_navigation_path
+                         io_tech_request_context = io_tech_request_context
+             	 IMPORTING er_entity          = vimdocshset_update_entity
+          ).
+       IF vimdocshset_update_entity IS NOT INITIAL.
+*     Send specific entity data to the caller interface
+          copy_data_to_ref(
+            EXPORTING
+              is_data = vimdocshset_update_entity
+            CHANGING
+              cr_data = er_entity
+          ).
+        ELSE.
+*         In case of initial values - unbind the entity reference
+          er_entity = lr_entity.
+        ENDIF.
+*-------------------------------------------------------------------------*
+*             EntitySet -  BalanceCheckSet
+*-------------------------------------------------------------------------*
+      WHEN 'BalanceCheckSet'.
+*     Call the entity set generated method
+          balancecheckset_update_entity(
+               EXPORTING iv_entity_name     = iv_entity_name
+                         iv_entity_set_name = iv_entity_set_name
+                         iv_source_name     = iv_source_name
+                         io_data_provider   = io_data_provider
+                         it_key_tab         = it_key_tab
+                         it_navigation_path = it_navigation_path
+                         io_tech_request_context = io_tech_request_context
+             	 IMPORTING er_entity          = balancecheckset_update_entity
+          ).
+       IF balancecheckset_update_entity IS NOT INITIAL.
+*     Send specific entity data to the caller interface
+          copy_data_to_ref(
+            EXPORTING
+              is_data = balancecheckset_update_entity
+            CHANGING
+              cr_data = er_entity
+          ).
+        ELSE.
+*         In case of initial values - unbind the entity reference
+          er_entity = lr_entity.
+        ENDIF.
+*-------------------------------------------------------------------------*
+*             EntitySet -  Actions
+*-------------------------------------------------------------------------*
+      WHEN 'Actions'.
+*     Call the entity set generated method
+          actions_update_entity(
+               EXPORTING iv_entity_name     = iv_entity_name
+                         iv_entity_set_name = iv_entity_set_name
+                         iv_source_name     = iv_source_name
+                         io_data_provider   = io_data_provider
+                         it_key_tab         = it_key_tab
+                         it_navigation_path = it_navigation_path
+                         io_tech_request_context = io_tech_request_context
+             	 IMPORTING er_entity          = actions_update_entity
+          ).
+       IF actions_update_entity IS NOT INITIAL.
+*     Send specific entity data to the caller interface
+          copy_data_to_ref(
+            EXPORTING
+              is_data = actions_update_entity
+            CHANGING
+              cr_data = er_entity
+          ).
+        ELSE.
+*         In case of initial values - unbind the entity reference
+          er_entity = lr_entity.
+        ENDIF.
+*-------------------------------------------------------------------------*
+*             EntitySet -  PurchaseOrderItems
+*-------------------------------------------------------------------------*
+      WHEN 'PurchaseOrderItems'.
+*     Call the entity set generated method
+          purchaseorderite_update_entity(
+               EXPORTING iv_entity_name     = iv_entity_name
+                         iv_entity_set_name = iv_entity_set_name
+                         iv_source_name     = iv_source_name
+                         io_data_provider   = io_data_provider
+                         it_key_tab         = it_key_tab
+                         it_navigation_path = it_navigation_path
+                         io_tech_request_context = io_tech_request_context
+             	 IMPORTING er_entity          = purchaseorderite_update_entity
+          ).
+       IF purchaseorderite_update_entity IS NOT INITIAL.
+*     Send specific entity data to the caller interface
+          copy_data_to_ref(
+            EXPORTING
+              is_data = purchaseorderite_update_entity
+            CHANGING
+              cr_data = er_entity
+          ).
+        ELSE.
+*         In case of initial values - unbind the entity reference
+          er_entity = lr_entity.
+        ENDIF.
+*-------------------------------------------------------------------------*
+*             EntitySet -  UserDetails
+*-------------------------------------------------------------------------*
+      WHEN 'UserDetails'.
+*     Call the entity set generated method
+          userdetails_update_entity(
+               EXPORTING iv_entity_name     = iv_entity_name
+                         iv_entity_set_name = iv_entity_set_name
+                         iv_source_name     = iv_source_name
+                         io_data_provider   = io_data_provider
+                         it_key_tab         = it_key_tab
+                         it_navigation_path = it_navigation_path
+                         io_tech_request_context = io_tech_request_context
+             	 IMPORTING er_entity          = userdetails_update_entity
+          ).
+       IF userdetails_update_entity IS NOT INITIAL.
+*     Send specific entity data to the caller interface
+          copy_data_to_ref(
+            EXPORTING
+              is_data = userdetails_update_entity
+            CHANGING
+              cr_data = er_entity
+          ).
+        ELSE.
+*         In case of initial values - unbind the entity reference
+          er_entity = lr_entity.
+        ENDIF.
+*-------------------------------------------------------------------------*
+*             EntitySet -  LockingActions
+*-------------------------------------------------------------------------*
+      WHEN 'LockingActions'.
+*     Call the entity set generated method
+          lockingactions_update_entity(
+               EXPORTING iv_entity_name     = iv_entity_name
+                         iv_entity_set_name = iv_entity_set_name
+                         iv_source_name     = iv_source_name
+                         io_data_provider   = io_data_provider
+                         it_key_tab         = it_key_tab
+                         it_navigation_path = it_navigation_path
+                         io_tech_request_context = io_tech_request_context
+             	 IMPORTING er_entity          = lockingactions_update_entity
+          ).
+       IF lockingactions_update_entity IS NOT INITIAL.
+*     Send specific entity data to the caller interface
+          copy_data_to_ref(
+            EXPORTING
+              is_data = lockingactions_update_entity
+            CHANGING
+              cr_data = er_entity
+          ).
+        ELSE.
+*         In case of initial values - unbind the entity reference
+          er_entity = lr_entity.
+        ENDIF.
+*-------------------------------------------------------------------------*
+*             EntitySet -  VimDocHeaders
+*-------------------------------------------------------------------------*
+      WHEN 'VimDocHeaders'.
+*     Call the entity set generated method
+          vimdocheaders_update_entity(
+               EXPORTING iv_entity_name     = iv_entity_name
+                         iv_entity_set_name = iv_entity_set_name
+                         iv_source_name     = iv_source_name
+                         io_data_provider   = io_data_provider
+                         it_key_tab         = it_key_tab
+                         it_navigation_path = it_navigation_path
+                         io_tech_request_context = io_tech_request_context
+             	 IMPORTING er_entity          = vimdocheaders_update_entity
+          ).
+       IF vimdocheaders_update_entity IS NOT INITIAL.
+*     Send specific entity data to the caller interface
+          copy_data_to_ref(
+            EXPORTING
+              is_data = vimdocheaders_update_entity
+            CHANGING
+              cr_data = er_entity
+          ).
+        ELSE.
+*         In case of initial values - unbind the entity reference
+          er_entity = lr_entity.
+        ENDIF.
+*-------------------------------------------------------------------------*
+*             EntitySet -  VimImages
+*-------------------------------------------------------------------------*
+      WHEN 'VimImages'.
+*     Call the entity set generated method
+          vimimageset_update_entity(
+               EXPORTING iv_entity_name     = iv_entity_name
+                         iv_entity_set_name = iv_entity_set_name
+                         iv_source_name     = iv_source_name
+                         io_data_provider   = io_data_provider
+                         it_key_tab         = it_key_tab
+                         it_navigation_path = it_navigation_path
+                         io_tech_request_context = io_tech_request_context
+             	 IMPORTING er_entity          = vimimageset_update_entity
+          ).
+       IF vimimageset_update_entity IS NOT INITIAL.
+*     Send specific entity data to the caller interface
+          copy_data_to_ref(
+            EXPORTING
+              is_data = vimimageset_update_entity
+            CHANGING
+              cr_data = er_entity
+          ).
+        ELSE.
+*         In case of initial values - unbind the entity reference
+          er_entity = lr_entity.
+        ENDIF.
+*-------------------------------------------------------------------------*
+*             EntitySet -  GoodsReceipts
+*-------------------------------------------------------------------------*
+      WHEN 'GoodsReceipts'.
+*     Call the entity set generated method
+          goodsreceiptsset_update_entity(
+               EXPORTING iv_entity_name     = iv_entity_name
+                         iv_entity_set_name = iv_entity_set_name
+                         iv_source_name     = iv_source_name
+                         io_data_provider   = io_data_provider
+                         it_key_tab         = it_key_tab
+                         it_navigation_path = it_navigation_path
+                         io_tech_request_context = io_tech_request_context
+             	 IMPORTING er_entity          = goodsreceiptsset_update_entity
+          ).
+       IF goodsreceiptsset_update_entity IS NOT INITIAL.
+*     Send specific entity data to the caller interface
+          copy_data_to_ref(
+            EXPORTING
+              is_data = goodsreceiptsset_update_entity
+            CHANGING
+              cr_data = er_entity
+          ).
+        ELSE.
+*         In case of initial values - unbind the entity reference
+          er_entity = lr_entity.
+        ENDIF.
+*-------------------------------------------------------------------------*
+*             EntitySet -  VimDocIds
+*-------------------------------------------------------------------------*
+      WHEN 'VimDocIds'.
+*     Call the entity set generated method
+          vimdocids_update_entity(
+               EXPORTING iv_entity_name     = iv_entity_name
+                         iv_entity_set_name = iv_entity_set_name
+                         iv_source_name     = iv_source_name
+                         io_data_provider   = io_data_provider
+                         it_key_tab         = it_key_tab
+                         it_navigation_path = it_navigation_path
+                         io_tech_request_context = io_tech_request_context
+             	 IMPORTING er_entity          = vimdocids_update_entity
+          ).
+       IF vimdocids_update_entity IS NOT INITIAL.
+*     Send specific entity data to the caller interface
+          copy_data_to_ref(
+            EXPORTING
+              is_data = vimdocids_update_entity
+            CHANGING
+              cr_data = er_entity
+          ).
+        ELSE.
+*         In case of initial values - unbind the entity reference
+          er_entity = lr_entity.
+        ENDIF.
+*-------------------------------------------------------------------------*
+*             EntitySet -  ReasonCodes
+*-------------------------------------------------------------------------*
+      WHEN 'ReasonCodes'.
+*     Call the entity set generated method
+          reasoncodes_update_entity(
+               EXPORTING iv_entity_name     = iv_entity_name
+                         iv_entity_set_name = iv_entity_set_name
+                         iv_source_name     = iv_source_name
+                         io_data_provider   = io_data_provider
+                         it_key_tab         = it_key_tab
+                         it_navigation_path = it_navigation_path
+                         io_tech_request_context = io_tech_request_context
+             	 IMPORTING er_entity          = reasoncodes_update_entity
+          ).
+       IF reasoncodes_update_entity IS NOT INITIAL.
+*     Send specific entity data to the caller interface
+          copy_data_to_ref(
+            EXPORTING
+              is_data = reasoncodes_update_entity
+            CHANGING
+              cr_data = er_entity
+          ).
+        ELSE.
+*         In case of initial values - unbind the entity reference
+          er_entity = lr_entity.
+        ENDIF.
+      WHEN OTHERS.
+        super->/iwbep/if_mgw_appl_srv_runtime~update_entity(
+           EXPORTING
+             iv_entity_name = iv_entity_name
+             iv_entity_set_name = iv_entity_set_name
+             iv_source_name = iv_source_name
+             io_data_provider   = io_data_provider
+             it_key_tab = it_key_tab
+             it_navigation_path = it_navigation_path
+          IMPORTING
+            er_entity = er_entity
+    ).
+ ENDCASE.
+  endmethod.
+
+
+  method /IWBEP/IF_SB_DPC_COMM_SERVICES~COMMIT_WORK.
+* Call RFC commit work functionality
+DATA lt_message      TYPE bapiret2. "#EC NEEDED
+DATA lv_message_text TYPE BAPI_MSG.
+DATA lo_logger       TYPE REF TO /iwbep/cl_cos_logger.
+DATA lv_subrc        TYPE syst-subrc.
+
+lo_logger = /iwbep/if_mgw_conv_srv_runtime~get_logger( ).
+
+  IF iv_rfc_dest IS INITIAL OR iv_rfc_dest EQ 'NONE'.
+    CALL FUNCTION 'BAPI_TRANSACTION_COMMIT'
+      EXPORTING
+      wait   = abap_true
+    IMPORTING
+      return = lt_message.
+  ELSE.
+    CALL FUNCTION 'BAPI_TRANSACTION_COMMIT'
+      DESTINATION iv_rfc_dest
+    EXPORTING
+      wait                  = abap_true
+    IMPORTING
+      return                = lt_message
+    EXCEPTIONS
+      communication_failure = 1000 MESSAGE lv_message_text
+      system_failure        = 1001 MESSAGE lv_message_text
+      OTHERS                = 1002.
+
+  IF sy-subrc <> 0.
+    lv_subrc = sy-subrc.
+    /iwbep/cl_sb_gen_dpc_rt_util=>rfc_exception_handling(
+        EXPORTING
+          iv_subrc            = lv_subrc
+          iv_exp_message_text = lv_message_text
+          io_logger           = lo_logger ).
+  ENDIF.
+  ENDIF.
+  endmethod.
+
+
+  method /IWBEP/IF_SB_DPC_COMM_SERVICES~GET_GENERATION_STRATEGY.
+* Get generation strategy
+  rv_generation_strategy = '1'.
+  endmethod.
+
+
+  method /IWBEP/IF_SB_DPC_COMM_SERVICES~LOG_MESSAGE.
+* Log message in the application log
+DATA lo_logger TYPE REF TO /iwbep/cl_cos_logger.
+DATA lv_text TYPE /iwbep/sup_msg_longtext.
+
+  MESSAGE ID iv_msg_id TYPE iv_msg_type NUMBER iv_msg_number
+    WITH iv_msg_v1 iv_msg_v2 iv_msg_v3 iv_msg_v4 INTO lv_text.
+
+  lo_logger = mo_context->get_logger( ).
+  lo_logger->log_message(
+    EXPORTING
+     iv_msg_type   = iv_msg_type
+     iv_msg_id     = iv_msg_id
+     iv_msg_number = iv_msg_number
+     iv_msg_text   = lv_text
+     iv_msg_v1     = iv_msg_v1
+     iv_msg_v2     = iv_msg_v2
+     iv_msg_v3     = iv_msg_v3
+     iv_msg_v4     = iv_msg_v4
+     iv_agent      = 'DPC' ).
+  endmethod.
+
+
+  method /IWBEP/IF_SB_DPC_COMM_SERVICES~RFC_EXCEPTION_HANDLING.
+* RFC call exception handling
+DATA lo_logger  TYPE REF TO /iwbep/cl_cos_logger.
+
+lo_logger = /iwbep/if_mgw_conv_srv_runtime~get_logger( ).
+
+/iwbep/cl_sb_gen_dpc_rt_util=>rfc_exception_handling(
+  EXPORTING
+    iv_subrc            = iv_subrc
+    iv_exp_message_text = iv_exp_message_text
+    io_logger           = lo_logger ).
+  endmethod.
+
+
+  method /IWBEP/IF_SB_DPC_COMM_SERVICES~RFC_SAVE_LOG.
+  DATA lo_logger  TYPE REF TO /iwbep/cl_cos_logger.
+  DATA lo_message_container TYPE REF TO /iwbep/if_message_container.
+
+  lo_logger = /iwbep/if_mgw_conv_srv_runtime~get_logger( ).
+  lo_message_container = /iwbep/if_mgw_conv_srv_runtime~get_message_container( ).
+
+  " Save the RFC call log in the application log
+  /iwbep/cl_sb_gen_dpc_rt_util=>rfc_save_log(
+    EXPORTING
+      is_return            = is_return
+      iv_entity_type       = iv_entity_type
+      it_return            = it_return
+      it_key_tab           = it_key_tab
+      io_logger            = lo_logger
+      io_message_container = lo_message_container ).
+  endmethod.
+
+
+  method /IWBEP/IF_SB_DPC_COMM_SERVICES~SET_INJECTION.
+* Unit test injection
+  IF io_unit IS BOUND.
+    mo_injection = io_unit.
+  ELSE.
+    mo_injection = me.
+  ENDIF.
+  endmethod.
+
+
+  method /IWBEP/IF_SB_GENDPC_SHLP_DATA~GET_SEARCH_HELP_VALUES.
+* Call to Search Help run time mechanism to get values
+  data lo_sh_data type ref to /iwbep/if_sb_shlp_data.
+
+  clear: et_return_list, es_message.
+  lo_sh_data = /iwbep/cl_sb_shlp_data_factory=>get_sh_data_obj( ).
+
+  lo_sh_data->/iwbep/if_sb_gendpc_shlp_data~get_search_help_values(
+    exporting
+      iv_shlp_name  = iv_shlp_name
+      iv_maxrows  = iv_maxrows
+      iv_sort = iv_sort
+      iv_call_shlt_exit = iv_call_shlt_exit
+      it_selopt = it_selopt
+    importing
+      et_return_list = et_return_list
+      es_message = es_message ).
+  endmethod.
+
+
+  method ACTIONS_CREATE_ENTITY.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'ACTIONS_CREATE_ENTITY'.
+  endmethod.
+
+
+  method ACTIONS_DELETE_ENTITY.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'ACTIONS_DELETE_ENTITY'.
+  endmethod.
+
+
+  method ACTIONS_GET_ENTITY.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'ACTIONS_GET_ENTITY'.
+  endmethod.
+
+
+  method ACTIONS_GET_ENTITYSET.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'ACTIONS_GET_ENTITYSET'.
+  endmethod.
+
+
+  method ACTIONS_UPDATE_ENTITY.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'ACTIONS_UPDATE_ENTITY'.
+  endmethod.
+
+
+  method BALANCECHECKSET_CREATE_ENTITY.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'BALANCECHECKSET_CREATE_ENTITY'.
+  endmethod.
+
+
+  method BALANCECHECKSET_DELETE_ENTITY.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'BALANCECHECKSET_DELETE_ENTITY'.
+  endmethod.
+
+
+  method BALANCECHECKSET_GET_ENTITY.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'BALANCECHECKSET_GET_ENTITY'.
+  endmethod.
+
+
+  method BALANCECHECKSET_GET_ENTITYSET.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'BALANCECHECKSET_GET_ENTITYSET'.
+  endmethod.
+
+
+  method BALANCECHECKSET_UPDATE_ENTITY.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'BALANCECHECKSET_UPDATE_ENTITY'.
+  endmethod.
+
+
+  method CHECK_SUBSCRIPTION_AUTHORITY.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'CHECK_SUBSCRIPTION_AUTHORITY'.
+  endmethod.
+
+
+  method GOODSRECEIPTSSET_CREATE_ENTITY.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'GOODSRECEIPTSSET_CREATE_ENTITY'.
+  endmethod.
+
+
+  method GOODSRECEIPTSSET_DELETE_ENTITY.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'GOODSRECEIPTSSET_DELETE_ENTITY'.
+  endmethod.
+
+
+  method GOODSRECEIPTSSET_GET_ENTITY.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'GOODSRECEIPTSSET_GET_ENTITY'.
+  endmethod.
+
+
+  method GOODSRECEIPTSSET_GET_ENTITYSET.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'GOODSRECEIPTSSET_GET_ENTITYSET'.
+  endmethod.
+
+
+  method GOODSRECEIPTSSET_UPDATE_ENTITY.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'GOODSRECEIPTSSET_UPDATE_ENTITY'.
+  endmethod.
+
+
+  method LOCKINGACTIONS_CREATE_ENTITY.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'LOCKINGACTIONS_CREATE_ENTITY'.
+  endmethod.
+
+
+  method LOCKINGACTIONS_DELETE_ENTITY.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'LOCKINGACTIONS_DELETE_ENTITY'.
+  endmethod.
+
+
+  method LOCKINGACTIONS_GET_ENTITY.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'LOCKINGACTIONS_GET_ENTITY'.
+  endmethod.
+
+
+  method LOCKINGACTIONS_GET_ENTITYSET.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'LOCKINGACTIONS_GET_ENTITYSET'.
+  endmethod.
+
+
+  method LOCKINGACTIONS_UPDATE_ENTITY.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'LOCKINGACTIONS_UPDATE_ENTITY'.
+  endmethod.
+
+
+  method PURCHASEORDERITE_CREATE_ENTITY.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'PURCHASEORDERITE_CREATE_ENTITY'.
+  endmethod.
+
+
+  method PURCHASEORDERITE_DELETE_ENTITY.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'PURCHASEORDERITE_DELETE_ENTITY'.
+  endmethod.
+
+
+  method PURCHASEORDERITE_GET_ENTITY.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'PURCHASEORDERITE_GET_ENTITY'.
+  endmethod.
+
+
+  method PURCHASEORDERITE_GET_ENTITYSET.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'PURCHASEORDERITE_GET_ENTITYSET'.
+  endmethod.
+
+
+  method PURCHASEORDERITE_UPDATE_ENTITY.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'PURCHASEORDERITE_UPDATE_ENTITY'.
+  endmethod.
+
+
+  method REASONCODES_CREATE_ENTITY.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'REASONCODES_CREATE_ENTITY'.
+  endmethod.
+
+
+  method REASONCODES_DELETE_ENTITY.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'REASONCODES_DELETE_ENTITY'.
+  endmethod.
+
+
+  method REASONCODES_GET_ENTITY.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'REASONCODES_GET_ENTITY'.
+  endmethod.
+
+
+  method REASONCODES_GET_ENTITYSET.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'REASONCODES_GET_ENTITYSET'.
+  endmethod.
+
+
+  method REASONCODES_UPDATE_ENTITY.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'REASONCODES_UPDATE_ENTITY'.
+  endmethod.
+
+
+  method USERDETAILS_CREATE_ENTITY.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'USERDETAILS_CREATE_ENTITY'.
+  endmethod.
+
+
+  method USERDETAILS_DELETE_ENTITY.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'USERDETAILS_DELETE_ENTITY'.
+  endmethod.
+
+
+  method USERDETAILS_GET_ENTITY.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'USERDETAILS_GET_ENTITY'.
+  endmethod.
+
+
+  method USERDETAILS_GET_ENTITYSET.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'USERDETAILS_GET_ENTITYSET'.
+  endmethod.
+
+
+  method USERDETAILS_UPDATE_ENTITY.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'USERDETAILS_UPDATE_ENTITY'.
+  endmethod.
+
+
+  method VIMDOCHEADERS_CREATE_ENTITY.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'VIMDOCHEADERS_CREATE_ENTITY'.
+  endmethod.
+
+
+  method VIMDOCHEADERS_DELETE_ENTITY.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'VIMDOCHEADERS_DELETE_ENTITY'.
+  endmethod.
+
+
+  method VIMDOCHEADERS_GET_ENTITY.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'VIMDOCHEADERS_GET_ENTITY'.
+  endmethod.
+
+
+  method VIMDOCHEADERS_GET_ENTITYSET.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'VIMDOCHEADERS_GET_ENTITYSET'.
+  endmethod.
+
+
+  method VIMDOCHEADERS_UPDATE_ENTITY.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'VIMDOCHEADERS_UPDATE_ENTITY'.
+  endmethod.
+
+
+  method VIMDOCIDS_CREATE_ENTITY.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'VIMDOCIDS_CREATE_ENTITY'.
+  endmethod.
+
+
+  method VIMDOCIDS_DELETE_ENTITY.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'VIMDOCIDS_DELETE_ENTITY'.
+  endmethod.
+
+
+  method VIMDOCIDS_GET_ENTITY.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'VIMDOCIDS_GET_ENTITY'.
+  endmethod.
+
+
+  method VIMDOCIDS_GET_ENTITYSET.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'VIMDOCIDS_GET_ENTITYSET'.
+  endmethod.
+
+
+  method VIMDOCIDS_UPDATE_ENTITY.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'VIMDOCIDS_UPDATE_ENTITY'.
+  endmethod.
+
+
+  method VIMDOCSHSET_CREATE_ENTITY.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'VIMDOCSHSET_CREATE_ENTITY'.
+  endmethod.
+
+
+  method VIMDOCSHSET_DELETE_ENTITY.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'VIMDOCSHSET_DELETE_ENTITY'.
+  endmethod.
+
+
+  method VIMDOCSHSET_GET_ENTITY.
+*-------------------------------------------------------------
+*  Data declaration
+*-------------------------------------------------------------
+data lv_max_hits type i value 1.
+data ls_converted_keys like er_entity.
+data ls_message type bapiret2.
+data lt_selopt type ddshselops.
+data ls_selopt like line of lt_selopt.
+data lv_source_entity_set_name type string.
+data lt_result_list type /iwbep/if_sb_gendpc_shlp_data=>tt_result_list.
+data ls_result_list like line of lt_result_list.
+
+*-------------------------------------------------------------
+*  Map the runtime request to the Search Help select option - Only mapped attributes
+*-------------------------------------------------------------
+* Get all input information from the technical request context object
+* Since DPC works with internal property names and runtime API interface holds external property names
+* the process needs to get the all needed input information from the technical request context object
+* Get key table information - for direct call
+io_tech_request_context->get_converted_keys(
+  importing
+    es_key_values = ls_converted_keys ).
+
+* Maps key fields to function module parameters
+
+lv_source_entity_set_name = io_tech_request_context->get_source_entity_set_name( ).
+
+ls_selopt-sign = 'I'.
+ls_selopt-option = 'EQ'.
+ls_selopt-low = ls_converted_keys-docid.
+ls_selopt-shlpfield = 'DOCID'.
+ls_selopt-shlpname = 'ZSHP_VIM_DOC'.
+append ls_selopt to lt_selopt.
+clear ls_selopt.
+
+*-------------------------------------------------------------
+*  Call to Search Help get values mechanism
+*-------------------------------------------------------------
+* Get search help values
+me->/iwbep/if_sb_gendpc_shlp_data~get_search_help_values(
+  exporting
+    iv_shlp_name = 'ZSHP_VIM_DOC'
+    iv_maxrows = lv_max_hits
+    iv_sort = 'X'
+    iv_call_shlt_exit = 'X'
+    it_selopt = lt_selopt
+  importing
+    et_return_list = lt_result_list
+    es_message = ls_message ).
+
+*-------------------------------------------------------------
+*  Map the Search Help returned results to the caller interface - Only mapped attributes
+*-------------------------------------------------------------
+if ls_message is not initial.
+* Call RFC call exception handling
+  me->/iwbep/if_sb_dpc_comm_services~rfc_save_log(
+    exporting
+      is_return      = ls_message
+      iv_entity_type = iv_entity_name
+      it_key_tab     = it_key_tab ).
+endif.
+
+clear er_entity.
+loop at lt_result_list into ls_result_list.
+
+  " Move SH results to GW request responce table
+  case ls_result_list-field_name.
+    when 'DOCID'.
+      er_entity-docid = ls_result_list-field_value.
+    when 'EBELN'.
+      er_entity-ebeln = ls_result_list-field_value.
+    when 'LIFNR'.
+      er_entity-lifnr = ls_result_list-field_value.
+    when 'VEND_NAME'.
+      er_entity-vend_name = ls_result_list-field_value.
+  endcase.
+
+endloop.
+
+  endmethod.
+
+
+  method VIMDOCSHSET_GET_ENTITYSET.
+*-------------------------------------------------------------
+*  Data declaration
+*-------------------------------------------------------------
+data lo_filter type  ref to /iwbep/if_mgw_req_filter.
+data lt_filter_select_options type /iwbep/t_mgw_select_option.
+data lv_filter_str type string.
+data lv_max_hits type i.
+data ls_paging type /iwbep/s_mgw_paging.
+data ls_converted_keys like line of et_entityset.
+data ls_message type bapiret2.
+data lt_selopt type ddshselops.
+data ls_selopt like line of lt_selopt.
+data ls_filter type /iwbep/s_mgw_select_option.
+data ls_filter_range type /iwbep/s_cod_select_option.
+data lr_vend_name like range of ls_converted_keys-vend_name.
+data ls_vend_name like line of lr_vend_name.
+data lr_docid like range of ls_converted_keys-docid.
+data ls_docid like line of lr_docid.
+data lr_lifnr like range of ls_converted_keys-lifnr.
+data ls_lifnr like line of lr_lifnr.
+data lr_ebeln like range of ls_converted_keys-ebeln.
+data ls_ebeln like line of lr_ebeln.
+data lt_result_list type /iwbep/if_sb_gendpc_shlp_data=>tt_result_list.
+data lv_next type i value 1.
+data ls_entityset like line of et_entityset.
+data ls_result_list_next like line of lt_result_list.
+data ls_result_list like line of lt_result_list.
+
+*-------------------------------------------------------------
+*  Map the runtime request to the Search Help select option - Only mapped attributes
+*-------------------------------------------------------------
+* Get all input information from the technical request context object
+* Since DPC works with internal property names and runtime API interface holds external property names
+* the process needs to get the all needed input information from the technical request context object
+* Get filter or select option information
+lo_filter = io_tech_request_context->get_filter( ).
+lt_filter_select_options = lo_filter->get_filter_select_options( ).
+lv_filter_str = lo_filter->get_filter_string( ).
+
+* Check if the supplied filter is supported by standard gateway runtime process
+if  lv_filter_str            is not initial
+and lt_filter_select_options is initial.
+  " If the string of the Filter System Query Option is not automatically converted into
+  " filter option table (lt_filter_select_options), then the filtering combination is not supported
+  " Log message in the application log
+  me->/iwbep/if_sb_dpc_comm_services~log_message(
+    exporting
+      iv_msg_type   = 'E'
+      iv_msg_id     = '/IWBEP/MC_SB_DPC_ADM'
+      iv_msg_number = 025 ).
+  " Raise Exception
+  raise exception type /iwbep/cx_mgw_tech_exception
+    exporting
+      textid = /iwbep/cx_mgw_tech_exception=>internal_error.
+endif.
+
+* Get key table information
+io_tech_request_context->get_converted_source_keys(
+  importing
+    es_key_values  = ls_converted_keys ).
+
+ls_paging-top = io_tech_request_context->get_top( ).
+ls_paging-skip = io_tech_request_context->get_skip( ).
+
+" Calculate the number of max hits to be fetched from the function module
+" The lv_max_hits value is a summary of the Top and Skip values
+if ls_paging-top > 0.
+  lv_max_hits = is_paging-top + is_paging-skip.
+endif.
+
+* Maps filter table lines to the Search Help select option table
+loop at lt_filter_select_options into ls_filter.
+
+  case ls_filter-property.
+    when 'VEND_NAME'.              " Equivalent to 'VendName' property in the service
+      lo_filter->convert_select_option(
+        exporting
+          is_select_option = ls_filter
+        importing
+          et_select_option = lr_vend_name ).
+
+      loop at lr_vend_name into ls_vend_name.
+        ls_selopt-sign = ls_vend_name-sign.
+        ls_selopt-option = ls_vend_name-option.
+        ls_selopt-low = ls_vend_name-low.
+        ls_selopt-high = ls_vend_name-high.
+        ls_selopt-shlpfield = 'VEND_NAME'.
+        ls_selopt-shlpname = 'ZSHP_VIM_DOC'.
+        append ls_selopt to lt_selopt.
+        clear ls_selopt.
+      endloop.
+    when 'DOCID'.              " Equivalent to 'Docid' property in the service
+      lo_filter->convert_select_option(
+        exporting
+          is_select_option = ls_filter
+        importing
+          et_select_option = lr_docid ).
+
+      loop at lr_docid into ls_docid.
+        ls_selopt-sign = ls_docid-sign.
+        ls_selopt-option = ls_docid-option.
+        ls_selopt-low = ls_docid-low.
+        ls_selopt-high = ls_docid-high.
+        ls_selopt-shlpfield = 'DOCID'.
+        ls_selopt-shlpname = 'ZSHP_VIM_DOC'.
+        append ls_selopt to lt_selopt.
+        clear ls_selopt.
+      endloop.
+    when 'LIFNR'.              " Equivalent to 'Lifnr' property in the service
+      lo_filter->convert_select_option(
+        exporting
+          is_select_option = ls_filter
+        importing
+          et_select_option = lr_lifnr ).
+
+      loop at lr_lifnr into ls_lifnr.
+        ls_selopt-sign = ls_lifnr-sign.
+        ls_selopt-option = ls_lifnr-option.
+        ls_selopt-low = ls_lifnr-low.
+        ls_selopt-high = ls_lifnr-high.
+        ls_selopt-shlpfield = 'LIFNR'.
+        ls_selopt-shlpname = 'ZSHP_VIM_DOC'.
+        append ls_selopt to lt_selopt.
+        clear ls_selopt.
+      endloop.
+    when 'EBELN'.              " Equivalent to 'Ebeln' property in the service
+      lo_filter->convert_select_option(
+        exporting
+          is_select_option = ls_filter
+        importing
+          et_select_option = lr_ebeln ).
+
+      loop at lr_ebeln into ls_ebeln.
+        ls_selopt-sign = ls_ebeln-sign.
+        ls_selopt-option = ls_ebeln-option.
+        ls_selopt-low = ls_ebeln-low.
+        ls_selopt-high = ls_ebeln-high.
+        ls_selopt-shlpfield = 'EBELN'.
+        ls_selopt-shlpname = 'ZSHP_VIM_DOC'.
+        append ls_selopt to lt_selopt.
+        clear ls_selopt.
+      endloop.
+
+    when others.
+      " Log message in the application log
+      me->/iwbep/if_sb_dpc_comm_services~log_message(
+        exporting
+          iv_msg_type   = 'E'
+          iv_msg_id     = '/IWBEP/MC_SB_DPC_ADM'
+          iv_msg_number = 020
+          iv_msg_v1     = ls_filter-property ).
+      " Raise Exception
+      raise exception type /iwbep/cx_mgw_tech_exception
+        exporting
+          textid = /iwbep/cx_mgw_tech_exception=>internal_error.
+  endcase.
+endloop.
+
+*-------------------------------------------------------------
+*  Call to Search Help get values mechanism
+*-------------------------------------------------------------
+* Get search help values
+me->/iwbep/if_sb_gendpc_shlp_data~get_search_help_values(
+  exporting
+    iv_shlp_name = 'ZSHP_VIM_DOC'
+    iv_maxrows = lv_max_hits
+    iv_sort = 'X'
+    iv_call_shlt_exit = 'X'
+    it_selopt = lt_selopt
+  importing
+    et_return_list = lt_result_list
+    es_message = ls_message ).
+
+*-------------------------------------------------------------
+*  Map the Search Help returned results to the caller interface - Only mapped attributes
+*-------------------------------------------------------------
+if ls_message is not initial.
+* Call RFC call exception handling
+  me->/iwbep/if_sb_dpc_comm_services~rfc_save_log(
+    exporting
+      is_return      = ls_message
+      iv_entity_type = iv_entity_name
+      it_key_tab     = it_key_tab ).
+endif.
+
+clear et_entityset.
+
+loop at lt_result_list into ls_result_list
+  where record_number > ls_paging-skip.
+
+  " Move SH results to GW request responce table
+  lv_next = sy-tabix + 1. " next loop iteration
+  case ls_result_list-field_name.
+    when 'DOCID'.
+      ls_entityset-docid = ls_result_list-field_value.
+    when 'EBELN'.
+      ls_entityset-ebeln = ls_result_list-field_value.
+    when 'LIFNR'.
+      ls_entityset-lifnr = ls_result_list-field_value.
+    when 'VEND_NAME'.
+      ls_entityset-vend_name = ls_result_list-field_value.
+  endcase.
+
+  " Check if the next line in the result list is a new record
+  read table lt_result_list into ls_result_list_next index lv_next.
+  if sy-subrc <> 0
+  or ls_result_list-record_number <> ls_result_list_next-record_number.
+    " Save the collected SH result in the GW request table
+    append ls_entityset to et_entityset.
+    clear: ls_result_list_next, ls_entityset.
+  endif.
+
+endloop.
+
+  endmethod.
+
+
+  method VIMDOCSHSET_UPDATE_ENTITY.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'VIMDOCSHSET_UPDATE_ENTITY'.
+  endmethod.
+
+
+  method VIMIMAGESET_CREATE_ENTITY.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'VIMIMAGESET_CREATE_ENTITY'.
+  endmethod.
+
+
+  method VIMIMAGESET_DELETE_ENTITY.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'VIMIMAGESET_DELETE_ENTITY'.
+  endmethod.
+
+
+  method VIMIMAGESET_GET_ENTITY.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'VIMIMAGESET_GET_ENTITY'.
+  endmethod.
+
+
+  method VIMIMAGESET_GET_ENTITYSET.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'VIMIMAGESET_GET_ENTITYSET'.
+  endmethod.
+
+
+  method VIMIMAGESET_UPDATE_ENTITY.
+  RAISE EXCEPTION TYPE /iwbep/cx_mgw_not_impl_exc
+    EXPORTING
+      textid = /iwbep/cx_mgw_not_impl_exc=>method_not_implemented
+      method = 'VIMIMAGESET_UPDATE_ENTITY'.
+  endmethod.
+ENDCLASS.

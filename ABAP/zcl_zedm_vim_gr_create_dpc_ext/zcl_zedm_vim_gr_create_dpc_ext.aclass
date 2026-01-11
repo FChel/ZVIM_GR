@@ -1,0 +1,3627 @@
+class ZCL_ZEDM_VIM_GR_CREATE_DPC_EXT definition
+  public
+  inheriting from ZCL_ZEDM_VIM_GR_CREATE_DPC
+  create public .
+
+public section.
+
+  types:
+    BEGIN OF ty_vimdocheader_deep .
+        INCLUDE TYPE zcl_zedm_vim_gr_create_mpc=>ts_vimdocheader.
+      TYPES:
+        goodsreceipts TYPE STANDARD TABLE OF zcl_zedm_vim_gr_create_mpc=>ts_goodsreceipt WITH DEFAULT KEY,
+        lockingaction TYPE zcl_zedm_vim_gr_create_mpc=>ts_lockingaction,
+        actionnav     TYPE zcl_zedm_vim_gr_create_mpc=>ts_action,
+        balancecheck  TYPE zcl_zedm_vim_gr_create_mpc=>ts_balancecheck,
+      END OF ty_vimdocheader_deep .
+
+  data GV_COMP_CODE type BUKRS .
+  data GV_CREDITMEMO type /OPT/VIM_BL_CM .
+  data GV_PONUMBER type EBELN .
+  data GT_POITEMS type BAPIMEPOITEM_TP .
+  data GT_POHISTORY type BAPIEKBE_TP .
+  data GT_HISTORY_TOTALS type BAPIEKBES_TP .
+  data GT_GOODSRECEIPTS type ZCL_ZEDM_VIM_GR_CREATE_MPC=>TT_GOODSRECEIPT .
+  data GV_GROSSAMOUNT type /OPT/RMWWR .
+  data GT_ITEMS type ZCL_ZEDM_VIM_GR_CREATE_MPC=>TT_PURCHASEORDERITEM .
+  data GS_BALANCECHECK type ZCL_ZEDM_VIM_GR_CREATE_MPC=>TS_BALANCECHECK .
+  data GS_LOCKINGACTION type ZCL_ZEDM_VIM_GR_CREATE_MPC=>TS_LOCKINGACTION .
+  data GT_RETURN type BAPIRET2_T .
+  data GV_FULLEXPAND type BOOLE value ABAP_FALSE ##NO_TEXT.
+  constants:
+    BEGIN OF gc_msg_type,
+        error   TYPE symsgty VALUE 'E' ##NO_TEXT,
+        warning TYPE symsgty VALUE 'W' ##NO_TEXT,
+      END OF gc_msg_type .
+  constants:
+    BEGIN OF gc_lock_action,
+        create TYPE zvim_gr_app_lock_action VALUE 'C' ##NO_TEXT,
+        extend TYPE zvim_gr_app_lock_action VALUE 'E' ##NO_TEXT,
+        force  TYPE zvim_gr_app_lock_action VALUE 'F' ##NO_TEXT,
+        delete TYPE zvim_gr_app_lock_action VALUE 'D' ##NO_TEXT,
+      END OF gc_lock_action .
+  constants:
+    BEGIN OF gc_status,
+        rescan     TYPE char20 VALUE 'Rescan Complete' ##NO_TEXT,
+        duplicate  TYPE char20 VALUE 'Confirmed Duplicate' ##NO_TEXT,
+        obsolete   TYPE char20 VALUE 'Obsolete' ##NO_TEXT,
+        posted     TYPE char20 VALUE 'Posted' ##NO_TEXT,
+        deleted    TYPE char20 VALUE 'Deleted' ##NO_TEXT,
+        blocked    TYPE char20 VALUE 'Blocked' ##NO_TEXT,
+        rejected   TYPE char20 VALUE 'Rejected' ##NO_TEXT,
+        creditmemo TYPE char20 VALUE 'Now a Credit Memo' ##NO_TEXT,
+        invoice    TYPE char20 VALUE 'Now an Invoice' ##NO_TEXT,
+      END OF gc_status .
+  data GV_NAVIGATE type BOOLE_D value ABAP_FALSE ##NO_TEXT.
+
+  methods _READ_POITEMS_GOODSRECEIPTS
+    importing
+      value(I_VIM_DOC_ID) type /OPT/DOCID
+      value(I_SEQUENCE) type ZVIM_GR_APP_SEQUENCE .
+  methods _CALCULATE_BALANCE
+    importing
+      value(I_VIM_DOC_ID) type /OPT/DOCID
+      value(I_SEQUENCE) type ZVIM_GR_APP_SEQUENCE .
+  methods _SET_INITIAL_LOCK
+    importing
+      value(I_VIM_DOC_ID) type /OPT/DOCID
+      value(I_SEQUENCE) type ZVIM_GR_APP_SEQUENCE .
+  methods ADD_MESSAGE
+    importing
+      !MSGLIST type BAPIRETTAB optional
+      !MSG type BAPIRET2 optional
+      !ADDTOHEADER type BOOLEAN default ABAP_TRUE
+      !RAISEEXCEP type BOOLEAN default ABAP_FALSE
+      !MSGTXT type BAPI_MSG optional
+      !MSGTXTTYP type C1 default 'E' .
+  methods _SET_SELECTED_GR
+    importing
+      value(I_VIM_DOC_ID) type /OPT/DOCID
+      !I_UNSELECT_ALL type BOOLEAN optional .
+  methods _MANAGE_LOCK
+    importing
+      !I_VIM_DOC_ID type /OPT/DOCID
+      !I_APP_UUID type SYSUUID_C32
+      !IV_ACTION type CHAR01
+    returning
+      value(ET_RETURN) type BAPIRET2_T .
+  methods _CREATE_GR_APP_HDR
+    importing
+      !IS_ZVIM_GR_APP_HDR type ZVIM_GR_APP_HDR
+    returning
+      value(EV_SUCCESS) type BOOLEAN .
+  methods _GET_TAX_RATE
+    importing
+      !IV_BUKRS type BUKRS
+      !IV_MWSKZ type /OPT/VIM_TAX_CODE
+      !IV_WAERS type WAERS
+      !IV_RBKPV type TXJCD
+    returning
+      value(EV_KBETR) type /OPT/VIM_TAX_RATE .
+  methods _CHECK_VIM_LOCK
+    importing
+      !IV_VIMDOC type /OPT/DOCID
+    exporting
+      value(EV_LOCK) type BOOLEAN
+      value(EV_USER) type EQEUNAME .
+
+  methods /IWBEP/IF_MGW_APPL_SRV_RUNTIME~CREATE_DEEP_ENTITY
+    redefinition .
+  methods /IWBEP/IF_MGW_APPL_SRV_RUNTIME~GET_STREAM
+    redefinition .
+  methods /IWBEP/IF_MGW_CORE_SRV_RUNTIME~EXEC_SERVICE_OPERATION
+    redefinition .
+  methods /IWBEP/IF_MGW_CORE_SRV_RUNTIME~READ_ENTITY
+    redefinition .
+  methods /IWBEP/IF_MGW_CORE_SRV_RUNTIME~READ_ENTITYSET
+    redefinition .
+protected section.
+
+  methods ACTIONS_GET_ENTITY
+    redefinition .
+  methods BALANCECHECKSET_GET_ENTITY
+    redefinition .
+  methods GOODSRECEIPTSSET_GET_ENTITYSET
+    redefinition .
+  methods LOCKINGACTIONS_GET_ENTITY
+    redefinition .
+  methods PURCHASEORDERITE_GET_ENTITYSET
+    redefinition .
+  methods REASONCODES_GET_ENTITYSET
+    redefinition .
+  methods USERDETAILS_GET_ENTITYSET
+    redefinition .
+  methods VIMDOCHEADERS_GET_ENTITY
+    redefinition .
+  methods VIMIMAGESET_GET_ENTITY
+    redefinition .
+  methods VIMDOCSHSET_GET_ENTITYSET
+    redefinition .
+private section.
+
+  methods _CHECK_GR_QTY
+    importing
+      value(I_VIM_DOC_ID) type /OPT/DOCID
+    returning
+      value(TAB_DSPMSG) type /OPT/STRUCT_MESSAGE_TABLE_T .
+*protected section.
+*private section.
+ENDCLASS.
+
+
+
+CLASS ZCL_ZEDM_VIM_GR_CREATE_DPC_EXT IMPLEMENTATION.
+
+
+  METHOD /iwbep/if_mgw_appl_srv_runtime~create_deep_entity.
+*-----------------------------------------------------------------------------------------
+* DESCRIPTION:  This method is called by the ZVIM_GR application.  It mainly handles user
+*               actions including Validate, Submit, Reject, forcing a lock and saving
+*               data in the GR matching table.
+* NOTES:
+*
+* AUTHOR:       James Southwell
+* CREATE DATE:  29.09.2020
+*
+* ACTIVITY:     AD-11-32-01 - Goods Receipting
+* DEV SCRIPT:   DC-11-32-01-01 - VIM GR UI5 Application
+*-----------------------------------------------------------------------------------------
+* VERSION CONTROL:
+*
+* Date       Author    CTS Req    SCR        Description
+* ---------- --------- ---------- ---------- ---------------------------------------------
+* 29.09.2020 070667JPS RD2K919880 6000002064 BAR 2020-07 VIM Integration with MyFi.
+* 27.04.2020 210983DY  RD2K920964 6000002335 BAR 2020-08 ROMAN Tolerances
+* 07.06.2021 210983DY  RD2K921119 6000002334 BAR e-Invoicing for SAP
+* 22.09.2021 210983DY  RD2K921768 S 6000002537: VIM October release
+*                                 Pass rejection Code Short text and comments to VIM
+* 23.09.2021 180876KNS RD2K921768  CR 6000002537: VIM October release
+*   Update last User who matched for POC Team Email
+*-----------------------------------------------------------------------------------------
+    DATA:
+      ls_vimdocheader_deep         TYPE ty_vimdocheader_deep,
+      lv_status                    TYPE /opt/vim_1head-status,
+      lv_curr_proc_type            TYPE /opt/process_type,
+      lv_vimdoc_status             TYPE char20,
+      lv_credit_memo               TYPE /opt/vim_bl_cm,
+      ls_goodsreceipts             TYPE zcl_zedm_vim_gr_create_mpc=>ts_goodsreceipt,
+      ls_zvim_gr_app_gr            TYPE zvim_gr_app_gr,
+      lt_return                    TYPE bapiret2_t,
+      ls_return                    TYPE bapiret2,
+      lv_message                   TYPE bapi_msg,
+      lv_msg_type                  TYPE symsgty,
+      lv_lock_action               TYPE char01, "zvim_gr_app_lock_action,
+      lv_lock_success              TYPE boolean,
+      lt_reject_reason             TYPE tline_tab,
+      ls_reject_reasn_str          TYPE string,
+      ls_zvim_gr_app_hdr           TYPE zif_z_vim_gr_app_hdr_create=>zvim_gr_app_hdr,
+      lt_zvim_gr_app_itm           TYPE zif_z_vim_gr_app_itm_create=>zvim_gr_app_itm_tt,
+      ls_zvim_gr_app_itm           TYPE zif_z_vim_gr_app_itm_create=>zvim_gr_app_itm,
+      lv_subrc                     TYPE char01,
+      ls_overdue_reason            TYPE zvim_late_cmnt,
+      lt_values                    TYPE TABLE OF dd07v,
+      lw_item_counter              TYPE /opt/docitemid, " i.
+* DATA : Get current User Email Address
+      ls_user_address              TYPE bapiaddr3,
+      ls_user_logondata            TYPE bapilogond,
+      lt_get_user_detail_return    TYPE TABLE OF bapiret2,
+      lv_processing_poc_email_addr TYPE zfvim_email.
+
+* Access the data from the IO_DATA_PROVIDER
+    io_data_provider->read_entry_data( IMPORTING es_data = ls_vimdocheader_deep ).
+
+* First check if the VIM Document status has changed
+    SELECT SINGLE status curr_proc_type credit_memo
+      FROM /opt/vim_1head
+      INTO (lv_status, lv_curr_proc_type, lv_credit_memo)
+     WHERE docid = ls_vimdocheader_deep-vimdocid.
+
+    IF sy-subrc = 0.
+* Check the status to see if it has changed since the start of the session.
+      CASE lv_status.
+        WHEN '06'.
+          lv_vimdoc_status = gc_status-rescan."'Rescan Complete'.
+        WHEN '08'.
+          lv_vimdoc_status = gc_status-duplicate."'Confirmed Duplicate'.
+        WHEN '10'.
+          lv_vimdoc_status = gc_status-obsolete."'Obsolete'.
+        WHEN '15'.
+          lv_vimdoc_status = gc_status-posted."'Posted'.
+        WHEN '16'.
+          lv_vimdoc_status = gc_status-deleted."'Deleted'.
+        WHEN '18'.
+          lv_vimdoc_status = gc_status-blocked."'Blocked'.
+        WHEN OTHERS.  "Status hasn't changed but check if rejected now.
+* Could be rejected by a POC (Point Of Contact) - check this
+          IF lv_curr_proc_type = '932'.
+            lv_vimdoc_status = gc_status-rejected."'Rejected'.
+          ENDIF.
+      ENDCASE.
+
+    ENDIF.
+
+* Check if the document type has changed during the GR app session
+    IF ( lv_vimdoc_status EQ '' ).  " Status is OK so far
+* Check if the document type has changed
+      IF ( ls_vimdocheader_deep-creditmemo NE lv_credit_memo ).
+
+        IF ( lv_credit_memo EQ abap_true ).
+          lv_vimdoc_status = gc_status-creditmemo."'Now a Credit Memo'.
+        ELSE.
+          lv_vimdoc_status = gc_status-invoice." 'Now an Invoice'.
+        ENDIF.
+
+      ENDIF.
+    ENDIF.
+* End of added block for document type change
+
+    IF lv_vimdoc_status NE ''.
+* Return the status to the UI5 application as it has changed since
+* the user started the application session.
+      CONCATENATE 'Status = '
+                  lv_vimdoc_status
+             INTO lv_message
+                  SEPARATED BY space.
+
+      ls_return-message = lv_message.
+      ls_return-type = gc_msg_type-error.  "E or W
+      ls_return-id = 'ST'.
+      ls_return-number = '001'.
+      APPEND ls_return TO lt_return.
+
+    ENDIF.
+
+    IF lt_return IS NOT INITIAL.
+      add_message( EXPORTING msglist = lt_return  ).
+
+* Delete the lock.  Lock action of 'D' for 'Delete' will be used
+      lv_lock_action = gc_lock_action-delete. "'D
+
+      DATA(lt_return_lock) = me->_manage_lock( i_vim_doc_id = ls_vimdocheader_deep-vimdocid
+      i_app_uuid = ls_vimdocheader_deep-lockingaction-app_uuid
+      iv_action = lv_lock_action
+      ).
+
+* No need to check if any errors occurred in deleting the lock.
+    ELSE.
+
+      MOVE-CORRESPONDING ls_vimdocheader_deep TO ls_zvim_gr_app_hdr.
+
+      ls_zvim_gr_app_hdr-lifnr = ls_vimdocheader_deep-vendorno.
+      ls_zvim_gr_app_hdr-vend_name = ls_vimdocheader_deep-vendname.
+      ls_zvim_gr_app_hdr-ebeln = ls_vimdocheader_deep-ponumber.
+      ls_zvim_gr_app_hdr-net_amount = ls_vimdocheader_deep-netamount.
+      ls_zvim_gr_app_hdr-tax_amount = ls_vimdocheader_deep-taxamount.
+      ls_zvim_gr_app_hdr-gross_amount = ls_vimdocheader_deep-grossamount.
+
+      MOVE-CORRESPONDING ls_vimdocheader_deep-actionnav TO ls_zvim_gr_app_hdr.
+
+      ls_zvim_gr_app_hdr-userid = sy-uname.
+      ls_zvim_gr_app_hdr-actiondate = sy-datum.
+      ls_zvim_gr_app_hdr-actiontime = sy-uzeit.
+      ls_zvim_gr_app_hdr-receivedgoods = space.
+
+      ls_zvim_gr_app_hdr-received_dt   = ls_vimdocheader_deep-receiveddt.
+      ls_zvim_gr_app_hdr-payment_terms = ls_vimdocheader_deep-paymentterms.
+
+      MOVE-CORRESPONDING ls_vimdocheader_deep-lockingaction TO ls_zvim_gr_app_hdr.
+
+      ls_zvim_gr_app_hdr-credit_memo = ls_vimdocheader_deep-creditmemo.
+
+      gv_grossamount = ls_vimdocheader_deep-grossamount.
+      gv_creditmemo = ls_vimdocheader_deep-creditmemo.
+      gv_comp_code = ls_vimdocheader_deep-compcode.
+      gv_ponumber  = ls_vimdocheader_deep-ponumber.
+
+      MOVE-CORRESPONDING ls_vimdocheader_deep-goodsreceipts TO gt_goodsreceipts.
+
+* FInd and Increment Sequence
+      SELECT SINGLE MAX( sequence )
+                    INTO @DATA(lv_sequence)
+                    FROM zvim_gr_app_hdr
+                   WHERE vimdocid = @ls_zvim_gr_app_hdr-vimdocid.
+
+      IF sy-subrc IS INITIAL.
+        lv_sequence = lv_sequence + 1. "Found record, increment
+      ELSE.
+* No existing record for the VIM Doc ID so set sequence to 1.
+        lv_sequence = 1.
+      ENDIF.
+
+      ls_zvim_gr_app_hdr-sequence = lv_sequence.
+
+      CASE ls_vimdocheader_deep-actionnav-useraction.
+        WHEN 'VALIDATE'.
+
+          DATA(lt_message) = me->_check_gr_qty( i_vim_doc_id = ls_vimdocheader_deep-vimdocid ).
+
+          LOOP AT lt_message INTO DATA(ls_message) WHERE msgtyp = 'E'.
+            CLEAR : ls_return.
+            ls_return-type = 'E'.
+            ls_return-id   = 'VA'."ls_message-msgid.
+            CONCATENATE TEXT-t08 ls_message-msgv4 '.' TEXT-t09 INTO ls_return-message SEPARATED BY space.
+            APPEND ls_return TO lt_return.
+          ENDLOOP.
+
+          IF NOT lt_return IS INITIAL.
+            add_message( EXPORTING msglist = lt_return  ).
+          ENDIF.
+
+          CLEAR: ls_return.
+          IF ls_vimdocheader_deep-creditmemo EQ abap_true AND
+             ls_vimdocheader_deep-balancecheck-iswithintolerance = abap_false AND
+             ls_vimdocheader_deep-balancecheck-balance EQ '0'.
+
+            LOOP AT gt_goodsreceipts INTO DATA(ls_gr) WHERE creditquantity GT 0.
+              IF ls_gr-creditquantity GT ls_gr-quantitydelivered.
+                ls_return-type = 'E'.
+                ls_return-id   = 'VA'.
+                CONCATENATE TEXT-t10 ls_gr-grdocnumber '.' TEXT-t11 INTO ls_return-message SEPARATED BY space.
+                APPEND ls_return TO lt_return.
+              ENDIF.
+            ENDLOOP.
+            IF lt_return IS NOT INITIAL.
+              add_message( EXPORTING msglist = lt_return  ).
+            ENDIF.
+          ENDIF.
+
+          IF ls_vimdocheader_deep-balancecheck-balance NE '0' AND ls_vimdocheader_deep-balancecheck-iswithintolerance = abap_false.
+
+            CLEAR: ls_return.
+            IF ls_vimdocheader_deep-creditmemo EQ abap_true.
+              ls_return-message = TEXT-t02.
+            ELSE.
+              CONCATENATE TEXT-t12 TEXT-t13 TEXT-t14 INTO ls_return-message.
+*              ls_return-message = TEXT-t01.
+            ENDIF.
+            ls_return-type = 'E'.
+            ls_return-id = 'VA'.
+            ls_return-number = '001'. " this number is used in UI to display long message
+            APPEND ls_return TO lt_return.
+
+            IF lt_return IS NOT INITIAL.
+              add_message( EXPORTING msglist = lt_return  ).
+            ENDIF.
+
+          ENDIF.
+
+* There may be no need to so anything in here as the status is checked and the balance is re-calculated when the back-end is called anyway.
+* The ls_gr structure is updated and passed back to the calling oData
+* service and ultimately the UI5 app at the bottom of this method.
+* The UI5 app take these values, puts them in a JSON model and sets
+* this model to the view for displaying to the user.
+
+        WHEN 'SUBMIT'.
+          DATA(lt_message_check) = me->_check_gr_qty( i_vim_doc_id = ls_vimdocheader_deep-vimdocid ).
+
+          IF ls_vimdocheader_deep-isduedate_passed = abap_true AND
+           NOT ls_vimdocheader_deep-late_reason IS INITIAL .
+
+            ls_overdue_reason-docid = ls_vimdocheader_deep-vimdocid.
+            ls_overdue_reason-zzlate_cmnt = ls_vimdocheader_deep-late_comment.
+            ls_overdue_reason-reason_code = ls_vimdocheader_deep-late_reason.
+            MODIFY zvim_late_cmnt FROM ls_overdue_reason.
+
+          ENDIF.
+
+          LOOP AT lt_message_check INTO DATA(ls_message_v) WHERE msgtyp = 'E'.
+            CLEAR : ls_return.
+            ls_return-type = 'W'.
+            ls_return-id   = ls_message_v-msgid.
+            CONCATENATE TEXT-t08 ls_message_v-msgv4 '.' TEXT-t09 INTO ls_return-message SEPARATED BY space.
+            APPEND ls_return TO lt_return.
+          ENDLOOP.
+
+          IF NOT lt_return IS INITIAL.
+            add_message( EXPORTING msglist = lt_return  ).
+          ENDIF.
+          IF ls_vimdocheader_deep-lockingaction-lock_action = gc_lock_action-force.  "'F'.
+            lv_lock_action = ls_vimdocheader_deep-lockingaction-lock_action.
+          ELSE.
+            lv_lock_action = gc_lock_action-extend. "'E'.
+          ENDIF.
+
+          lt_return_lock = me->_manage_lock( i_vim_doc_id = ls_vimdocheader_deep-vimdocid
+          i_app_uuid = ls_vimdocheader_deep-lockingaction-app_uuid
+          iv_action = lv_lock_action
+          ).
+          APPEND LINES OF lt_return_lock TO lt_return.
+
+          IF lt_return IS NOT INITIAL.
+            add_message( EXPORTING msglist = lt_return  ).
+          ELSE.
+            ls_zvim_gr_app_hdr-sequence = lv_sequence.
+            DATA(lv_success) = me->_create_gr_app_hdr( is_zvim_gr_app_hdr = ls_zvim_gr_app_hdr ).
+
+            IF lv_success = 'X'.
+              IF ( ls_vimdocheader_deep-creditmemo NE abap_true ).  "It's an invoice
+* Only store GR matching data for invoices
+                LOOP AT ls_vimdocheader_deep-goodsreceipts INTO ls_goodsreceipts.
+                  MOVE-CORRESPONDING ls_goodsreceipts TO ls_zvim_gr_app_gr.
+                  MODIFY zvim_gr_app_gr FROM ls_zvim_gr_app_gr.
+                ENDLOOP.
+
+* VIM is updated in the following function call
+
+                CALL FUNCTION 'Z_VIM_GR_APP_UPD_MATCHED_ITMS'
+                  EXPORTING
+                    iv_vimdocid     = ls_vimdocheader_deep-vimdocid
+                    iv_sequence     = lv_sequence
+                    iv_test_mode    = abap_false
+                    is_late_comment = ls_overdue_reason
+                  IMPORTING
+                    et_return       = lt_return.
+
+                IF lt_return IS NOT INITIAL.
+                  add_message( EXPORTING msglist = lt_return ).
+                ELSE.
+                  lv_success = 'X'.
+
+                  " --
+                  " When an Invoice is matched, update the POC Group table for group POC emails
+                  " to record the last actual person who posted the GR or matched the invoice
+                  " This is used to help determine who should get escalation emails
+                  CLEAR: ls_user_logondata, ls_user_address, lv_processing_poc_email_addr.
+                  REFRESH: lt_get_user_detail_return.
+                  CALL FUNCTION 'BAPI_USER_GET_DETAIL'
+                    EXPORTING
+                      username  = sy-uname
+                    IMPORTING
+                      logondata = ls_user_logondata
+                      address   = ls_user_address
+                    TABLES
+                      return    = lt_get_user_detail_return.
+
+                  IF ( lt_get_user_detail_return[] IS INITIAL ) AND
+                     ( ls_user_logondata-ustyp = 'A'          ) AND
+                     ( ls_user_address-e_mail IS NOT INITIAL  ).
+                    " Dialog User posted the GR (not system user)
+                    " and the user has an email address
+                    lv_processing_poc_email_addr = ls_user_address-e_mail.
+                    TRANSLATE lv_processing_poc_email_addr TO UPPER CASE.
+
+                    CALL FUNCTION 'Z_VIM_UPDATE_POC_MAPPING_TABLE'
+                      EXPORTING
+                        iv_vim_docid            = ls_vimdocheader_deep-vimdocid
+                        iv_processing_poc_email = lv_processing_poc_email_addr.
+                  ENDIF.
+                ENDIF.
+
+              ELSE.  " Credit Memo
+* Store the UI5 app item details for credit memos only
+* Map request Item input fields to function module parameters
+                lw_item_counter = 1.
+                LOOP AT ls_vimdocheader_deep-goodsreceipts INTO ls_goodsreceipts.
+                  ls_zvim_gr_app_itm-mandt = sy-mandt.
+                  ls_zvim_gr_app_itm-vimdocid = ls_goodsreceipts-vimdocid.
+                  ls_zvim_gr_app_itm-sequence = lv_sequence.
+                  ls_zvim_gr_app_itm-ebeln = ls_goodsreceipts-po_number.
+                  ls_zvim_gr_app_itm-ebelp = ls_goodsreceipts-po_item.
+
+                  ls_zvim_gr_app_itm-itemid = lw_item_counter.
+                  lw_item_counter = lw_item_counter + 1.
+
+                  ls_zvim_gr_app_itm-linetext = ls_goodsreceipts-headertext.
+                  ls_zvim_gr_app_itm-quantityordered = ls_goodsreceipts-quantitydelivered.
+                  ls_zvim_gr_app_itm-unitprice = ls_goodsreceipts-unitprice.
+                  ls_zvim_gr_app_itm-taxcode = ls_goodsreceipts-taxcode.
+*                  ls_zvim_gr_app_itm-taxamount = ls_goodsreceipts-taxamount.
+                  ls_zvim_gr_app_itm-quantityleft = 0.  " For old GR App
+                  ls_zvim_gr_app_itm-quantityreceived = 0.  " For old GR App
+                  ls_zvim_gr_app_itm-unitofmeasure = ls_goodsreceipts-uom.
+                  ls_zvim_gr_app_itm-webre = ls_goodsreceipts-webre.
+                  ls_zvim_gr_app_itm-grrefdocid = ls_goodsreceipts-grdocnumber.
+                  ls_zvim_gr_app_itm-grrefdocyr = ls_goodsreceipts-grdocyear.
+                  ls_zvim_gr_app_itm-grrefdocitem = ls_goodsreceipts-grdocitem.
+                  ls_zvim_gr_app_itm-quantitygrd = 0. " For old GR App
+                  ls_zvim_gr_app_itm-quantityreversed = ls_goodsreceipts-creditquantity.
+
+                  APPEND ls_zvim_gr_app_itm TO lt_zvim_gr_app_itm.
+
+                ENDLOOP.
+
+                CALL FUNCTION 'Z_VIM_GR_APP_ITM_CREATE'
+                  EXPORTING
+                    it_zvim_gr_app_itm = lt_zvim_gr_app_itm
+                  IMPORTING
+                    ev_success         = lv_success.
+
+
+* Not a lot of error checking is needed at this point. The important
+* thing is to store the reject reasons as the Header
+* and Item tables are ony used to store an audit trail of the user
+* action, which is secondary to the Reject reason storage which
+* are done separately and also record the user action.
+              ENDIF.
+              IF lv_success EQ 'X'.
+                COMMIT WORK.
+              ELSE.
+                ROLLBACK WORK.
+              ENDIF.
+            ELSE.  "HDR create
+              ROLLBACK WORK.
+            ENDIF.
+
+* Call VIM function to fill VIM document lines which
+* will trigger the VIM business rules to post the VIM FI credit memo.
+            IF ( ls_vimdocheader_deep-creditmemo EQ abap_true ).
+
+              CALL FUNCTION 'Z_VIM_REVGRUI5_UPDATE_VIMDOC'
+                EXPORTING
+                  iv_vimdocid                = ls_vimdocheader_deep-vimdocid
+                  iv_sequence                = lv_sequence
+                EXCEPTIONS
+                  err_ui5_header_read        = 1
+                  err_ui5_item_read          = 2
+                  err_unable_to_add_vim_line = 3
+                  OTHERS                     = 4.
+              IF sy-subrc <> 0.
+
+                lv_subrc = sy-subrc.
+
+                CONCATENATE TEXT-t03
+                             lv_subrc
+                       INTO lv_message
+                  SEPARATED BY space.
+
+                ls_return-message = lv_message.
+                ls_return-type = gc_msg_type-error.  "E
+                ls_return-id = 'CM'.
+                ls_return-number = '100'.
+                APPEND ls_return TO lt_return.
+              ENDIF.
+
+              IF lt_return IS NOT INITIAL.
+                add_message( EXPORTING msglist = lt_return  ).
+              ENDIF.
+
+            ENDIF.
+
+* Release the lock for the VIM document
+* Lock action of 'D' for 'Delete' will be used
+            lv_lock_action = gc_lock_action-delete. "'D'.
+            lt_return_lock = me->_manage_lock( i_vim_doc_id = ls_vimdocheader_deep-vimdocid
+          i_app_uuid = ls_vimdocheader_deep-lockingaction-app_uuid
+          iv_action = lv_lock_action
+          ).
+            APPEND LINES OF lt_return_lock TO lt_return.
+
+
+* No error checking is needed - the lock can remain as an expired
+* lock if it isn't deleted for some reason.
+          ENDIF.
+
+        WHEN 'REJECT'.
+          IF ls_vimdocheader_deep-lockingaction-lock_action = gc_lock_action-force. "'F'.
+            lv_lock_action = ls_vimdocheader_deep-lockingaction-lock_action.
+          ELSE.
+            lv_lock_action = gc_lock_action-extend. "'E'.
+          ENDIF.
+
+          lt_return_lock = me->_manage_lock( i_vim_doc_id = ls_vimdocheader_deep-vimdocid
+                    i_app_uuid = ls_vimdocheader_deep-lockingaction-app_uuid
+                    iv_action = lv_lock_action
+                    ).
+          APPEND LINES OF lt_return_lock TO lt_return.
+
+
+          IF lt_return IS NOT INITIAL.
+            add_message( EXPORTING msglist = lt_return  ).
+*         return.
+          ELSE.
+
+
+* Get Rejection reason Codes
+            CALL FUNCTION 'GET_DOMAIN_VALUES'
+              EXPORTING
+                domname         = 'ZZVIM_REJECTION_CODE'
+                text            = 'X'
+              TABLES
+                values_tab      = lt_values
+              EXCEPTIONS
+                no_values_found = 1
+                OTHERS          = 2.
+            IF sy-subrc <> 0.
+* Implement suitable error handling here
+            ELSE.
+              READ TABLE lt_values INTO DATA(ls_value) WITH KEY domvalue_l = ls_vimdocheader_deep-reject_reason.
+              IF sy-subrc IS INITIAL.
+                ls_reject_reasn_str = ls_value-ddtext.
+              ENDIF.
+            ENDIF.
+
+* Store the rejection reason in the VIM tables.  The passed in char
+* value needs to be moved to a string variable and then converted to
+* an internal table for storing by the "Z_VIM_POC_REJECT" function.
+            IF NOT ls_vimdocheader_deep-actionnav-rejectreason IS INITIAL.
+              CONCATENATE ls_reject_reasn_str cl_abap_char_utilities=>newline ls_vimdocheader_deep-actionnav-rejectreason INTO ls_reject_reasn_str.
+            ENDIF.
+
+            CALL FUNCTION 'HRHAP_CONVERT_STR_TO_TABLE'
+              EXPORTING
+                note_string = ls_reject_reasn_str
+              IMPORTING
+                note_tab    = lt_reject_reason.
+
+* Call VIM's Function call
+            CALL FUNCTION 'Z_VIM_POC_REJECT'
+              EXPORTING
+                iv_vim_docid = ls_vimdocheader_deep-vimdocid
+              CHANGING
+                ct_comments  = lt_reject_reason.
+
+
+* Store the UI5 app header details
+            lv_success = me->_create_gr_app_hdr( is_zvim_gr_app_hdr = ls_zvim_gr_app_hdr ).
+
+* CR 6000001564 - release the lock for the VIM document
+* Lock action of 'D' for 'Delete' will be used
+            lv_lock_action = gc_lock_action-delete. "'D'
+            lt_return_lock = me->_manage_lock( i_vim_doc_id = ls_zvim_gr_app_hdr-vimdocid
+            i_app_uuid = ls_zvim_gr_app_hdr-app_uuid
+            iv_action = lv_lock_action
+            ).
+            APPEND LINES OF lt_return_lock TO lt_return.
+
+* No error checking is needed - the lock can remain as an expired
+* lock if it isn't deleted for some reason.
+
+          ENDIF.
+
+* Call from UI for  balance calculation
+        WHEN 'BAL'.
+          IF ls_vimdocheader_deep-lockingaction-lock_action = gc_lock_action-extend.
+            CALL METHOD me->_calculate_balance
+              EXPORTING
+                i_vim_doc_id = ls_vimdocheader_deep-vimdocid
+                i_sequence   = ls_vimdocheader_deep-sequence.
+
+            MOVE-CORRESPONDING gs_balancecheck TO ls_vimdocheader_deep-balancecheck.
+          ENDIF.
+        WHEN 'RECEIPT'.
+* On Navigation to create Purchase receipt application
+          gv_navigate = abap_true.
+          DATA(lv_gr_select) = abap_false.
+          IF ls_vimdocheader_deep-balancecheck-balance LT '0'.
+            lv_gr_select = abap_true.
+          ENDIF.
+          CALL METHOD me->_set_selected_gr
+            EXPORTING
+              i_vim_doc_id   = ls_vimdocheader_deep-vimdocid
+              i_unselect_all = lv_gr_select.
+
+
+        WHEN 'CLOSE'.
+* Close event is triggered on Navigating to Create Purchase Receipt Application and also upon Close Browser
+* To differentiate, Lock action is sent as 'E' for Close event on navigation to Create Purchase receipt app
+          IF ls_vimdocheader_deep-lockingaction-lock_action = gc_lock_action-extend.
+            lv_lock_action = gc_lock_action-extend.
+          ELSE.
+            lv_lock_action = gc_lock_action-delete."'D'
+            CALL METHOD me->_set_selected_gr
+              EXPORTING
+                i_vim_doc_id   = ls_vimdocheader_deep-vimdocid
+                i_unselect_all = abap_true.
+          ENDIF.
+
+          lt_return_lock = me->_manage_lock( i_vim_doc_id = ls_vimdocheader_deep-vimdocid
+          i_app_uuid = ls_vimdocheader_deep-lockingaction-app_uuid
+          iv_action = lv_lock_action ).
+          APPEND LINES OF lt_return_lock TO lt_return.
+
+
+        WHEN OTHERS.
+          IF ls_vimdocheader_deep-lockingaction-lock_action = gc_lock_action-force. "'F'.
+            lv_lock_action = ls_vimdocheader_deep-lockingaction-lock_action.
+          ELSE.
+            lv_lock_action = gc_lock_action-extend. "'E'. - Always extend when not force *e.g. for balance check
+          ENDIF.
+
+          lt_return_lock = me->_manage_lock( i_vim_doc_id = ls_vimdocheader_deep-vimdocid
+                   i_app_uuid = ls_vimdocheader_deep-lockingaction-app_uuid
+                   iv_action = lv_lock_action
+                   ).
+
+          APPEND LINES OF lt_return_lock TO lt_return.
+          IF lt_return IS NOT INITIAL.
+            add_message( EXPORTING msglist = lt_return  ).
+*      return.
+          ENDIF.
+
+      ENDCASE.
+
+    ENDIF.
+* Send the response back
+    copy_data_to_ref(
+      EXPORTING
+        is_data = ls_vimdocheader_deep
+      CHANGING
+        cr_data = er_deep_entity ).
+
+  ENDMETHOD.
+
+
+  METHOD /iwbep/if_mgw_appl_srv_runtime~get_stream.
+*----------------------------------------------------------------------*
+* METHOD ID:          /IWBEP/IF_MGW_APPL_SRV_RUNTIME~GET_STREAM
+* DESCRIPTION:        This method is used by the VIM UI5 Goods
+*                     Receipting application.  The application displays
+*                     the VIM invoice image on the right hand side of
+*                     the page.  This method retrieves the image from
+*                     the Open Text archive server, converts it to an
+*                     XSTRING and passes the data back to the UI5 app
+*                     for displaying as a PDF.  The oData Service
+*                     ZEDM_VIM_GR_CREATE_SRV calls this method with the
+*                     URL structured as follows:
+*                       /sap/opu/odata/sap/ZEDM_VIM_GR_CREATE_SRV/
+*                       CreateGrImgSet('<VIM document ID>')/$value
+*
+* AUTHOR:             James Southwell
+* CREATE DATE:        25 Feb 2019
+* R/3 RELEASE VERSION: ECC6
+*
+* ACTIVITY:           AD-11-32-01 - Goods Receipting
+* CR Number:          6000001457 - VIM UI5 Applications
+*-----------------------------------------------------------------------
+    DATA:
+      ls_key                 TYPE /iwbep/s_mgw_name_value_pair,
+      lw_vimdocid            TYPE /opt/docid,          "passed in VIM Doc ID
+      ls_lheader             TYPE ihttpnvp,            "Response header
+      ls_stream              TYPE ty_s_media_resource, "Response stream
+      lw_filename            TYPE string,
+      lw_arch_binlength      TYPE i,
+      lt_arch_binobj         TYPE TABLE OF tbl1024,
+      lw_arch_xstring        TYPE xstring,
+      lw_lengthi             TYPE i,                "For length of XString
+      lt_arch_solix          TYPE solix_tab,
+      lw_arch_doctype        TYPE toaom-doc_type,
+      lw_arch_mime_type      TYPE w3conttype,
+      lw_arch_mime_type_sdok
+        TYPE sdok_cntty,
+      lw_arch_file_extension
+        TYPE sdok_fnext,
+      lw_archive_id          TYPE /opt/saeardoid,   "Open Text archive ID
+      lw_arc_doc_id          TYPE /opt/saeardoid.   "Open Text archive Doc ID
+
+* It will always be the 'CreateGrImg' entity but include the case
+* statement anyway.
+    CASE iv_entity_name.
+      WHEN 'VimImage'.
+
+* Get the passed in VIM Doc ID
+        READ TABLE it_key_tab
+          WITH KEY name = 'Vimdocid'
+              INTO ls_key.
+
+        lw_vimdocid = ls_key-value.
+
+* Get the VIM archive ID and archive Doc ID from the VIM header
+        SELECT SINGLE
+               archiv_id
+               arc_doc_id
+          FROM /opt/vim_1head
+          INTO (lw_archive_id,
+               lw_arc_doc_id)
+         WHERE docid = lw_vimdocid.
+
+*Get Archived Object Content Data
+        CALL FUNCTION 'SCMS_AO_TABLE_GET'
+          EXPORTING
+            arc_id       = lw_archive_id
+            doc_id       = lw_arc_doc_id
+          IMPORTING
+            length       = lw_arch_binlength
+          TABLES
+            data         = lt_arch_binobj
+          EXCEPTIONS
+            error_http   = 1
+            error_archiv = 2
+            error_kernel = 3
+            error_config = 4
+            OTHERS       = 5.
+
+        IF sy-subrc = 0.
+* Convert Archived Object Content data from Binary to XString format
+          CALL FUNCTION 'SCMS_BINARY_TO_XSTRING'
+            EXPORTING
+              input_length = lw_arch_binlength
+            IMPORTING
+              buffer       = lw_arch_xstring
+            TABLES
+              binary_tab   = lt_arch_binobj
+            EXCEPTIONS
+              failed       = 1
+              OTHERS       = 2.
+
+          IF sy-subrc = 0.
+* Get the length of the XString var. for passing back in the header
+            lw_lengthi = xstrlen( lw_arch_xstring ).
+            ls_stream-value = lw_arch_xstring.
+
+* Get Archive Document Type
+            CALL FUNCTION 'ARCHIV_APPLICATIONINFO_GET'
+              EXPORTING
+                ar_object                = 'ZVIM_IVO' "iv_ar_object
+                sap_object               = '/OPT/V1001'
+              IMPORTING
+                document_type            = lw_arch_doctype
+              EXCEPTIONS
+                error_communicationtable = 1
+                error_connectiontable    = 2
+                OTHERS                   = 3.
+
+            IF sy-subrc = 0.
+* Get Archive Documents MIME Type
+              SELECT SINGLE mimetype
+                FROM toadd
+                INTO lw_arch_mime_type
+               WHERE doc_type = lw_arch_doctype.
+
+              IF sy-subrc = 0.
+* Get Archive Documents File Extension
+                lw_arch_mime_type_sdok = lw_arch_mime_type.
+                ls_stream-mime_type = lw_arch_mime_type.
+
+                SELECT SINGLE extension
+                  FROM sdokfext
+                  INTO lw_arch_file_extension
+                 WHERE type = lw_arch_mime_type_sdok.
+              ENDIF.
+            ENDIF.
+          ENDIF.
+        ENDIF.
+
+        CONCATENATE 'archive.'
+                    lw_arch_file_extension
+               INTO lw_filename.                "'archive.pdf'
+
+        lw_filename = escape( val = lw_filename
+                              format = cl_abap_format=>e_url ).
+
+        ls_lheader-name = 'Content-Type'.
+        ls_lheader-value = lw_arch_mime_type.  "application/pdf
+        set_header( is_header = ls_lheader ).
+
+        ls_lheader-name = 'Content-Length'.
+        ls_lheader-value = lw_lengthi.
+        set_header( is_header = ls_lheader ).
+
+        ls_lheader-name = 'Content-Disposition'.
+        ls_lheader-value = |inline; filename="{ lw_filename }"|.
+        set_header( is_header = ls_lheader ).
+
+
+        copy_data_to_ref( EXPORTING is_data = ls_stream
+                          CHANGING  cr_data = er_stream ).
+    ENDCASE.
+
+  ENDMETHOD.
+
+
+  METHOD /iwbep/if_mgw_core_srv_runtime~exec_service_operation.
+*----------------------------------------------------------------------*
+* METHOD ID:          /IWBEP/IF_MGW_CORE_SRV_RUNTIME~
+*                       EXEC_SERVICE_OPERATION
+* DESCRIPTION:        This method is used by the VIM UI5 Goods
+*                     Receipting application.  The application displays
+*                     the VIM invoice image on the right hand side of
+*                     the page.  This method has been redefined to stop
+*                     chaching (particularly in Internet Explorer which
+*                     seems to be the most problematic browser).  The
+*                     caching is a problem on the initial load of the
+*                     application.  Other approaches were tried to
+*                     stop caching but did not work.  The problem with
+*                     caching is that the data is not refreshed if the
+*                     user presses F5 or re-loads the application so a
+*                     user may be able to submit a duplicate GR.
+*                     The oData Service ZEDM_VIM_GR_CREATE_SRV calls
+*                     this method.
+*
+* AUTHOR:             James Southwell
+* CREATE DATE:        26 Mar 2019
+* R/3 RELEASE VERSION: ECC6
+*
+* ACTIVITY:           AD-11-32-01 - Goods Receipting
+* CR Number:          6000001500 - VIM GR UI5 App - Phase 1 Testing
+*                     Defects
+*-----------------------------------------------------------------------
+
+    DATA:
+      ls_header           TYPE ihttpnvp.
+
+    ls_header-name = 'Cache-Control'.
+    ls_header-value = 'no-cache, no-store'.
+    APPEND ls_header TO ct_headers.
+
+    ls_header-name = 'Pragma'.
+    ls_header-value = 'no-cache'.
+    APPEND ls_header TO ct_headers.
+
+    CALL METHOD super->/iwbep/if_mgw_core_srv_runtime~exec_service_operation
+      EXPORTING
+        iv_action_name     = iv_action_name
+        iv_return_type     = iv_return_type
+        iv_multiplicity    = iv_multiplicity
+        is_request_details = is_request_details
+      CHANGING
+        ct_headers         = ct_headers
+        cr_data            = cr_data.
+
+
+  ENDMETHOD.
+
+
+  METHOD /iwbep/if_mgw_core_srv_runtime~read_entity.
+*----------------------------------------------------------------------*
+* METHOD ID:          /IWBEP/IF_MGW_CORE_SRV_RUNTIME~READ_ENTITY
+* DESCRIPTION:        This method is used by the VIM UI5 Goods
+*                     Receipting application.  The application displays
+*                     the VIM invoice image on the right hand side of
+*                     the page.  This method has been redefined to stop
+*                     chaching (particularly in Internet Explorer which
+*                     seems to be the most problematic browser).  The
+*                     caching is a problem on the initial load of the
+*                     application.  Other approaches were tried to
+*                     stop caching but did not work.  The problem with
+*                     caching is that the data is not refreshed if the
+*                     user presses F5 or re-loads the application so a
+*                     user may be able to submit a duplicate GR.
+*                     The oData Service ZEDM_VIM_GR_CREATE_SRV calls
+*                     this method.
+*
+* AUTHOR:             James Southwell
+* CREATE DATE:        26 Mar 2019
+* R/3 RELEASE VERSION: ECC6
+*
+* ACTIVITY:           AD-11-32-01 - Goods Receipting
+* CR Number:          6000001500 - VIM GR UI5 App - Phase 1 Testing
+*                     Defects
+*-----------------------------------------------------------------------
+
+    DATA:
+      ls_header           TYPE ihttpnvp.
+
+    ls_header-name = 'Cache-Control'.
+    ls_header-value = 'no-cache, no-store'.
+    APPEND ls_header TO ct_headers.
+
+    ls_header-name = 'Pragma'.
+    ls_header-value = 'no-cache'.
+    APPEND ls_header TO ct_headers.
+
+    CALL METHOD super->/iwbep/if_mgw_core_srv_runtime~read_entity
+      EXPORTING
+        iv_entity_name     = iv_entity_name
+        iv_source_name     = iv_source_name
+        is_request_details = is_request_details
+      CHANGING
+        ct_headers         = ct_headers
+        cr_entity          = cr_entity.
+
+
+  ENDMETHOD.
+
+
+  method /IWBEP/IF_MGW_CORE_SRV_RUNTIME~READ_ENTITYSET.
+*----------------------------------------------------------------------*
+* METHOD ID:          /IWBEP/IF_MGW_CORE_SRV_RUNTIME~READ_ENTITYSET
+* DESCRIPTION:        This method is used by the VIM UI5 Goods
+*                     Receipting application.  The application displays
+*                     the VIM invoice image on the right hand side of
+*                     the page.  This method has been redefined to stop
+*                     chaching (particularly in Internet Explorer which
+*                     seems to be the most problematic browser).  The
+*                     caching is a problem on the initial load of the
+*                     application.  Other approaches were tried to
+*                     stop caching but did not work.  The problem with
+*                     caching is that the data is not refreshed if the
+*                     user presses F5 or re-loads the application so a
+*                     user may be able to submit a duplicate GR.
+*                     The oData Service ZEDM_VIM_GR_CREATE_SRV calls
+*                     this method.
+*
+* AUTHOR:             James Southwell
+* CREATE DATE:        26 Mar 2019
+* R/3 RELEASE VERSION: ECC6
+*
+* ACTIVITY:           AD-11-32-01 - Goods Receipting
+* CR Number:          6000001500 - VIM GR UI5 App - Phase 1 Testing
+*                     Defects
+*-----------------------------------------------------------------------
+  data:
+    ls_header           type ihttpnvp.
+
+  ls_header-name = 'Cache-Control'.
+  ls_header-value = 'no-cache, no-store'.
+  append ls_header to ct_headers.
+
+  ls_header-name = 'Pragma'.
+  ls_header-value = 'no-cache'.
+  append ls_header to ct_headers.
+
+  call method super->/iwbep/if_mgw_core_srv_runtime~read_entityset
+    exporting
+      iv_entity_name           = iv_entity_name
+      iv_source_name           = iv_source_name
+      is_paging                = is_paging
+      it_order                 = it_order
+      it_filter_select_options = it_filter_select_options
+      is_request_details       = is_request_details
+    changing
+      ct_headers               = ct_headers
+      cr_entityset             = cr_entityset.
+
+
+  endmethod.
+
+
+  METHOD actions_get_entity.
+*-----------------------------------------------------------------------------------------
+* DESCRIPTION:  Called by the ZVIM_GR UI5 application.  Retrieves the actions entity
+*               for an invoice document.  This is done to set an initial record for this
+*               this entity when the app loads.
+* NOTES:
+*
+* AUTHOR:       James Southwell
+* CREATE DATE:  01.10.2020
+*
+* ACTIVITY:     AD-11-32-01 - Goods Receipting
+* DEV SCRIPT:   DC-11-32-01-01 - VIM GR UI5 Application
+*-----------------------------------------------------------------------------------------
+* VERSION CONTROL:
+*
+* Date       Author    CTS Req    SCR        Description
+* ---------- --------- ---------- ---------- ---------------------------------------------
+* 01.10.2020 070667JPS RD2K919880 6000002064 BAR 2020-07 VIM Integration with MyFi.
+*-----------------------------------------------------------------------------------------
+    DATA:
+      ls_key     TYPE zcl_zedm_vim_gr_create_mpc=>ts_vimdocheader,
+      lt_return  TYPE bapiret2_t,
+      ls_return  TYPE bapiret2,
+      lv_message TYPE bapi_msg,
+      ls_action  TYPE zcl_zedm_vim_gr_create_mpc=>ts_action,
+      lt_action  TYPE STANDARD TABLE OF zcl_zedm_vim_gr_create_mpc=>ts_action.
+
+*--- get converted key
+    io_tech_request_context->get_converted_source_keys(
+      IMPORTING
+        es_key_values = ls_key ).
+
+* Read the VIM Document Header
+    IF ( ls_key-vimdocid EQ '000000000000' ) OR ( ls_key-vimdocid IS INITIAL ).
+* VIM document is invalid or missing.
+      MESSAGE e022(zvim_gr_app) INTO lv_message.
+      ls_return-message = lv_message.
+      ls_return-type = gc_msg_type-error. "'E'.
+      APPEND ls_return TO lt_return.
+
+      IF lt_return IS NOT INITIAL.
+        add_message( EXPORTING msglist = lt_return  ).
+        RETURN.
+      ENDIF.
+    ENDIF.
+
+* Set the key and an initial value for the user action of space
+    ls_action-vimdocid = ls_key-vimdocid.
+    ls_action-sequence = ls_key-sequence.
+    ls_action-useraction = ''.
+
+    MOVE-CORRESPONDING ls_action TO er_entity.
+
+
+  ENDMETHOD.
+
+
+  METHOD add_message.
+*-----------------------------------------------------------------------------------------
+* DESCRIPTION:  Ccopied from MyFi Purchasing app method of the same name.
+*               This method adds messages to the message container.
+* NOTES:
+*
+* AUTHOR:       James Southwell (original authors: James Southwell / Stephen Ning)
+* CREATE DATE:  22.09.2020
+*
+* ACTIVITY:     AD-11-32-01 - Goods Receipting
+* DEV SCRIPT:   DC-11-32-01-01 - VIM GR UI5 Application
+*-----------------------------------------------------------------------------------------
+* VERSION CONTROL:
+*
+* Date       Author    CTS Req    SCR        Description
+* ---------- --------- ---------- ---------- ---------------------------------------------
+* 22.09.2020 070667JPS RD2K919880 6000002064 BAR 2020-07 VIM Integration with MyFi.
+*-----------------------------------------------------------------------------------------
+    DATA: lt_msg        TYPE bapirettab,
+          ls_msg        TYPE bapiret2,
+          lt_exceptions TYPE /iwbep/t_message_container,
+          lv_param      TYPE symsgv.
+
+    DATA: lo_message_container TYPE REF TO /iwbep/if_message_container,
+          lc_bus_exception     TYPE REF TO /iwbep/cx_mgw_busi_exception.
+
+
+    lo_message_container = mo_context->get_message_container( ).
+
+    IF msglist IS NOT INITIAL.
+      lt_msg = msglist.
+    ENDIF.
+
+    IF msg IS NOT INITIAL.
+      APPEND msg TO lt_msg.
+    ENDIF.
+
+    IF msgtxt IS NOT INITIAL.
+      ls_msg-type = msgtxttyp.
+      ls_msg-message = msgtxt.
+      APPEND ls_msg TO lt_msg.
+    ENDIF.
+
+
+    IF lt_msg IS NOT INITIAL.
+      lo_message_container->add_messages_from_bapi(
+          it_bapi_messages          =  lt_msg              " Entity key as name-value pair
+          iv_add_to_response_header = abap_true       " Flag for adding or not the message to the response header
+      ).
+
+    ENDIF.
+  ENDMETHOD.
+
+
+  METHOD balancecheckset_get_entity.
+*-----------------------------------------------------------------------------------------
+* DESCRIPTION:  Called by the ZVIM_GR UI5 application.  Retrieves the balance check data
+*               for an invoice document.
+* NOTES:
+*
+* AUTHOR:       James Southwell
+* CREATE DATE:  22.09.2020
+*
+* ACTIVITY:     AD-11-32-01 - Goods Receipting
+* DEV SCRIPT:   DC-11-32-01-01 - VIM GR UI5 Application
+*-----------------------------------------------------------------------------------------
+* VERSION CONTROL:
+*
+* Date       Author    CTS Req    SCR        Description
+* ---------- --------- ---------- ---------- ---------------------------------------------
+* 22.09.2020 070667JPS RD2K919880 6000002064 BAR 2020-07 VIM Integration with MyFi.
+*-----------------------------------------------------------------------------------------
+    DATA:
+      ls_key     TYPE zcl_zedm_vim_gr_create_mpc=>ts_vimdocheader,
+      lt_return  TYPE bapiret2_t,
+      ls_return  TYPE bapiret2,
+      lv_message TYPE bapi_msg.
+
+*--- get converted key
+    io_tech_request_context->get_converted_source_keys(
+      IMPORTING
+        es_key_values = ls_key ).
+
+* Read the VIM document header
+    IF ( ls_key-vimdocid EQ '000000000000' ) OR ( ls_key-vimdocid IS INITIAL ).
+* VIM document is invalid or missing.
+      MESSAGE e022(zvim_gr_app) INTO lv_message.
+      ls_return-message = lv_message.
+      ls_return-type = gc_msg_type-error. "'E'.
+      APPEND ls_return TO lt_return.
+
+      IF lt_return IS NOT INITIAL.
+        add_message( EXPORTING msglist = lt_return  ).
+        RETURN.
+      ENDIF.
+    ENDIF.
+
+    er_entity = gs_balancecheck.
+
+  ENDMETHOD.
+
+
+  METHOD goodsreceiptsset_get_entityset.
+*-----------------------------------------------------------------------------------------
+* DESCRIPTION:  Called by the ZVIM_GR UI5 application.  Retrieves the Goods Receipt data
+*               for a VIM document for use in the app (either invoice or credit memo types).
+*               Sorting and filtering are also handled.
+* NOTES:
+*
+* AUTHOR:       James Southwell
+* CREATE DATE:  01.10.2020
+*
+* ACTIVITY:     AD-11-32-01 - Goods Receipting
+* DEV SCRIPT:   DC-11-32-01-01 - VIM GR UI5 Application
+*-----------------------------------------------------------------------------------------
+* VERSION CONTROL:
+*
+* Date       Author    CTS Req    SCR        Description
+* ---------- --------- ---------- ---------- ---------------------------------------------
+*01.10.2020 070667JPS RD2K919880 6000002064 BAR 2020-07 VIM Integration with MyFi.
+*-----------------------------------------------------------------------------------------
+    DATA:
+      ls_key          TYPE zcl_zedm_vim_gr_create_mpc=>ts_vimdocheader,
+      lt_return       TYPE bapiret2_t,
+      ls_return       TYPE bapiret2,
+      lt_entrydate    TYPE RANGE OF cpudt,
+      lt_deliverydate TYPE RANGE OF cpudt,
+      lt_quantity     TYPE RANGE OF menge_d,
+      lt_unitprice    TYPE RANGE OF bprei,
+      lt_valueextax   TYPE RANGE OF wrbtr,
+      lv_message      TYPE bapi_msg.
+
+*--- get converted key
+    io_tech_request_context->get_converted_source_keys(
+      IMPORTING
+        es_key_values = ls_key ).
+
+* read the vim document header
+    IF ( ls_key-vimdocid EQ '000000000000' ) OR ( ls_key-vimdocid IS INITIAL ).
+* VIM document is invalid or missing.
+      MESSAGE e022(zvim_gr_app) INTO lv_message.
+      ls_return-message = lv_message.
+      ls_return-type = gc_msg_type-error. "'E'.
+      APPEND ls_return TO lt_return.
+
+      IF lt_return IS NOT INITIAL.
+        add_message( EXPORTING msglist = lt_return  ).
+        RETURN.
+      ENDIF.
+    ENDIF.
+
+    DATA(lt_filter_select_options) = it_filter_select_options.
+    DATA(lt_order) = it_order.
+
+* If gv_fullexpand is initial it means that this method was called for a filter or sort and not from the initial expanded entity call
+    IF ( gv_fullexpand IS INITIAL AND lt_filter_select_options IS INITIAL AND lt_order IS INITIAL )
+     OR ( lt_filter_select_options IS NOT INITIAL OR lt_order IS NOT INITIAL ).
+* Need to get data again as previous filtering could have deleted some records.
+* Need to get the PO number first
+      SELECT SINGLE ebeln
+        FROM /opt/vim_1head
+        INTO gv_ponumber
+       WHERE docid = ls_key-vimdocid.
+
+      CALL METHOD me->_read_poitems_goodsreceipts
+        EXPORTING
+          i_vim_doc_id = ls_key-vimdocid
+          i_sequence   = ls_key-sequence.
+
+* Do filter first if passed in
+      READ TABLE lt_filter_select_options INDEX 1 ASSIGNING FIELD-SYMBOL(<ls_filter_select_options>).
+      IF ( <ls_filter_select_options> IS ASSIGNED ) OR ( gv_fullexpand EQ abap_false ).  " Still get the GR data if filter was called with no parameters
+
+        LOOP AT it_filter_select_options INTO DATA(ls_filter_options).
+
+          READ TABLE ls_filter_options-select_options INDEX 1 ASSIGNING FIELD-SYMBOL(<fs_selection>).
+
+          TRANSLATE ls_filter_options-property TO UPPER CASE.
+
+          CASE ls_filter_options-property.
+            WHEN 'GRDOCNUMBER'.
+              CONCATENATE '*' <fs_selection>-low '*' INTO <fs_selection>-low.
+              DELETE gt_goodsreceipts WHERE NOT grdocnumber CP <fs_selection>-low.
+            WHEN 'GRDOCYEAR'.
+              DELETE gt_goodsreceipts WHERE grdocyear NE <fs_selection>-low.
+            WHEN 'ENTRYDATE'.
+
+
+              IF <fs_selection>-low EQ 'null'. CLEAR <fs_selection>-low. ENDIF.
+              IF <fs_selection>-high EQ 'null'. CLEAR <fs_selection>-high. ENDIF.
+              lt_entrydate = VALUE #( FOR ls_ranges_entry IN ls_filter_options-select_options
+             ( sign = 'I' option = 'BT' low = ls_ranges_entry-low high = ls_ranges_entry-high ) ).
+
+              DELETE gt_goodsreceipts WHERE entrydate NOT IN lt_entrydate.
+            WHEN 'DELIVERYDATE'.
+
+              IF <fs_selection>-low EQ 'null'. CLEAR <fs_selection>-low. ENDIF.
+              IF <fs_selection>-high EQ 'null'. CLEAR <fs_selection>-high. ENDIF.
+              lt_deliverydate = VALUE #( FOR ls_ranges_del IN ls_filter_options-select_options
+             ( sign = 'I' option = 'BT' low = ls_ranges_del-low high = ls_ranges_del-high ) ).
+
+              DELETE gt_goodsreceipts WHERE deliverydate NOT IN lt_deliverydate.
+
+            WHEN 'HEADERTEXT'.
+              CONCATENATE '*' <fs_selection>-low '*' INTO <fs_selection>-low.
+              DELETE gt_goodsreceipts WHERE NOT headertext CP <fs_selection>-low.
+            WHEN 'DELIVERYNOTE'.
+              CONCATENATE '*' <fs_selection>-low '*' INTO <fs_selection>-low.
+              DELETE gt_goodsreceipts WHERE NOT deliverynote CP <fs_selection>-low.
+            WHEN 'QUANTITYDELIVERED'.
+
+              IF <fs_selection>-low EQ 'null'. CLEAR <fs_selection>-low. ENDIF.
+              IF <fs_selection>-high EQ 'null'. CLEAR <fs_selection>-high. ENDIF.
+              lt_quantity = VALUE #( FOR ls_ranges_qty IN ls_filter_options-select_options
+             ( sign = 'I' option = 'BT' low = ls_ranges_qty-low high = ls_ranges_qty-high ) ).
+              DELETE gt_goodsreceipts WHERE NOT quantitydelivered IN lt_quantity.
+
+            WHEN 'UOM'.
+              DELETE gt_goodsreceipts WHERE uom NE <fs_selection>-low.
+
+            WHEN 'UNITPRICE'.
+
+              IF <fs_selection>-low EQ 'null'. CLEAR <fs_selection>-low. ENDIF.
+              IF <fs_selection>-high EQ 'null'. CLEAR <fs_selection>-high. ENDIF.
+              lt_unitprice = VALUE #( FOR ls_ranges_unit IN ls_filter_options-select_options
+             ( sign = 'I' option = 'BT' low = ls_ranges_unit-low high = ls_ranges_unit-high ) ).
+
+              DELETE gt_goodsreceipts WHERE unitprice NOT IN lt_unitprice.
+
+            WHEN 'TAXCODE'.
+              DELETE gt_goodsreceipts WHERE taxcode NE <fs_selection>-low.
+            WHEN 'VALUEEXTAX'.
+              IF <fs_selection>-low EQ 'null'. CLEAR <fs_selection>-low. ENDIF.
+              IF <fs_selection>-high EQ 'null'. CLEAR <fs_selection>-high. ENDIF.
+              lt_valueextax = VALUE #( FOR ls_ranges_value IN ls_filter_options-select_options
+             ( sign = 'I' option = 'BT' low = ls_ranges_value-low high = ls_ranges_value-high ) ).
+
+              DELETE gt_goodsreceipts WHERE valueextax NOT IN lt_valueextax.
+
+            WHEN 'SHOWREVERSALIND'.
+              " If space (false), delete reversal records from gt_goodsreceipts (movement type 102?  )
+              " If true, don't need to do anything as reversals should already be included )
+
+              " Might need to check if QUANTITYDELIVERED is negative for reversals rather than checking movement type
+          ENDCASE.
+        ENDLOOP.
+
+      ENDIF.
+
+* Do sorting if passed in
+      READ TABLE lt_order INDEX 1 ASSIGNING FIELD-SYMBOL(<ls_order>).
+      IF <ls_order> IS ASSIGNED.
+
+        TRANSLATE <ls_order>-property TO UPPER CASE.
+        CASE <ls_order>-order.
+          WHEN 'asc'.
+            SORT gt_goodsreceipts ASCENDING BY (<ls_order>-property).
+          WHEN 'desc'.
+            SORT gt_goodsreceipts DESCENDING BY (<ls_order>-property).
+          WHEN OTHERS.
+        ENDCASE.
+
+      ENDIF.
+
+    ENDIF.
+
+    et_entityset = gt_goodsreceipts.
+
+  ENDMETHOD.
+
+
+  METHOD lockingactions_get_entity.
+*-----------------------------------------------------------------------------------------
+* DESCRIPTION:  Called by the ZVIM_GR UI5 application.  Retrieves the locking actions for
+*               a VIM document.
+* NOTES:
+*
+* AUTHOR:       James Southwell
+* CREATE DATE:  22.09.2020
+*
+* ACTIVITY:     AD-11-32-01 - Goods Receipting
+* DEV SCRIPT:   DC-11-32-01-01 - VIM GR UI5 Application
+*-----------------------------------------------------------------------------------------
+* VERSION CONTROL:
+*
+* Date       Author    CTS Req    SCR        Description
+* ---------- --------- ---------- ---------- ---------------------------------------------
+* 22.09.2020 070667JPS RD2K919880 6000002064 BAR 2020-07 VIM Integration with MyFi.
+*-----------------------------------------------------------------------------------------
+    DATA:
+      ls_key     TYPE zcl_zedm_vim_gr_create_mpc=>ts_lockingaction,
+      lt_return  TYPE bapiret2_t,
+      ls_return  TYPE bapiret2,
+      lv_message TYPE bapi_msg.
+
+*--- get converted key
+    io_tech_request_context->get_converted_source_keys(
+      IMPORTING
+        es_key_values = ls_key ).
+
+* read the vim document header
+    IF ( ls_key-vimdocid EQ '000000000000' ) OR ( ls_key-vimdocid IS INITIAL ).
+* VIM Document is invalid or missing.
+      MESSAGE e022(zvim_gr_app) INTO lv_message.
+      ls_return-message = lv_message.
+      ls_return-type = gc_msg_type-error. "'E'.
+      APPEND ls_return TO lt_return.
+
+      IF lt_return IS NOT INITIAL.
+        add_message( EXPORTING msglist = lt_return  ).
+        return.
+      ENDIF.
+    ENDIF.
+
+    er_entity = gs_lockingaction.
+
+  ENDMETHOD.
+
+
+  METHOD purchaseorderite_get_entityset.
+*-----------------------------------------------------------------------------------------
+* DESCRIPTION:  Called by the ZVIM_GR UI5 application.  Retrieves the PO Items for a VIM
+*               invoice document.  Sorting and filtering are also handled.
+* NOTES:
+*
+* AUTHOR:       James Southwell
+* CREATE DATE:  11.09.2020
+*
+* ACTIVITY:     AD-11-32-01 - Goods Receipting
+* DEV SCRIPT:   DC-11-32-01-01 - VIM GR UI5 Application
+*-----------------------------------------------------------------------------------------
+* VERSION CONTROL:
+*
+* Date       Author    CTS Req    SCR        Description
+* ---------- --------- ---------- ---------- ---------------------------------------------
+* 11.09.2020 070667JPS RD2K919880 6000002064 BAR 2020-07 VIM Integration with MyFi.
+*-----------------------------------------------------------------------------------------
+
+    TYPES: ty_quantity TYPE RANGE OF bstmg.
+
+    DATA:
+      ls_key      TYPE zcl_zedm_vim_gr_create_mpc=>ts_vimdocheader,
+      lt_return   TYPE bapiret2_t,
+      ls_return   TYPE bapiret2,
+      lr_quantity TYPE ty_quantity,
+      ls_quantity TYPE LINE OF ty_quantity,
+      lv_message  TYPE bapi_msg.
+    DATA: lt_quantity TYPE RANGE OF bstmg,
+          lt_price    TYPE RANGE OF bprei.
+
+
+*--- get converted key
+    io_tech_request_context->get_converted_source_keys(
+      IMPORTING
+        es_key_values = ls_key ).
+
+* Read the VIM Document Header
+    IF ( ls_key-vimdocid EQ '000000000000' ) OR ( ls_key-vimdocid IS INITIAL ).
+*      VIM Document is invalid or missing.
+      MESSAGE e022(zvim_gr_app) INTO lv_message.
+      ls_return-message = lv_message.
+      ls_return-type = gc_msg_type-error. "'E'.
+      APPEND ls_return TO lt_return.
+
+      IF lt_return IS NOT INITIAL.
+        add_message( EXPORTING msglist = lt_return  ).
+        RETURN.
+      ENDIF.
+    ENDIF.
+
+    DATA(lt_filter_select_options) = it_filter_select_options.
+    DATA(lt_order) = it_order.
+
+
+* if gv_fullexpand is initial it means that this method was called for a filter or sort and not from the initial expanded entity call
+    IF ( gv_fullexpand IS INITIAL AND lt_filter_select_options IS INITIAL AND lt_order IS INITIAL )
+     OR ( lt_filter_select_options IS NOT INITIAL OR lt_order IS NOT INITIAL ).
+* Need to get data again as previous filtering could have deleted some records.
+* Need to get the PO number first
+      SELECT SINGLE ebeln
+        FROM /opt/vim_1head
+        INTO gv_ponumber
+       WHERE docid = ls_key-vimdocid.
+
+      CALL METHOD me->_read_poitems_goodsreceipts
+        EXPORTING
+          i_vim_doc_id = ls_key-vimdocid
+          i_sequence   = ls_key-sequence.
+
+* Do filter first if passed in
+      READ TABLE lt_filter_select_options INDEX 1 ASSIGNING FIELD-SYMBOL(<ls_filter_select_options>).
+      IF ( <ls_filter_select_options> IS ASSIGNED ) OR ( gv_fullexpand EQ abap_false ).  " Still get the GR data if filter was called with no parameters
+
+        LOOP AT it_filter_select_options INTO DATA(ls_filter_options).
+          READ TABLE ls_filter_options-select_options INDEX 1 ASSIGNING FIELD-SYMBOL(<fs_selection>).
+
+          TRANSLATE ls_filter_options-property TO UPPER CASE.
+
+          CASE ls_filter_options-property.
+            WHEN 'SHORTTEXT'.
+              DELETE gt_items WHERE NOT short_text CP <fs_selection>-low.
+            WHEN 'TAXCODE'.
+              DELETE gt_items WHERE  tax_code NE <fs_selection>-low.
+            WHEN 'QUANTITY'.
+              IF <fs_selection>-low EQ 'null'. CLEAR <fs_selection>-low. ENDIF.
+              IF <fs_selection>-high EQ 'null'. CLEAR <fs_selection>-high. ENDIF.
+              lt_quantity = VALUE #( FOR ls_ranges_qty IN ls_filter_options-select_options
+             ( sign = 'I' option = 'BT' low = ls_ranges_qty-low high = ls_ranges_qty-high ) ).
+              DELETE gt_items WHERE NOT quantity IN lt_quantity.
+
+            WHEN 'QUANTITYREMAINING'.
+              IF <fs_selection>-low EQ 'null'. CLEAR <fs_selection>-low. ENDIF.
+               IF <fs_selection>-high EQ 'null'. CLEAR <fs_selection>-high. ENDIF.
+              lt_quantity = VALUE #( FOR ls_ranges_qty IN ls_filter_options-select_options
+              ( sign = 'I' option = 'BT' low = ls_ranges_qty-low high = ls_ranges_qty-high ) ).
+              DELETE gt_items WHERE NOT quantity_remaining IN lt_quantity.
+
+            WHEN 'NETPRICE'.
+              IF <fs_selection>-low EQ 'null'. CLEAR <fs_selection>-low. ENDIF.
+               IF <fs_selection>-high EQ 'null'. CLEAR <fs_selection>-high. ENDIF.
+              lt_price = VALUE #( FOR ls_price IN ls_filter_options-select_options
+              ( sign = 'I' option = 'BT' low = ls_price-low high = ls_price-high ) ).
+              DELETE gt_items WHERE NOT net_price IN lt_price.
+
+            WHEN 'EFFECTIVEVALUE'.
+              IF <fs_selection>-low EQ 'null'. CLEAR <fs_selection>-low. ENDIF.
+               IF <fs_selection>-high EQ 'null'. CLEAR <fs_selection>-high. ENDIF.
+              lt_price = VALUE #( FOR ls_price IN ls_filter_options-select_options
+              ( sign = 'I' option = 'BT' low = ls_price-low high = ls_price-high ) ).
+              DELETE gt_items WHERE NOT effective_value IN lt_price.
+
+          ENDCASE.
+        ENDLOOP.
+
+      ENDIF.
+
+* Do sorting if passed in
+      READ TABLE lt_order INDEX 1 ASSIGNING FIELD-SYMBOL(<ls_order>).
+      IF <ls_order> IS ASSIGNED.
+        TRANSLATE <ls_order>-property TO UPPER CASE.
+        CASE <ls_order>-property.
+          WHEN 'TAXCODE'.
+            <ls_order>-property = 'TAX_CODE'.
+          WHEN 'SHORTTEXT'.
+            <ls_order>-property = 'SHORT_TEXT'.
+          WHEN 'QUANTITY'.
+            <ls_order>-property = 'QUANTITY'.
+          WHEN 'NETPRICE'.
+            <ls_order>-property = 'NET_PRICE'.
+          WHEN 'EFFECTIVEVALUE'.
+            <ls_order>-property = 'EFFECTIVE_VALUE'.
+          WHEN OTHERS.
+        ENDCASE.
+
+
+        CASE <ls_order>-order.
+          WHEN 'asc'.
+            SORT gt_items ASCENDING BY (<ls_order>-property).
+          WHEN 'desc'.
+            SORT gt_items DESCENDING BY (<ls_order>-property).
+          WHEN OTHERS.
+        ENDCASE.
+      ENDIF.
+    ENDIF.
+
+    et_entityset = gt_items.
+
+  ENDMETHOD.
+
+
+  METHOD reasoncodes_get_entityset.
+*-----------------------------------------------------------------------------------------
+* DESCRIPTION:  This method is called by the ZVIM_GR UI5 application.  It retrieves
+*               Domain values for Reason Code
+* NOTES:
+*
+* AUTHOR:       Dathri Yellamarthy
+* CREATE DATE:  07.06.2021
+*
+* ACTIVITY:     AD-11-32-01 - Goods Receipting
+* DEV SCRIPT:   DC-11-32-01-01 - VIM GR UI5 Application
+*-----------------------------------------------------------------------------------------
+* VERSION CONTROL:
+*
+* Date       Author    CTS Req    SCR        Description
+* ---------- --------- ---------- ---------- ---------------------------------------------
+* 07.06.2021 210983DY  RD2K921119 6000002334 BAR e-Invoicing for SAP
+* 22.09.2021 210983DY  RD2K921768 S 6000002537: VIM October release
+*                                 Pass rejection Codes to UI
+*-----------------------------------------------------------------------------------------
+
+    DATA: lt_values    TYPE TABLE OF dd07v,
+          ls_entityset TYPE zcl_zedm_vim_gr_create_mpc=>ts_reasoncode.
+
+* Get Late reason Codes
+    CALL FUNCTION 'GET_DOMAIN_VALUES'
+      EXPORTING
+        domname         = 'ZZVIM_LATE_REASON_CODE'
+        text            = 'X'
+      TABLES
+        values_tab      = lt_values
+      EXCEPTIONS
+        no_values_found = 1
+        OTHERS          = 2.
+    IF sy-subrc <> 0.
+* Implement suitable error handling here
+    ELSE.
+      LOOP AT lt_values INTO DATA(ls_value).
+        ls_entityset-datatype = 'Late'.
+        ls_entityset-reasoncode = ls_value-domvalue_l.
+        ls_entityset-late_comment = ls_value-ddtext.
+        APPEND ls_entityset TO et_entityset.
+        CLEAR ls_entityset.
+      ENDLOOP.
+
+    ENDIF.
+
+* Get Rejection reason Codes
+    CALL FUNCTION 'GET_DOMAIN_VALUES'
+      EXPORTING
+        domname         = 'ZZVIM_REJECTION_CODE'
+        text            = 'X'
+      TABLES
+        values_tab      = lt_values
+      EXCEPTIONS
+        no_values_found = 1
+        OTHERS          = 2.
+    IF sy-subrc <> 0.
+* Implement suitable error handling here
+    ELSE.
+      LOOP AT lt_values INTO ls_value.
+        ls_entityset-datatype = 'Reject'.
+        ls_entityset-reasoncode = ls_value-domvalue_l.
+        ls_entityset-late_comment = ls_value-ddtext.
+        APPEND ls_entityset TO et_entityset.
+        CLEAR ls_entityset.
+      ENDLOOP.
+
+    ENDIF.
+
+
+
+
+
+  ENDMETHOD.
+
+
+method userdetails_get_entityset.
+*-----------------------------------------------------------------------------------------
+* DESCRIPTION:  UserDetails Get EntitySet - copied from Purchasing Receipting application
+* NOTES:        Returs the details of logged on user.
+*
+* AUTHOR:       James Southwell  (original author: Fred Chelashaw)
+* CREATE DATE:  07.09.2020
+*
+* ACTIVITY:     AD-11-32-01 - Goods Receipting
+* DEV SCRIPT:   DC-11-32-01-01 - VIM GR UI5 Application
+*-----------------------------------------------------------------------------------------
+* VERSION CONTROL:
+*
+* Date       Author    CTS Req    SCR        Description
+* ---------- --------- ---------- ---------- ---------------------------------------------
+* 15.09.2020 070667JPS RD2K919880 6000002064 BAR 2020-07 VIM Integration with MyFi.
+*-----------------------------------------------------------------------------------------
+  data:
+    ls_entity like line of et_entityset,
+    l_pernr   type pernr,
+    l_usrid   type sysid,
+    l_nachn	  type pad_nachn,
+    l_vorna   type pad_vorna,
+    l_titel   type titel.
+
+*--- user ID
+  ls_entity-user_id = sy-uname.
+
+*--- full name
+  select single name_text
+    from v_usr_name
+    into ls_entity-full_name
+    where bname = sy-uname.
+  if ls_entity-full_name is initial.
+    ls_entity-full_name = sy-uname.
+  endif.
+
+*--- employee ID
+  l_pernr = sy-uname.
+  select single pernr
+    from pa0001
+    into l_pernr
+    where pernr = l_pernr.
+  if sy-subrc <> 0.
+    l_usrid = sy-uname.
+    select single pernr
+      from pa0105
+      into l_pernr
+      where usrid eq l_usrid
+        and subty eq '0001'.
+  endif.
+
+*--- full name from HR
+  if l_pernr is not initial.
+    select single nachn vorna titel
+      from pa0002
+      into (l_nachn, l_vorna, l_titel)
+      where pernr = l_pernr
+        and begda le sy-datum
+        and endda ge sy-datum.
+    if sy-subrc = 0.
+      concatenate l_titel l_vorna l_nachn into ls_entity-full_name_hr separated by space.
+    endif.
+  endif.
+  if ls_entity-full_name_hr is initial.
+    ls_entity-full_name_hr = ls_entity-full_name.
+  endif.
+
+*--- help Url
+  select single url
+    from ztfss_url
+    into ls_entity-help_url
+    where tag = 'USER_GUIDES'.
+
+*--- append the entity
+  append ls_entity to et_entityset.
+
+endmethod.
+
+
+  METHOD vimdocheaders_get_entity.
+*-----------------------------------------------------------------------------------------
+* DESCRIPTION:  This method is called by the ZVIM_GR UI5 application.  It retrieves the
+*               VIM Document header details when the initial expanded entity read is
+*               performed by the app.
+* NOTES:
+*
+* AUTHOR:       James Southwell
+* CREATE DATE:  04.09.2020
+*
+* ACTIVITY:     AD-11-32-01 - Goods Receipting
+* DEV SCRIPT:   DC-11-32-01-01 - VIM GR UI5 Application
+*-----------------------------------------------------------------------------------------
+* VERSION CONTROL:
+*
+* Date       Author    CTS Req    SCR        Description
+* ---------- --------- ---------- ---------- ---------------------------------------------
+* 04.09.2020 070667JPS RD2K919880 6000002064 BAR 2020-07 VIM Integration with MyFi.
+* 07.06.2021 210983DY  RD2K921119 6000002334 BAR e-Invoicing for SAP
+*-----------------------------------------------------------------------------------------
+
+    DATA:
+      ls_key               TYPE zcl_zedm_vim_gr_create_mpc=>ts_vimdocheader,
+      ls_vimdocheader_deep TYPE ty_vimdocheader_deep,
+      ls_vimdocheader      TYPE zcl_zedm_vim_gr_create_mpc=>ts_vimdocheader,
+      lt_return            TYPE bapiret2_t,
+      ls_return            TYPE bapiret2,
+      lv_message           TYPE bapi_msg,
+      lv_msg_type          TYPE symsgty,
+      lv_curr_proc_type    TYPE /opt/process_type,
+      lv_received_dt       TYPE zvim_received_date,
+      lv_status            TYPE /opt/vim_1head-status,
+      lv_vimdoc_status     TYPE char20,
+      lv_amount            TYPE ktwrt,
+      l_mblnr              TYPE mblnr.
+
+*--- get converted key
+    io_tech_request_context->get_converted_keys(
+      IMPORTING
+        es_key_values = ls_key ).
+
+* Read the VIM Document Header
+    IF ( ls_key-vimdocid EQ '000000000000' ) OR ( ls_key-vimdocid IS INITIAL ).
+*      VIM Document is invalid or missing.
+      MESSAGE e022(zvim_gr_app) INTO lv_message.
+      ls_return-message = lv_message.
+      ls_return-type = gc_msg_type-error. "'E'.
+      APPEND ls_return TO lt_return.
+
+      IF lt_return IS NOT INITIAL.
+        add_message( EXPORTING msglist = lt_return  ).
+        RETURN.
+      ENDIF.
+    ENDIF.
+
+    IF ( ls_key-vimdocid IS NOT INITIAL ).
+* Set global variable to indicate the initial full read on load of the app
+      gv_fullexpand = abap_true.
+
+* Retrieve data based on passed in VIM Doc ID.
+      SELECT SINGLE
+              docid
+              edi_docnum
+              status
+              curr_proc_type
+              xblnr
+              lifnr
+              vend_name
+              ebeln
+              waers
+              net_amount
+              vat_amount
+              gross_amount
+              zzreceived_date
+              pymnt_terms
+              pymnt_terms_text
+              credit_memo
+              due_date
+        FROM /opt/vim_1head
+        INTO (ls_vimdocheader-vimdocid,
+              ls_vimdocheader-edi_docnum,
+              lv_status,
+              lv_curr_proc_type,
+              ls_vimdocheader-invnumber,
+              ls_vimdocheader-vendorno,
+              ls_vimdocheader-vendname,
+              ls_vimdocheader-ponumber,
+              ls_vimdocheader-currency,
+              ls_vimdocheader-netamount,
+              ls_vimdocheader-taxamount,
+              ls_vimdocheader-grossamount,
+              lv_received_dt,
+              ls_vimdocheader-paymentterms,
+              ls_vimdocheader-paymenttermsdesc,
+              ls_vimdocheader-creditmemo,
+              ls_vimdocheader-due_date)
+        WHERE docid = ls_key-vimdocid.
+
+    ENDIF.
+
+* The status is now checked separately in case an error message needs
+* to be sent back to the UI5 application.
+
+    IF sy-subrc = 0.
+
+      IF ls_vimdocheader-paymenttermsdesc IS INITIAL.
+        SELECT SINGLE text1 INTO ls_vimdocheader-paymenttermsdesc
+          FROM t052u WHERE spras = 'E' AND
+                           zterm = ls_vimdocheader-paymentterms.
+
+      ENDIF.
+*Check the status to see if it has changed.
+* Statuses that we can't process are:
+* 06 Rescan Complete
+* 08 Confirmed Duplicate
+* 10 Obsolete
+* 15 Posted
+* 16 Deleted
+* 18 Blocked
+* We also can't process records that are rejected (see below).
+      CASE lv_status.
+        WHEN '06'.
+          lv_vimdoc_status = gc_status-rescan.
+        WHEN '08'.
+          lv_vimdoc_status = gc_status-duplicate."'Confirmed Duplicate'.
+        WHEN '10'.
+          lv_vimdoc_status = gc_status-obsolete."'Obsolete'.
+        WHEN '15'.
+          lv_vimdoc_status = gc_status-posted."'Posted'.
+        WHEN '16'.
+          lv_vimdoc_status = gc_status-deleted."'Deleted'.
+        WHEN '18'.
+          lv_vimdoc_status = gc_status-blocked."'Blocked'.
+        WHEN OTHERS.  "check if rejected.
+* Could be rejected by a POC (Point Of Contact) - check this
+          IF lv_curr_proc_type = '932'.
+            lv_vimdoc_status = gc_status-rejected." 'Rejected'.
+          ENDIF.
+      ENDCASE.
+
+      IF lv_vimdoc_status NE ''.
+* Return the status error to the UI5 application.
+        IF lv_vimdoc_status = gc_status-posted.
+
+          MESSAGE e025(zvim_gr_app) INTO lv_message.
+
+        ELSEIF lv_vimdoc_status = gc_status-rejected.
+
+          CONCATENATE TEXT-t05 TEXT-t04 INTO lv_message SEPARATED BY space.
+
+        ELSE.
+          MESSAGE e013(zvim_gr_app) WITH lv_vimdoc_status
+                                INTO lv_message.
+        ENDIF.
+
+        ls_return-message = lv_message.
+        ls_return-type = gc_msg_type-error. "'E'.
+        APPEND ls_return TO lt_return.
+
+        IF lt_return IS NOT INITIAL.
+          add_message( EXPORTING msglist = lt_return  ).
+          ls_vimdocheader-receiveddt = lv_received_dt.
+          MOVE-CORRESPONDING ls_vimdocheader TO er_entity.
+          RETURN.
+        ENDIF.
+
+      ELSE.   "Status is OK
+
+* Try to set a lock
+        CALL METHOD me->_set_initial_lock
+          EXPORTING
+            i_vim_doc_id = ls_key-vimdocid
+            i_sequence   = ls_key-sequence.
+
+* Check if the PO is a MyFi PO - set the Is MyFi flag if it is
+        ls_vimdocheader-po_is_myfi = zcl_mfp_utilities=>is_myfi( ls_vimdocheader-ponumber ).
+
+        ls_vimdocheader-receiveddt = lv_received_dt.
+
+        IF  NOT ls_vimdocheader-currency = 'AUD'.
+          lv_amount = ls_vimdocheader-grossamount.
+          ls_vimdocheader-grossamount = zcl_mfp_utilities=>convert_curr_format( iv_amount = lv_amount iv_curr = ls_vimdocheader-currency ).
+        ENDIF.
+
+* GLobal variables used in other methods
+        gv_ponumber =    ls_vimdocheader-ponumber.
+        gv_grossamount = ls_vimdocheader-grossamount.  "For use in balance calculation
+        gv_creditmemo = ls_vimdocheader-creditmemo.
+
+* Get the expanded entities as a call to the VIMDocHeaders from the UI5 app is virtually always going to be an expanded one
+        CALL METHOD me->_read_poitems_goodsreceipts
+          EXPORTING
+            i_vim_doc_id = ls_key-vimdocid
+            i_sequence   = ls_key-sequence.
+
+        IF gt_items IS INITIAL.
+
+          CONCATENATE TEXT-t06 TEXT-t07 INTO ls_return-message SEPARATED BY space.
+
+          ls_return-type = gc_msg_type-error. "'E'.
+          APPEND ls_return TO lt_return.
+
+          IF lt_return IS NOT INITIAL.
+            add_message( EXPORTING msglist = lt_return  ).
+            ls_vimdocheader-receiveddt = lv_received_dt.
+            MOVE-CORRESPONDING ls_vimdocheader TO er_entity.
+            RETURN.
+          ENDIF.
+
+        ENDIF.
+
+        IF NOT gt_goodsreceipts IS INITIAL.
+          DATA(lv_uom) = gt_goodsreceipts[ 1 ]-uom.
+        ENDIF.
+
+
+        DATA(lt_message_check) = me->_check_gr_qty( i_vim_doc_id = ls_key-vimdocid ).
+
+        LOOP AT lt_message_check INTO DATA(ls_message) WHERE msgtyp = 'E'.
+          CLEAR : ls_return.
+
+          ls_return-type = 'W'.
+          ls_return-id   = ls_message-msgid.
+          CONCATENATE TEXT-t08 ls_message-msgv4 lv_uom '.' TEXT-t09 INTO ls_return-message SEPARATED BY space.
+          APPEND ls_return TO lt_return.
+
+        ENDLOOP.
+        IF NOT lt_return IS INITIAL.
+          add_message( EXPORTING msglist = lt_return  ).
+        ENDIF.
+* Do the balance check so that initial data is returned when the aspp is loaded if some GRs have been selected already
+* (e.g. returning from Purchase Receipting app after creating a GR)
+        CALL METHOD me->_calculate_balance
+          EXPORTING
+            i_vim_doc_id = ls_key-vimdocid
+            i_sequence   = ls_key-sequence.
+
+        ls_vimdocheader-compcode = gv_comp_code.
+
+        IF     ls_vimdocheader-creditmemo  IS INITIAL AND
+               ls_vimdocheader-due_date LT sy-datum.
+          ls_vimdocheader-isduedate_passed = abap_true.
+        ENDIF.
+
+        MOVE-CORRESPONDING ls_vimdocheader TO er_entity.
+
+      ENDIF.
+
+    ELSE.
+
+      MESSAGE e022(zvim_gr_app) INTO lv_message.
+      ls_return-message = lv_message.
+      ls_return-type = gc_msg_type-error. "'E'.
+      APPEND ls_return TO lt_return.
+
+      IF lt_return IS NOT INITIAL.
+        add_message( EXPORTING msglist = lt_return  ).
+        RETURN.
+      ENDIF.
+    ENDIF.
+
+  ENDMETHOD.
+
+
+method vimdocshset_get_entityset.
+*-----------------------------------------------------------------------------------------
+* DESCRIPTION:  This method is used returns the value help (search help) for VIM Documents
+*               It is a redefinition based on the generated method of the same name to
+*               incorporate the following modifications:
+*               (1) only lookup results if at least one filter specified
+*               (2) remove leading zero's in VIM doc ID field
+
+* AUTHOR:       Fred Chelashaw
+* CREATE DATE:  19.01.2022
+*
+* ACTIVITY:     AD-11-32-01 - Goods Receipting
+* DEV SCRIPT:   DC-11-32-01-01 - VIM GR UI5 Application
+*-----------------------------------------------------------------------------------------
+* VERSION CONTROL:
+*
+* Date       Author    CTS Req    SCR        Description
+* ---------- --------- ---------- ---------- ---------------------------------------------
+* 19.01.2022 220977FKC RD2K922296 6000002623 MyFi Applications (February Release)
+*-----------------------------------------------------------------------------------------
+
+
+*-------------------------------------------------------------
+*  Data declaration
+*-------------------------------------------------------------
+  data lo_filter type  ref to /iwbep/if_mgw_req_filter.
+  data lt_filter_select_options type /iwbep/t_mgw_select_option.
+  data lv_filter_str type string.
+  data lv_max_hits type i.
+  data ls_paging type /iwbep/s_mgw_paging.
+  data ls_converted_keys like line of et_entityset.
+  data ls_message type bapiret2.
+  data lt_selopt type ddshselops.
+  data ls_selopt like line of lt_selopt.
+  data ls_filter type /iwbep/s_mgw_select_option.
+  data ls_filter_range type /iwbep/s_cod_select_option.
+  data lr_vend_name like range of ls_converted_keys-vend_name.
+  data ls_vend_name like line of lr_vend_name.
+  data lr_docid like range of ls_converted_keys-docid.
+  data ls_docid like line of lr_docid.
+  data lr_lifnr like range of ls_converted_keys-lifnr.
+  data ls_lifnr like line of lr_lifnr.
+  data lr_ebeln like range of ls_converted_keys-ebeln.
+  data ls_ebeln like line of lr_ebeln.
+  data lt_result_list type /iwbep/if_sb_gendpc_shlp_data=>tt_result_list.
+  data lv_next type i value 1.
+  data ls_entityset like line of et_entityset.
+  data ls_result_list_next like line of lt_result_list.
+  data ls_result_list like line of lt_result_list.
+
+*-------------------------------------------------------------
+*  Map the runtime request to the Search Help select option - Only mapped attributes
+*-------------------------------------------------------------
+* Get all input information from the technical request context object
+* Since DPC works with internal property names and runtime API interface holds external property names
+* the process needs to get the all needed input information from the technical request context object
+* Get filter or select option information
+  lo_filter = io_tech_request_context->get_filter( ).
+  lt_filter_select_options = lo_filter->get_filter_select_options( ).
+  lv_filter_str = lo_filter->get_filter_string( ).
+
+* Check if the supplied filter is supported by standard gateway runtime process
+  if  lv_filter_str            is not initial
+  and lt_filter_select_options is initial.
+    " If the string of the Filter System Query Option is not automatically converted into
+    " filter option table (lt_filter_select_options), then the filtering combination is not supported
+    " Log message in the application log
+    me->/iwbep/if_sb_dpc_comm_services~log_message(
+      exporting
+        iv_msg_type   = 'E'
+        iv_msg_id     = '/IWBEP/MC_SB_DPC_ADM'
+        iv_msg_number = 025 ).
+    " Raise Exception
+    raise exception type /iwbep/cx_mgw_tech_exception
+      exporting
+        textid = /iwbep/cx_mgw_tech_exception=>internal_error.
+  endif.
+
+*--- only lookup results if at least one filter specified
+  if lt_filter_select_options is initial.
+  else.
+
+* Get key table information
+    io_tech_request_context->get_converted_source_keys(
+      importing
+        es_key_values  = ls_converted_keys ).
+
+    ls_paging-top = io_tech_request_context->get_top( ).
+    ls_paging-skip = io_tech_request_context->get_skip( ).
+
+    " Calculate the number of max hits to be fetched from the function module
+    " The lv_max_hits value is a summary of the Top and Skip values
+    if ls_paging-top > 0.
+      lv_max_hits = is_paging-top + is_paging-skip.
+    endif.
+
+* Maps filter table lines to the Search Help select option table
+    loop at lt_filter_select_options into ls_filter.
+
+      case ls_filter-property.
+        when 'VEND_NAME'.              " Equivalent to 'VendName' property in the service
+          lo_filter->convert_select_option(
+            exporting
+              is_select_option = ls_filter
+            importing
+              et_select_option = lr_vend_name ).
+
+          loop at lr_vend_name into ls_vend_name.
+            ls_selopt-sign = ls_vend_name-sign.
+            ls_selopt-option = ls_vend_name-option.
+            ls_selopt-low = ls_vend_name-low.
+            ls_selopt-high = ls_vend_name-high.
+            ls_selopt-shlpfield = 'VEND_NAME'.
+            ls_selopt-shlpname = 'ZSHP_VIM_DOC'.
+            append ls_selopt to lt_selopt.
+            clear ls_selopt.
+          endloop.
+        when 'DOCID'.              " Equivalent to 'Docid' property in the service
+          lo_filter->convert_select_option(
+            exporting
+              is_select_option = ls_filter
+            importing
+              et_select_option = lr_docid ).
+
+          loop at lr_docid into ls_docid.
+            ls_selopt-sign = ls_docid-sign.
+            ls_selopt-option = ls_docid-option.
+            ls_selopt-low = ls_docid-low.
+            ls_selopt-high = ls_docid-high.
+            ls_selopt-shlpfield = 'DOCID'.
+            ls_selopt-shlpname = 'ZSHP_VIM_DOC'.
+            append ls_selopt to lt_selopt.
+            clear ls_selopt.
+          endloop.
+        when 'LIFNR'.              " Equivalent to 'Lifnr' property in the service
+          lo_filter->convert_select_option(
+            exporting
+              is_select_option = ls_filter
+            importing
+              et_select_option = lr_lifnr ).
+
+          loop at lr_lifnr into ls_lifnr.
+            ls_selopt-sign = ls_lifnr-sign.
+            ls_selopt-option = ls_lifnr-option.
+            ls_selopt-low = ls_lifnr-low.
+            ls_selopt-high = ls_lifnr-high.
+            ls_selopt-shlpfield = 'LIFNR'.
+            ls_selopt-shlpname = 'ZSHP_VIM_DOC'.
+            append ls_selopt to lt_selopt.
+            clear ls_selopt.
+          endloop.
+        when 'EBELN'.              " Equivalent to 'Ebeln' property in the service
+          lo_filter->convert_select_option(
+            exporting
+              is_select_option = ls_filter
+            importing
+              et_select_option = lr_ebeln ).
+
+          loop at lr_ebeln into ls_ebeln.
+            ls_selopt-sign = ls_ebeln-sign.
+            ls_selopt-option = ls_ebeln-option.
+            ls_selopt-low = ls_ebeln-low.
+            ls_selopt-high = ls_ebeln-high.
+            ls_selopt-shlpfield = 'EBELN'.
+            ls_selopt-shlpname = 'ZSHP_VIM_DOC'.
+            append ls_selopt to lt_selopt.
+            clear ls_selopt.
+          endloop.
+
+        when others.
+          " Log message in the application log
+          me->/iwbep/if_sb_dpc_comm_services~log_message(
+            exporting
+              iv_msg_type   = 'E'
+              iv_msg_id     = '/IWBEP/MC_SB_DPC_ADM'
+              iv_msg_number = 020
+              iv_msg_v1     = ls_filter-property ).
+          " Raise Exception
+          raise exception type /iwbep/cx_mgw_tech_exception
+            exporting
+              textid = /iwbep/cx_mgw_tech_exception=>internal_error.
+      endcase.
+    endloop.
+
+*-------------------------------------------------------------
+*  Call to Search Help get values mechanism
+*-------------------------------------------------------------
+* Get search help values
+    me->/iwbep/if_sb_gendpc_shlp_data~get_search_help_values(
+      exporting
+        iv_shlp_name = 'ZSHP_VIM_DOC'
+        iv_maxrows = lv_max_hits
+        iv_sort = 'X'
+        iv_call_shlt_exit = 'X'
+        it_selopt = lt_selopt
+      importing
+        et_return_list = lt_result_list
+        es_message = ls_message ).
+
+*-------------------------------------------------------------
+*  Map the Search Help returned results to the caller interface - Only mapped attributes
+*-------------------------------------------------------------
+    if ls_message is not initial.
+* Call RFC call exception handling
+      me->/iwbep/if_sb_dpc_comm_services~rfc_save_log(
+        exporting
+          is_return      = ls_message
+          iv_entity_type = iv_entity_name
+          it_key_tab     = it_key_tab ).
+    endif.
+
+    clear et_entityset.
+
+    loop at lt_result_list into ls_result_list
+      where record_number > ls_paging-skip.
+
+      " Move SH results to GW request responce table
+      lv_next = sy-tabix + 1. " next loop iteration
+      case ls_result_list-field_name.
+        when 'DOCID'.
+          ls_entityset-docid = ls_result_list-field_value.
+        when 'EBELN'.
+          ls_entityset-ebeln = ls_result_list-field_value.
+        when 'LIFNR'.
+          ls_entityset-lifnr = ls_result_list-field_value.
+        when 'VEND_NAME'.
+          ls_entityset-vend_name = ls_result_list-field_value.
+      endcase.
+
+      " Check if the next line in the result list is a new record
+      read table lt_result_list into ls_result_list_next index lv_next.
+      if sy-subrc <> 0
+      or ls_result_list-record_number <> ls_result_list_next-record_number.
+
+*--- remove leading zero's in vim doc id line
+        "ls_entityset-docid = |{ ls_entityset-docid alpha = out }|.
+
+*--- remove leading zero's in po line
+        CALL FUNCTION 'CONVERSION_EXIT_ALPHA_OUTPUT'
+          EXPORTING
+            input  = ls_entityset-docid
+          IMPORTING
+            output = ls_entityset-docid.
+
+        " Save the collected SH result in the GW request table
+        append ls_entityset to et_entityset.
+        clear: ls_result_list_next, ls_entityset.
+      endif.
+
+    endloop.
+
+  endif.
+
+endmethod.
+
+
+  METHOD vimimageset_get_entity.
+*-----------------------------------------------------------------------------------------
+* DESCRIPTION:  This method is called by the ZVIM_GR UI5 application.  It retrieves the
+*               VIM invoice image and returns the data to the UI5 application for
+*               displaying in a popup window.
+* NOTES:
+*
+* AUTHOR:       James Southwell
+* CREATE DATE:  15.09.2020
+*
+* ACTIVITY:     AD-11-32-01 - Goods Receipting
+* DEV SCRIPT:   DC-11-32-01-01 - VIM GR UI5 Application
+*-----------------------------------------------------------------------------------------
+* VERSION CONTROL:
+*
+* Date       Author    CTS Req    SCR        Description
+* ---------- --------- ---------- ---------- ---------------------------------------------
+* 15.09.2020 070667JPS RD2K919880 6000002064 BAR 2020-07 VIM Integration with MyFi.
+*-----------------------------------------------------------------------------------------
+    DATA:
+      ls_key                 TYPE /iwbep/s_mgw_name_value_pair,
+      lv_vimdocid            TYPE /opt/docid,          "passed in VIM Doc ID
+      ls_images              TYPE zsvim_gr_app_image,
+      lv_filename            TYPE string,
+      lv_arch_doctype        TYPE toaom-doc_type,
+      lv_arch_mime_type      TYPE w3conttype,
+      lv_arch_mime_type_sdok TYPE sdok_cntty,
+      lv_arch_file_extension TYPE sdok_fnext,
+      lv_archive_id          TYPE /opt/saeardoid,   "Open Text archive ID
+      lv_arc_doc_id          TYPE /opt/saeardoid.   "Open Text archive Doc ID
+
+
+* Get the passed in VIM Doc ID
+    READ TABLE it_key_tab
+      WITH KEY name = 'Vimdocid'
+          INTO ls_key.
+
+    lv_vimdocid = ls_key-value.
+
+* Get Archive Document Type
+    CALL FUNCTION 'ARCHIV_APPLICATIONINFO_GET'
+      EXPORTING
+        ar_object                = 'ZVIM_IVO' "iv_ar_object
+        sap_object               = '/OPT/V1001'
+      IMPORTING
+        document_type            = lv_arch_doctype
+      EXCEPTIONS
+        error_communicationtable = 1
+        error_connectiontable    = 2
+        OTHERS                   = 3.
+
+    IF sy-subrc = 0.
+* Get Archive Documents MIME Type
+      SELECT SINGLE mimetype
+               FROM toadd
+               INTO lv_arch_mime_type
+              WHERE doc_type = lv_arch_doctype.
+
+      IF sy-subrc = 0.
+* Get Archive Documents File Extension
+        lv_arch_mime_type_sdok = lv_arch_mime_type.
+*              ls_stream-mime_type = lv_arch_mime_type.
+
+        SELECT SINGLE extension
+                 FROM sdokfext
+                 INTO lv_arch_file_extension
+                WHERE type = lv_arch_mime_type_sdok.
+      ENDIF.
+    ENDIF.
+
+    CONCATENATE 'archive.'
+                lv_arch_file_extension
+           INTO lv_filename.                "'archive.pdf'
+
+    lv_filename = escape( val = lv_filename
+                          format = cl_abap_format=>e_url ).
+
+    ls_images-vimdocid = lv_vimdocid.
+    ls_images-filename = lv_filename.
+    ls_images-mimetype = lv_arch_mime_type.  "application/pdf
+
+    er_entity = ls_images.
+
+  ENDMETHOD.
+
+
+  METHOD _calculate_balance.
+*-----------------------------------------------------------------------------------------
+* DESCRIPTION:  Called by the ZVIM_GR UI5 application.  Calculates the balance data for
+*               displaying in the app.
+* NOTES:
+*
+* AUTHOR:       James Southwell
+* CREATE DATE:  22.09.2020
+*
+* ACTIVITY:     AD-11-32-01 - Goods Receipting
+* DEV SCRIPT:   DC-11-32-01-01 - VIM GR UI5 Application
+*-----------------------------------------------------------------------------------------
+* VERSION CONTROL:
+*
+* Date       Author    CTS Req    SCR        Description
+* ---------- --------- ---------- ---------- ---------------------------------------------
+* 22.09.2020 070667JPS RD2K919880 6000002064 BAR 2020-07 VIM Integration with MyFi.
+*            180876KNS
+* 27.04.2020 210983DY  RD2K920964 6000002335 BAR 2020-08 ROMAN Tolerances
+*-----------------------------------------------------------------------------------------
+
+    CONSTANTS:
+     c_tolerance_gst  TYPE bseg-wrbtr VALUE '0.01'.
+    DATA:
+      ls_goodsreceipt                TYPE zcl_zedm_vim_gr_create_mpc=>ts_goodsreceipt,
+      lv_taxamount                   TYPE wrbtr,
+      lv_nettotal                    TYPE wrbtr,
+      ls_net_line_amt                TYPE /opt/rmwwr,
+      lw_gst_round_count             TYPE i,
+*      lw_calc_gross_high             TYPE /opt/rmwwr,
+*      lw_calc_gross_low              TYPE /opt/rmwwr,
+      lw_quantity_entered            TYPE zvimqtyrcvddt,
+      lw_qty_rounded                 TYPE p DECIMALS 1,
+      ls_po_item                     TYPE bapimepoitem, "zsvim_gr_app_goodsreceipts,
+* DATA : Tax Rate for Goods Receipt Line
+      lv_gr_line_taxrate             TYPE /opt/vim_tax_rate, "/opt/vim_1item-tax_rate1,
+      lv_poheader                    TYPE bapimepoheader,
+      lt_poitems                     TYPE TABLE OF bapimepoitem,
+      lt_po_getdetail_history_totals TYPE TABLE OF bapiekbes,
+      lt_po_getdetail_return         TYPE TABLE OF bapiret2,
+      lt_po_getdetail_poitem         TYPE TABLE OF bapimepoitem,
+      lt_po_list                     TYPE zfvim_po_id_struct_t,
+      ls_purchase_order              TYPE zfvim_po_id_struct,
+      lt_index_lines                 TYPE TABLE OF /opt/vim_1item,
+      ls_index_line                  TYPE /opt/vim_1item,
+      lv_currency                    TYPE ekko-waers,
+      lv_gr_line_difference          TYPE bapicurr-bapicurr,
+      lv_tolerance_returncode        TYPE sy-subrc,
+      lv_tolerance_match             TYPE checkbox,
+      lv_tolerance_within            TYPE checkbox,
+      lv_tolerance_outside           TYPE checkbox,
+      lt_return                      TYPE bapiret2_t,
+      ls_return                      TYPE bapiret2,
+      lv_calculated_gross            TYPE bapicurr_d,
+      lv_vim_gross                   TYPE bapicurr_d,
+      lv_numb_of_tax_lines           TYPE i.
+
+    gs_balancecheck-vimdocid = i_vim_doc_id.
+    gs_balancecheck-sequence = i_sequence.
+
+    gs_balancecheck-calculatednet = 0.
+    gs_balancecheck-calculatedtax = 0.
+    gs_balancecheck-calculatedgross = 0.
+    ls_net_line_amt = 0.
+*    lw_gst_round_count = 0.
+    CLEAR lv_numb_of_tax_lines.
+* Get Currency for PO
+    SELECT SINGLE waers FROM ekko
+                     INTO lv_currency
+                     WHERE ebeln = gv_ponumber.
+
+    IF gt_goodsreceipts IS NOT INITIAL.
+
+      LOOP AT gt_goodsreceipts INTO ls_goodsreceipt WHERE selectedgr = 'X' OR creditquantity > 0.
+
+        CASE ls_goodsreceipt-taxcode.
+          WHEN 'P1' OR 'P3' OR 'P6'.
+            ADD 1 TO lv_numb_of_tax_lines.
+          WHEN 'P8' OR 'P9' OR 'PG'.
+            ADD 1 TO lv_numb_of_tax_lines.
+          WHEN OTHERS.
+        ENDCASE.
+        IF gv_creditmemo = space.  " It's an invoice
+          IF ls_goodsreceipt-selectedgr = 'X'.
+
+            IF lv_currency IS NOT INITIAL.
+              CLEAR: ls_po_item-taxjurcode.
+* Get tax rate
+              lv_gr_line_taxrate = me->_get_tax_rate( iv_bukrs = gv_comp_code
+                                                      iv_mwskz = ls_goodsreceipt-taxcode
+                                                      iv_rbkpv = ls_po_item-taxjurcode
+                                                      iv_waers = lv_currency ).
+              IF lv_gr_line_taxrate > 0.
+*              calculate Tax amount
+                ls_goodsreceipt-taxamount = ls_goodsreceipt-valueextax * ( lv_gr_line_taxrate / 100 ).
+              ELSE.
+                ls_goodsreceipt-taxamount = 0.
+              ENDIF.
+            ENDIF.
+
+            ADD ls_goodsreceipt-valueextax TO gs_balancecheck-calculatednet.
+            ADD ls_goodsreceipt-taxamount TO gs_balancecheck-calculatedtax.
+
+            IF ls_goodsreceipt-quantitydelivered > 0.
+
+              ls_net_line_amt = ls_goodsreceipt-unitprice * ls_goodsreceipt-quantitydelivered.
+              lw_quantity_entered = ls_goodsreceipt-quantitydelivered.
+
+              CALL FUNCTION 'ROUND'
+                EXPORTING
+                  decimals      = 1
+                  input         = lw_quantity_entered
+*                 SIGN          = ' '
+                IMPORTING
+                  output        = lw_qty_rounded
+                EXCEPTIONS
+                  input_invalid = 1
+                  overflow      = 2
+                  type_invalid  = 3
+                  OTHERS        = 4.
+
+              IF ( lw_quantity_entered NE lw_qty_rounded ).
+                lw_gst_round_count = lw_gst_round_count + 1.
+              ELSE.
+                lw_gst_round_count = lw_gst_round_count + 1.
+              ENDIF.
+            ENDIF.
+          ENDIF.
+        ELSE.  "A credit memo
+          IF ls_goodsreceipt-creditquantity > 0.
+
+
+            IF ls_goodsreceipt-creditquantity LE ls_goodsreceipt-quantitydelivered.
+
+              CALL FUNCTION 'BAPI_PO_GETDETAIL1'
+                EXPORTING
+                  purchaseorder = gv_ponumber
+                IMPORTING
+                  poheader      = lv_poheader
+                TABLES
+                  poitem        = lt_poitems.
+
+              lv_nettotal = ls_goodsreceipt-creditquantity * ls_goodsreceipt-unitprice.
+              ls_net_line_amt = ls_goodsreceipt-unitprice * ls_goodsreceipt-creditquantity.
+              lw_quantity_entered = ls_goodsreceipt-creditquantity.
+
+              CALL FUNCTION 'ROUND'
+                EXPORTING
+                  decimals      = 1
+                  input         = lw_quantity_entered
+*                 SIGN          = ' '
+                IMPORTING
+                  output        = lw_qty_rounded
+                EXCEPTIONS
+                  input_invalid = 1
+                  overflow      = 2
+                  type_invalid  = 3
+                  OTHERS        = 4.
+
+              IF ( lw_quantity_entered NE lw_qty_rounded ).
+                lw_gst_round_count = lw_gst_round_count + 1.
+              ELSE.
+                lw_gst_round_count = lw_gst_round_count + 1.
+              ENDIF.
+
+              IF lv_currency IS NOT INITIAL.
+                READ TABLE lt_poitems INTO ls_po_item
+                     WITH KEY po_item = ls_goodsreceipt-po_item.
+                IF sy-subrc IS INITIAL.
+
+                  lv_gr_line_taxrate = me->_get_tax_rate( iv_bukrs = gv_comp_code
+                                                        iv_mwskz = ls_goodsreceipt-taxcode
+                                                        iv_rbkpv = ls_po_item-taxjurcode
+                                                        iv_waers = lv_currency ).
+
+                  IF lv_gr_line_taxrate > 0.
+*                    ls_goodsreceipt-taxamount = ls_goodsreceipt-valueextax * ( lv_gr_line_taxrate / 100 ).
+                    ls_goodsreceipt-taxamount = lv_nettotal * ( lv_gr_line_taxrate / 100 ).
+                  ELSE.
+                    ls_goodsreceipt-taxamount = 0.
+                  ENDIF.
+                ENDIF.
+              ENDIF.
+*            lv_nettotal = ls_goodsreceipt-creditquantity * ls_goodsreceipt-unitprice.
+              ADD lv_nettotal TO gs_balancecheck-calculatednet.
+              ADD ls_goodsreceipt-taxamount TO gs_balancecheck-calculatedtax.
+              CLEAR lw_gst_round_count.
+
+
+            ELSE.
+              CLEAR : ls_return.
+              ls_return-type = 'E'.
+              ls_return-id   = 'VA'.
+              CONCATENATE TEXT-t10 ls_goodsreceipt-grdocnumber '.' TEXT-t11 INTO ls_return-message SEPARATED BY space.
+
+              APPEND ls_return TO lt_return.
+              IF NOT lt_return IS INITIAL.
+                add_message( EXPORTING msglist = lt_return  ).
+              ENDIF.
+            ENDIF.
+
+          ENDIF.
+        ENDIF.
+      ENDLOOP.
+
+*      lw_calc_gross_high = gs_balancecheck-calculatednet +
+*                                       gs_balancecheck-calculatedtax +
+*                                      ( lw_gst_round_count * c_tolerance_gst ).
+*      lw_calc_gross_low = gs_balancecheck-calculatednet +
+*                          gs_balancecheck-calculatedtax -
+*                          ( lw_gst_round_count * c_tolerance_gst ).
+
+* Calculate the line total gross amount
+      gs_balancecheck-calculatedgross =
+        gs_balancecheck-calculatednet + gs_balancecheck-calculatedtax.
+    ENDIF.
+
+*    IF gv_creditmemo = space.  " Tolerance check for Invoice only.
+    gs_balancecheck-calculatedgross = gs_balancecheck-calculatednet + gs_balancecheck-calculatedtax.
+
+    lv_calculated_gross = gs_balancecheck-calculatedgross.
+    lv_vim_gross = gv_grossamount.
+
+    SELECT SINGLE * FROM /opt/vim_1head
+     INTO @DATA(ls_vimdoc_header)
+     WHERE docid = @i_vim_doc_id.
+
+    CALL FUNCTION 'Z_VIM_TOLERANCE_CHECK'
+      EXPORTING
+        is_vim_header                 = ls_vimdoc_header
+        iv_bukrs                      = gv_comp_code
+        iv_gr_amount_bapicurr         = lv_calculated_gross
+        iv_vim_amount_bapicurr        = lv_vim_gross
+        iv_numb_of_tax_lines          = lv_numb_of_tax_lines
+      IMPORTING
+        ev_tolerance_returncode       = lv_tolerance_returncode
+        ev_difference_bapicurr        = lv_gr_line_difference
+        ev_amounts_match              = lv_tolerance_match
+        ev_within_tolerance           = lv_tolerance_within
+        ev_outside_tolerance          = lv_tolerance_outside
+      EXCEPTIONS
+        mrm_tolerance_not_active      = 1
+        mrm_unhandled_error           = 2
+        t169g_bd_tolerance_not_config = 3
+        OTHERS                        = 4.
+
+    IF sy-subrc <> 0.
+* Implement suitable error handling here
+    ENDIF.
+    IF lv_tolerance_outside = abap_true.
+      gs_balancecheck-balance = gv_grossamount - gs_balancecheck-calculatedgross.
+    ELSE.
+*      gs_balancecheck-balance = 0.
+      gs_balancecheck-balance = gv_grossamount - gs_balancecheck-calculatedgross.
+      gs_balancecheck-iswithintolerance = abap_true.
+    ENDIF.
+*    ELSE.
+*
+*      gs_balancecheck-balance = gv_grossamount - gs_balancecheck-calculatedgross.
+    IF gv_creditmemo = abap_true.
+      IF gs_balancecheck-balance = '0' AND lt_return IS INITIAL.
+        gs_balancecheck-iswithintolerance = abap_true.
+      ELSE.
+        gs_balancecheck-iswithintolerance = abap_false.
+      ENDIF.
+
+    ENDIF.
+
+
+  ENDMETHOD.
+
+
+  METHOD _check_gr_qty.
+*----------------------------------------------------------------------*
+* Activity ID        : AD-35-02-02
+* Development Script : DS-35-02-02-01
+*----------------------------------------------------------------------*
+* Method description :
+*   VIM Business Rule : Insufficient GR Quantity for Invoice
+*
+*
+*----------------------------------------------------------------------*
+* History       :
+*----------------------------------------------------------------------*
+* DATE       AUTHOR    CTS REQ     DESCRIPTION
+*----------------------------------------------------------------------*
+* 01.09.2020 180876KNS   Initial Implementation
+*----------------------------------------------------------------------*
+
+    DATA: ls_vimhead TYPE /opt/vim_1head,
+          lt_message TYPE TABLE OF /opt/struct_message.
+
+    SELECT SINGLE doctype INTO @DATA(lv_doctype) FROM /opt/vim_1head WHERE
+       docid = @i_vim_doc_id.
+    IF sy-subrc IS INITIAL.
+
+      ls_vimhead-doctype = lv_doctype.
+    ENDIF.
+
+    ls_vimhead-docid = i_vim_doc_id.
+
+    CALL FUNCTION 'Z_FVIM_PRTY_INSUFF_GR_QTY_F_IV'
+      EXPORTING
+        iv_no_update = abap_false
+      IMPORTING
+        tab_dspmsg   = tab_dspmsg
+      TABLES
+        messages     = lt_message
+      CHANGING
+        index_data   = ls_vimhead
+      EXCEPTIONS
+        check_failed = 1
+        OTHERS       = 2.
+    IF sy-subrc <> 0.
+* Implement suitable error handling here
+    ENDIF.
+
+
+
+  ENDMETHOD.
+
+
+  METHOD _check_vim_lock.
+*-----------------------------------------------------------------------------------------
+* DESCRIPTION:  This method is called by the ZVIM_GR application. This method checks if this
+*               VIM document is currently being processed by VIM Workplace transaction
+* NOTES:
+*
+* AUTHOR:       Dathri Yellamarthy
+* CREATE DATE:  28.10.2020
+*
+* ACTIVITY:     AD-11-32-01 - Goods Receipting
+* DEV SCRIPT:   DC-11-32-01-01 - VIM GR UI5 Application
+*-----------------------------------------------------------------------------------------
+* VERSION CONTROL:
+*
+* Date       Author    CTS Req    SCR        Description
+* ---------- --------- ---------- ---------- ---------------------------------------------
+* 28.10.2020 210983DY RD2K919880 6000002064 BAR 2020-07 VIM Integration with MyFi.
+*-----------------------------------------------------------------------------------------
+
+
+    DATA: lt_enq      TYPE TABLE OF seqg7,
+          lv_subrc    TYPE sy-subrc,
+          lv_vimdocid TYPE eqegraarg,
+          lv_gname    TYPE eqegraname,
+          lv_number   TYPE sy-tabix.
+
+    CONCATENATE sy-mandt iv_vimdoc INTO lv_vimdocid.
+
+    lv_gname = '/OPT/VIM_1HEAD'. " VIM Doc header table
+
+    CALL FUNCTION 'ENQUE_READ2'
+      EXPORTING
+        gclient = sy-mandt
+        gname   = lv_gname  " Vim doc header table
+        garg    = lv_vimdocid "VIM doc ID
+      IMPORTING
+        number  = lv_number
+        subrc   = lv_subrc
+      TABLES
+        enq     = lt_enq.
+
+    IF NOT lt_enq IS INITIAL.
+*  Fetch the name of the user and set lock to True
+      READ TABLE lt_enq INTO DATA(ls_enq) WITH KEY gname = lv_gname
+                                                   garg  = lv_vimdocid.
+      IF sy-subrc IS INITIAL.
+        ev_user = ls_enq-guname.
+        ev_lock = abap_true.
+      ENDIF.
+
+    ENDIF.
+
+  ENDMETHOD.
+
+
+  METHOD _create_gr_app_hdr.
+*-----------------------------------------------------------------------------------------
+*   DESCRIPTION:  This method is called by the ZVIM_GR application.  This method updates record
+*                 to VIM header table zvim_gr_app_hdr
+*   NOTES:
+*
+*   AUTHOR:       Dathri Yellamarthy
+*   CREATE DATE:  24.10.2020
+*
+*   ACTIVITY:     AD-11-32-01 - Goods Receipting
+*   DEV SCRIPT:   DC-11-32-01-01 - VIM GR UI5 Application
+*  -----------------------------------------------------------------------------------------
+*   VERSION CONTROL:
+*
+*   Date       Author    CTS Req    SCR        Description
+*   ---------- --------- ---------- ---------- ---------------------------------------------
+*   24.10.2020 210983DY RD2K919880 6000002064 BAR 2020-07 VIM Integration with MyFi.
+*  -----------------------------------------------------------------------------------------
+
+
+    DATA:
+        ls_zvim_gr_app_hdr    TYPE zvim_gr_app_hdr.
+
+* store passed in values in the table structure.
+    ls_zvim_gr_app_hdr = is_zvim_gr_app_hdr.
+
+    IF ls_zvim_gr_app_hdr-vimdocid IS NOT INITIAL.
+* Only set values that are not passed in.
+      ls_zvim_gr_app_hdr-mandt = sy-mandt.
+      ls_zvim_gr_app_hdr-userid = sy-uname.
+      ls_zvim_gr_app_hdr-actiondate = sy-datum.
+      ls_zvim_gr_app_hdr-actiontime = sy-uzeit.
+* Do the insert
+      INSERT INTO zvim_gr_app_hdr VALUES ls_zvim_gr_app_hdr.
+
+* Return the success flag.
+      IF sy-subrc = 0.
+        ev_success = 'X'.
+      ENDIF.
+
+    ENDIF.
+
+  ENDMETHOD.
+
+
+  METHOD _get_tax_rate.
+*-----------------------------------------------------------------------------------------
+* DESCRIPTION:  This method is called by the ZVIM_GR application to get the tax rate
+*
+* NOTES:
+*
+* AUTHOR:       Dathri Yellamarthy
+* CREATE DATE:  24.10.2020
+*
+* ACTIVITY:     AD-11-32-01 - Goods Receipting
+* DEV SCRIPT:   DC-11-32-01-01 - VIM GR UI5 Application
+*-----------------------------------------------------------------------------------------
+* VERSION CONTROL:
+*
+* Date       Author    CTS Req    SCR        Description
+* ---------- --------- ---------- ---------- ---------------------------------------------
+* 24.10.2020 210983DY RD2K919880 6000002064 BAR 2020-07 VIM Integration with MyFi.
+*-----------------------------------------------------------------------------------------
+
+
+* Get Tax rate
+    CALL FUNCTION '/OPT/GET_TAX_RATE'
+      EXPORTING
+        i_bukrs            = gv_comp_code
+        i_mwskz            = iv_mwskz
+        i_rbkpv            = iv_rbkpv
+        i_waers            = iv_waers
+      IMPORTING
+        e_kbetr            = ev_kbetr
+      EXCEPTIONS
+        tax_rate_not_found = 1
+        OTHERS             = 2.
+
+    IF NOT sy-subrc IS INITIAL.
+      ev_kbetr = 0.
+    ENDIF.
+
+
+  ENDMETHOD.
+
+
+  METHOD _manage_lock.
+*-----------------------------------------------------------------------------------------
+* DESCRIPTION:  This method is called by the ZVIM_GR application.  It mainly handles Locking
+*               of VIM Document with Function call Z_VIM_GR_APP_MANAGE_LOCK
+* NOTES:
+*
+* AUTHOR:       Dathri Yellamarthy
+* CREATE DATE:  24.10.2020
+*
+* ACTIVITY:     AD-11-32-01 - Goods Receipting
+* DEV SCRIPT:   DC-11-32-01-01 - VIM GR UI5 Application
+*-----------------------------------------------------------------------------------------
+* VERSION CONTROL:
+*
+* Date       Author    CTS Req    SCR        Description
+* ---------- --------- ---------- ---------- ---------------------------------------------
+* 24.10.2020 210983DY RD2K919880 6000002064 BAR 2020-07 VIM Integration with MyFi.
+*-----------------------------------------------------------------------------------------
+
+
+    DATA: lv_message      TYPE bapi_msg,
+          lv_msg_type     TYPE symsgty,
+          ls_return       TYPE bapiret2,
+          lv_lock_success TYPE boolean.
+
+    CALL FUNCTION 'Z_VIM_GR_APP_MANAGE_LOCK'
+      EXPORTING
+        iv_vimdocid        = i_vim_doc_id
+        iv_app_uuid        = i_app_uuid
+        iv_action          = iv_action
+      IMPORTING
+        ev_return_message  = lv_message
+        ev_return_msg_type = lv_msg_type
+        ev_success         = lv_lock_success.
+
+    IF lv_lock_success = abap_false.
+
+      ls_return-message = lv_message.
+      ls_return-type = lv_msg_type.
+      ls_return-id = 'LK'.
+      ls_return-number = '100'.
+      APPEND ls_return TO et_return.
+
+    ENDIF.
+
+  ENDMETHOD.
+
+
+  METHOD _read_poitems_goodsreceipts.
+*-----------------------------------------------------------------------------------------
+* DESCRIPTION:  Helper Method to read VIM Document details
+* NOTES:
+*
+* AUTHOR:       James Southwell
+* CREATE DATE:  04.09.2020
+*
+* ACTIVITY:     AD-11-32-10 - MyFi Purchase Receipting
+* DEV SCRIPT:   DS-11-32-10-01 - MyFi Purchase Receipting App
+*-----------------------------------------------------------------------------------------
+* VERSION CONTROL:
+*
+* Date       Author    CTS Req    SCR        Description
+* ---------- --------- ---------- ---------- ---------------------------------------------
+* 22.05.2020 220977FKC RD2K919103 6000001870 DFG BAR 2020-02 MyFi Purchase Receipting
+* 20.10.2020 180876KNS RD2K919880  CR 6000002064 / VIM MyFi Integration (Phase 2)
+*-----------------------------------------------------------------------------------------
+
+    CONSTANTS:
+* CONSTANTS : GR History Item Type (GR, SES or Invoice)
+      lc_gr_item_histtype_invoice TYPE t163b-bewtp VALUE 'Q',
+      lc_gr_item_histtype_gr      TYPE t163b-bewtp VALUE 'E',
+      lc_gr_item_histtype_ses     TYPE t163b-bewtp VALUE 'D'.
+
+
+* TYPES : Purchase Order Item # with line details from BAPI read
+    TYPES: BEGIN OF lty_poitem_details,
+             ebeln                  TYPE ebeln,
+             detail                 TYPE bapimepoitem,
+             quantity_receipted     TYPE /opt/vim_1item-menge,
+             amount_receipted_net   TYPE bapicurr-bapicurr,
+             amount_receipted_tax   TYPE bapicurr-bapicurr,
+             amount_receipted_gross TYPE bapicurr-bapicurr,
+             quantity_invoiced      TYPE /opt/vim_1item-menge,
+             amount_invoiced_net    TYPE bapicurr-bapicurr,
+             amount_invoiced_tax    TYPE bapicurr-bapicurr,
+             amount_invoiced_gross  TYPE bapicurr-bapicurr,
+           END OF lty_poitem_details.
+
+* TYPES : Goods Receipt History Line
+    TYPES: BEGIN OF lty_gr_history_line,
+             ebeln                 TYPE ebeln,
+             doc_year              TYPE bapiekbe-doc_year,
+             mat_doc               TYPE bapiekbe-mat_doc,
+             matdoc_itm            TYPE bapiekbe-matdoc_itm,
+             po_item               TYPE bapiekbe-po_item,
+             xblnr                 TYPE mkpf-xblnr,
+             bktxt                 TYPE mkpf-bktxt,
+             entry_date            TYPE bapiekbe-entry_date,
+             pstng_date            TYPE bapiekbe-pstng_date,
+             hist_type             TYPE bapiekbe-hist_type,
+             move_type             TYPE bapiekbe-move_type,
+             quantity              TYPE bapiekbe-quantity,
+             net_price             TYPE bapimepoitem-net_price,
+             po_unit               TYPE bapimepoitem-po_unit,
+             val_forcur            TYPE bapiekbe-val_forcur,
+             net_amount            TYPE bapicurr-bapicurr,
+             tax_amount            TYPE bapicurr-bapicurr,
+             tax_code              TYPE bapiekbe-tax_code,
+             gross_amount          TYPE bapicurr-bapicurr,
+             currency              TYPE bapiekbe-currency,
+             db_cr_ind             TYPE bapiekbe-db_cr_ind,
+             invoiced_quantity     TYPE bapiekbe-quantity,
+             invoiced_val_forcur   TYPE bapiekbe-val_forcur,
+             invoiced_net_amount   TYPE bapicurr-bapicurr,
+             invoiced_tax_amount   TYPE bapicurr-bapicurr,
+             invoiced_gross_amount TYPE bapicurr-bapicurr,
+           END OF lty_gr_history_line.
+
+* TYPES : Invoice
+    TYPES: BEGIN OF lty_invoice,
+             belnr        TYPE rbkp-belnr,
+             gjahr        TYPE rbkp-gjahr,
+             buzei        TYPE rseg-buzei,
+             deliverynote TYPE rbkp-xblnr,
+             headertext   TYPE rbkp-bktxt,
+           END OF lty_invoice.
+
+* TYPES : Goods Receipt
+    TYPES: BEGIN OF lty_goods_receipt_item,
+             mblnr TYPE mkpf-mblnr,
+             mjahr TYPE mkpf-mjahr,
+             zeile TYPE mseg-zeile,
+           END OF lty_goods_receipt_item.
+
+    DATA:
+      ls_pohistory                   TYPE bapiekbe,
+      lt_zvim_gr_app_gr              TYPE STANDARD TABLE OF zvim_gr_app_gr,
+      ls_zvim_gr_app_gr              TYPE zvim_gr_app_gr,
+      lv_poheader                    TYPE bapimepoheader,
+      ls_poitems                     TYPE bapimepoitem,
+      lt_poitems                     TYPE STANDARD TABLE OF bapimepoitem,
+      ls_items                       TYPE zcl_zedm_vim_gr_create_mpc=>ts_purchaseorderitem,
+      lt_items                       TYPE STANDARD TABLE OF zcl_zedm_vim_gr_create_mpc=>ts_purchaseorderitem,
+      lv_taxamount                   TYPE wrbtr,
+      lv_nettotal                    TYPE wrbtr,
+      ls_action                      TYPE zcl_zedm_vim_gr_create_mpc=>ts_action,
+      lt_action                      TYPE STANDARD TABLE OF zcl_zedm_vim_gr_create_mpc=>ts_action,
+      ls_goodsreceipt                TYPE zcl_zedm_vim_gr_create_mpc=>ts_goodsreceipt,
+      ls_lockingaction               TYPE zcl_zedm_vim_gr_create_mpc=>ts_lockingaction,
+      lt_lockingaction               TYPE STANDARD TABLE OF zcl_zedm_vim_gr_create_mpc=>ts_lockingaction,
+** DATA : Calculate Total Gross Ordered, Receipted and to be Receipted
+*      lv_poitem_net_ordered          TYPE bapicurr-bapicurr, "/opt/vim_1head-net_amount,
+*      lv_poitem_tax_ordered          TYPE bapicurr-bapicurr, "/opt/vim_1head-vat_amount,
+*      lv_poitem_gross_ordered        TYPE bapicurr-bapicurr, "/opt/vim_1head-gross_amount,
+*      lv_po_tot_gross_ordered        TYPE bapicurr-bapicurr, "/opt/vim_1head-gross_amount,
+*      lv_tot_gross_receipted         TYPE bapicurr-bapicurr, "/opt/vim_1head-gross_amount,
+*      lv_tot_gross_tobe_receipted    TYPE bapicurr-bapicurr, "/opt/vim_1head-gross_amount,
+*      lv_tot_gross_invoiced          TYPE bapicurr-bapicurr, "/opt/vim_1head-gross_amount,
+*      lv_tot_gross_tobe_invoiced     TYPE bapicurr-bapicurr, "/opt/vim_1head-gross_amount,
+*      lv_half_tobe_gr_less_thisgr    TYPE bapicurr-bapicurr, "/opt/vim_1head-gross_amount,
+
+* DATA : VIM Document Header
+      ls_vimdoc_header               TYPE /opt/vim_1head,
+* DATA : Fully Invoiced Purchase Order Line
+      lv_fully_invoiced_po_line      TYPE checkbox,
+* DATA : No Goods Receipt for this PO Line where VIM document is a Credit Memo
+      lv_nogr_poln_w_credit_memo     TYPE checkbox,
+* DATA : PO Item Processing
+      ls_poitem_detail               TYPE lty_poitem_details,
+      lt_active_poitems_detail       TYPE TABLE OF lty_poitem_details,
+* DATA : Goods Receipt History
+      ls_gr_history_line             TYPE lty_gr_history_line,
+      ls_history_line_gr_for_iv      TYPE lty_gr_history_line,
+      lt_gr_history_lines            TYPE TABLE OF lty_gr_history_line,
+* DATA : Tax Jurisdiction (empty for Australia)
+      lv_tax_jurisdiction            TYPE txjcd,
+* DATA : Tax Rate for Goods Receipt Line
+      lv_gr_line_taxrate             TYPE /opt/vim_tax_rate, "/opt/vim_1item-tax_rate1,
+* DATA : Currency Conversion Return message
+      lv_currency_convert_return     TYPE bapireturn,
+* DATA : Posted MM Invoice Data
+      ls_invoice                     TYPE lty_invoice,
+      ls_gritem_reversed_or_invoiced TYPE lty_goods_receipt_item,
+      ls_key                         TYPE zcl_zedm_vim_gr_create_mpc=>ts_vimdocheader,
+      ls_vimdocheader_deep           TYPE ty_vimdocheader_deep,
+      l_expanded_tech_clause         TYPE string.
+
+    FIELD-SYMBOLS:
+* FIELD-SYMBOLS : PO Details
+      <ls_poitem>           TYPE bapimepoitem,
+      <ls_pohistory>        TYPE bapiekbe,
+      <ls_pohistory_totals> TYPE bapiekbes,
+      <ls_gr_history_line>  TYPE lty_gr_history_line,
+      <ls_poitem_detail>    TYPE lty_poitem_details.
+
+    " Read the vim document header
+    " Get VIM Document Header
+    SELECT SINGLE * FROM /opt/vim_1head
+         INTO ls_vimdoc_header
+         WHERE docid = i_vim_doc_id.
+    IF sy-subrc IS NOT INITIAL.
+      " VIM Doc ID doesn't exist.
+      RETURN.
+    ENDIF.
+
+    " Retrieve list of currently selected GR items
+    SELECT * FROM zvim_gr_app_gr
+        APPENDING TABLE lt_zvim_gr_app_gr
+        WHERE vimdocid = i_vim_doc_id
+          AND sequence = i_sequence.
+
+
+    CLEAR: lv_poheader, gt_poitems, gt_pohistory, gt_goodsreceipts.
+    CALL FUNCTION 'BAPI_PO_GETDETAIL1'
+      EXPORTING
+        purchaseorder    = gv_ponumber
+      IMPORTING
+        poheader         = lv_poheader
+      TABLES
+*       RETURN           =
+        poitem           = gt_poitems
+        pohistory        = gt_pohistory
+        pohistory_totals = gt_history_totals.
+
+    gv_comp_code = lv_poheader-comp_code.
+
+    " Sort PO items
+    SORT gt_poitems BY po_item.
+
+    " Compile list of PO Items contianing GRs to match against VIM lines
+    " removing;
+    " - Deleted PO Items
+    " - PO Item's not requiring Goods Receipts (to be approved with VIM Approver Portal instead)
+    " - PO Items marked as 'Final Invoice' received (except where VIM doc is Credit Memo)
+    " - PO Items fully invoiced (even though 'Final Invoice' wasn't marked) (except where VIM doc is Credit Memo)
+    " - Deleting Empty PO Items where VIM Document is a credit memo
+    " - Handle Valuated PO Items appropriately
+    LOOP AT gt_poitems ASSIGNING <ls_poitem>
+           WHERE delete_ind IS INITIAL
+             AND gr_ind = 'X'.
+      CLEAR: lv_fully_invoiced_po_line, lv_nogr_poln_w_credit_memo.
+
+      IF ( ls_vimdoc_header-credit_memo IS INITIAL ) AND
+         ( <ls_poitem>-final_inv = 'X'             ).
+        " Don't compile VIM lines where the PO Item is marked as 'Final Invoice' (unless credit memo)
+        " Can't post invoices to PO Item marked a 'Final Invoice' but can post credit memos
+      ELSE.
+        " Check and skip this PO line if fully invoiced by looking at history totals
+        "  (but hasn't been marked as fully invoiced)
+        IF ( ls_vimdoc_header-credit_memo IS INITIAL ).
+          READ TABLE gt_history_totals
+               ASSIGNING <ls_pohistory_totals>
+               WITH KEY po_item = <ls_poitem>-po_item
+                        serial_no = '00'.
+          IF sy-subrc IS INITIAL.
+            IF ( zcl_fvim_utilities=>is_uom_valuated( <ls_poitem>-po_unit ) = 'X' ).
+              " Determine if PO line is fully invoiced (where Valuated Unit of Measure)
+              " (at this time only UOM "PU" is Valuated)
+              IF <ls_poitem>-net_price <= <ls_pohistory_totals>-val_iv_loc.
+                " PO line is Fully Invoiced.
+                lv_fully_invoiced_po_line = 'X'.
+              ELSE.
+                CLEAR: lv_fully_invoiced_po_line.
+              ENDIF.
+            ELSE.
+              " Determine if PO line is fully invoiced (where Normal Unit of Measure (not valuated))
+              IF <ls_poitem>-quantity <= <ls_pohistory_totals>-iv_qty.
+                " PO line is Fully Invoiced.
+                lv_fully_invoiced_po_line = 'X'.
+              ELSE.
+                CLEAR: lv_fully_invoiced_po_line.
+              ENDIF.
+            ENDIF.
+          ELSE.
+            " No History, therefore this line hasn't been Invoiced or GR'd against
+            CLEAR: lv_fully_invoiced_po_line.
+          ENDIF.
+
+        ELSE. " VIM Doc is a Credit Memo
+          " As VIM Document is Credit Memo, Ignore lines with no outstanding GR's to reverse
+          READ TABLE gt_history_totals
+               ASSIGNING <ls_pohistory_totals>
+               WITH KEY po_item = <ls_poitem>-po_item
+                        serial_no = '00'.
+          IF sy-subrc IS INITIAL.
+            IF ( zcl_fvim_utilities=>is_uom_valuated( <ls_poitem>-po_unit ) = 'X' ).
+              IF ( <ls_poitem>-net_price = 0 ).
+                " No GR against PO Item for VIM Credit Memo
+                " Ignore this line
+                lv_nogr_poln_w_credit_memo = 'X'.
+              ENDIF.
+            ELSE.
+              IF ( <ls_poitem>-quantity = 0 ).
+                " No GR against PO Item for VIM Credit Memo
+                " Ignore this line
+                lv_nogr_poln_w_credit_memo = 'X'.
+              ENDIF.
+            ENDIF.
+          ENDIF.
+        ENDIF.
+
+        IF ( lv_fully_invoiced_po_line = 'X'  ) OR
+           ( lv_nogr_poln_w_credit_memo = 'X' ).
+          " PO line fully invoiced, remove from PO line list so not used in checking against VIM Invoice lines
+          " OR PO line has no GRs so not used in checkign against VIM Credit Memo lines.
+          DELETE gt_poitems.
+        ELSE.
+          " PO line not fully invoiced or Credit Memo, keep this PO line in list for checking against VIM line.
+          ls_poitem_detail-ebeln = gv_ponumber.
+          ls_poitem_detail-detail = <ls_poitem>.
+          APPEND ls_poitem_detail TO lt_active_poitems_detail.
+
+        ENDIF.
+      ENDIF.
+    ENDLOOP.
+
+
+    " ----
+    " Compile GR lines table "lt_gr_history_lines" from list of active PO Item
+    " Adjust available GR Quantity to cater for whether it's been Invoiced or Reversed (movement type 102/123)
+*    CLEAR: lv_tot_gross_receipted, lv_tot_gross_tobe_receipted, lv_tot_gross_invoiced, lv_tot_gross_tobe_invoiced.
+
+    SORT gt_pohistory BY po_item entry_date entry_time doc_year mat_doc matdoc_itm.
+
+    LOOP AT lt_active_poitems_detail ASSIGNING <ls_poitem_detail>.
+      LOOP AT gt_pohistory ASSIGNING <ls_pohistory>
+           WHERE po_item = <ls_poitem_detail>-detail-po_item.
+
+        CLEAR ls_gr_history_line.
+        MOVE-CORRESPONDING <ls_pohistory> TO ls_gr_history_line.
+        ls_gr_history_line-net_price = <ls_poitem_detail>-detail-net_price.
+        ls_gr_history_line-po_unit = <ls_poitem_detail>-detail-po_unit.
+        ls_gr_history_line-ebeln = <ls_poitem_detail>-ebeln.
+        ls_gr_history_line-tax_code = <ls_poitem_detail>-detail-tax_code.
+        SELECT SINGLE xblnr bktxt FROM mkpf
+             INTO ( ls_gr_history_line-xblnr, ls_gr_history_line-bktxt )
+             WHERE mblnr = ls_gr_history_line-mat_doc
+               AND mjahr = ls_gr_history_line-doc_year.
+        IF sy-subrc IS INITIAL.
+          " Retrieved Goods Receipt's Reference and Header Text
+        ENDIF.
+
+        " Calculate GR line amounts : Get $ net value of GR line - Handle Reversal Goods Movements(Credit Memos)
+        IF ( ls_gr_history_line-db_cr_ind = zcl_fvim_constants=>gc_debit_indicator ).
+          ls_gr_history_line-net_amount = ls_gr_history_line-val_forcur.
+        ELSE.
+          " GR is Reversal or Return (Goods Movement 102 or 122)
+          ls_gr_history_line-net_amount = ls_gr_history_line-val_forcur * -1.
+        ENDIF.
+
+        " Calculate GR line amounts : Get $ value of GST for GR line
+        READ TABLE gt_poitems ASSIGNING <ls_poitem>
+             WITH KEY po_item = <ls_pohistory>-po_item.
+        IF sy-subrc IS INITIAL.
+          CLEAR: lv_tax_jurisdiction, lv_gr_line_taxrate.
+
+          lv_gr_line_taxrate = me->_get_tax_rate( iv_bukrs = lv_poheader-comp_code
+                                                     iv_mwskz = <ls_poitem>-tax_code
+                                                     iv_rbkpv = lv_tax_jurisdiction
+                                                     iv_waers = <ls_pohistory>-currency ).
+          IF lv_gr_line_taxrate > 0.
+            ls_gr_history_line-tax_amount = ls_gr_history_line-net_amount * ( lv_gr_line_taxrate / 100 ).
+          ELSE.
+            ls_gr_history_line-tax_amount = 0.
+          ENDIF.
+
+        ENDIF.
+        " Calculate GR line amounts : Get $ Gross value for GR line
+        ls_gr_history_line-gross_amount = ls_gr_history_line-net_amount + ls_gr_history_line-tax_amount.
+
+        " --
+        " Calculate following totals for later calculation to determine if a GR gross amount equivalent
+        "  which matches the invoice will be large enough that no other goods receipt can be posted
+        " - Total Goods Receipted (converted to gross amount)
+        " - Total Invoiced (converted to gross amount)
+        IF ( <ls_pohistory>-hist_type = lc_gr_item_histtype_gr ).
+          ADD ls_gr_history_line-net_amount TO <ls_poitem_detail>-amount_receipted_net.
+          ADD ls_gr_history_line-tax_amount TO <ls_poitem_detail>-amount_receipted_tax.
+          ADD ls_gr_history_line-gross_amount TO <ls_poitem_detail>-amount_receipted_gross.
+          IF ( <ls_pohistory>-db_cr_ind = zcl_fvim_constants=>gc_debit_indicator ).
+            ADD ls_gr_history_line-quantity TO <ls_poitem_detail>-quantity_receipted.
+          ELSE.
+            SUBTRACT ls_gr_history_line-quantity FROM <ls_poitem_detail>-quantity_receipted.
+          ENDIF.
+        ELSEIF ( <ls_pohistory>-hist_type = lc_gr_item_histtype_invoice ).
+          ADD ls_gr_history_line-net_amount TO <ls_poitem_detail>-amount_invoiced_net.
+          ADD ls_gr_history_line-tax_amount TO <ls_poitem_detail>-amount_invoiced_tax.
+          ADD ls_gr_history_line-gross_amount TO <ls_poitem_detail>-amount_invoiced_gross.
+          IF ( <ls_pohistory>-db_cr_ind = zcl_fvim_constants=>gc_debit_indicator ).
+            ADD ls_gr_history_line-quantity TO <ls_poitem_detail>-quantity_invoiced.
+          ELSE.
+            SUBTRACT ls_gr_history_line-quantity FROM <ls_poitem_detail>-quantity_invoiced.
+          ENDIF.
+        ELSE.
+          " Unhandled type like SES
+        ENDIF.
+
+        " --
+        " Adjust GR Quantity to cater for reversals (i.e. 102 movement type against 101)
+        " and Remove cancelled GRs (fully reversed)
+        IF ( <ls_pohistory>-hist_type = lc_gr_item_histtype_gr                 ) AND
+           ( <ls_pohistory>-db_cr_ind = zcl_fvim_constants=>gc_debit_indicator ).
+          APPEND ls_gr_history_line TO lt_gr_history_lines.
+        ELSEIF ( <ls_pohistory>-hist_type = lc_gr_item_histtype_gr                  ) AND
+               ( <ls_pohistory>-db_cr_ind = zcl_fvim_constants=>gc_credit_indicator ) AND
+               ( <ls_poitem>-gr_basediv IS INITIAL                                  ).
+          " GR Reversal line (102 or 122 goods movement) where GR Based IV flagged OFF
+          APPEND ls_gr_history_line TO lt_gr_history_lines.
+        ELSEIF ( <ls_pohistory>-hist_type = lc_gr_item_histtype_invoice                        ) OR
+               ( ( <ls_pohistory>-hist_type = lc_gr_item_histtype_gr                     ) AND
+                 ( <ls_pohistory>-db_cr_ind = zcl_fvim_constants=>gc_credit_indicator    )     ).
+          CLEAR: ls_gritem_reversed_or_invoiced.
+          " Where GR Based IV is flagged OFF, the Invoice of GR Reversal
+          " doesn't specifically reference the GR
+          " Attempt to identify the GR where possible
+
+          IF ( <ls_poitem>-gr_basediv IS INITIAL ).
+            IF ( <ls_pohistory>-hist_type = lc_gr_item_histtype_invoice ).
+
+              " If Invoice for PO Item where GR Based IV is flagged OFF
+              " Attempt to find related GR via Reference and Header Text
+              " If GR was posted via VIM process then will
+              " be able to find match
+              " if posted outside VIM process unlikely to find match
+              CLEAR: ls_invoice.
+              ls_invoice-belnr = <ls_pohistory>-mat_doc.
+              ls_invoice-gjahr = <ls_pohistory>-doc_year.
+              SELECT SINGLE xblnr bktxt FROM rbkp
+                   INTO ( ls_invoice-deliverynote, ls_invoice-headertext )
+                   WHERE belnr = ls_invoice-belnr
+                     AND gjahr = ls_invoice-gjahr.
+              IF sy-subrc IS INITIAL.
+                SELECT SINGLE buzei FROM rseg
+                     INTO ls_invoice-buzei
+                     WHERE belnr = ls_invoice-belnr
+                       AND gjahr = ls_invoice-gjahr
+                       AND ebelp = <ls_poitem>-po_item.
+                IF sy-subrc IS INITIAL.
+                  READ TABLE lt_gr_history_lines INTO ls_history_line_gr_for_iv
+                     WITH KEY xblnr   = ls_invoice-deliverynote
+                              po_item = <ls_poitem>-po_item.
+                  IF sy-subrc IS INITIAL.
+                    " Found GR Item for this PO Item
+                    ls_gritem_reversed_or_invoiced-mblnr = ls_history_line_gr_for_iv-mat_doc.
+                    ls_gritem_reversed_or_invoiced-mjahr = ls_history_line_gr_for_iv-doc_year.
+                    ls_gritem_reversed_or_invoiced-zeile = ls_history_line_gr_for_iv-matdoc_itm.
+                  ELSE.
+                    " Couldn't find GR Item for this PO Item by Delivery Note/Reference
+                    " Look using Header Text (VIM Doc ID)
+                    READ TABLE lt_gr_history_lines INTO ls_history_line_gr_for_iv
+                       WITH KEY bktxt   = ls_invoice-headertext
+                                po_item = <ls_poitem>-po_item.
+                    IF sy-subrc IS INITIAL.
+                      " Found GR Item for this PO Item
+                      ls_gritem_reversed_or_invoiced-mblnr = ls_history_line_gr_for_iv-mat_doc.
+                      ls_gritem_reversed_or_invoiced-mjahr = ls_history_line_gr_for_iv-doc_year.
+                      ls_gritem_reversed_or_invoiced-zeile = ls_history_line_gr_for_iv-matdoc_itm.
+                    ELSE.
+                      " Couldn't find GR Item for this PO Item by Header Text (VIM Doc ID)
+                    ENDIF.
+                  ENDIF.
+
+                ELSE.
+                  " Can't find related Invoice Item
+                ENDIF.
+              ELSE.
+                " Unable to find Invoice
+              ENDIF.
+            ELSE.
+              " Not an Invoice
+            ENDIF.
+            CLEAR: ls_invoice.
+          ELSE.
+            " GR Based IV flagged ON
+            ls_gritem_reversed_or_invoiced-mblnr = <ls_pohistory>-ref_doc.
+            ls_gritem_reversed_or_invoiced-mjahr = <ls_pohistory>-ref_doc_yr.
+            ls_gritem_reversed_or_invoiced-zeile = <ls_pohistory>-ref_doc_it.
+          ENDIF.
+          " Subtract Invoiced Quantity AND GR Reversals from GR'd Quantity
+          READ TABLE lt_gr_history_lines ASSIGNING <ls_gr_history_line>
+               WITH KEY doc_year = ls_gritem_reversed_or_invoiced-mjahr
+                        mat_doc = ls_gritem_reversed_or_invoiced-mblnr
+                        matdoc_itm = ls_gritem_reversed_or_invoiced-zeile.
+
+          IF sy-subrc IS INITIAL.
+            " Found GR for this Invoice, reduce the Available GR Quantity by Quantity Invoiced
+
+            IF ( ( <ls_pohistory>-hist_type = lc_gr_item_histtype_invoice          ) AND
+                 ( <ls_pohistory>-db_cr_ind = <ls_gr_history_line>-db_cr_ind  )     ) OR
+               ( ( <ls_pohistory>-hist_type = lc_gr_item_histtype_gr               ) AND
+                 ( <ls_pohistory>-db_cr_ind <> <ls_gr_history_line>-db_cr_ind )     ).
+              " Subtract Quantity & Amounts if Invoiced or GR Reversal
+              SUBTRACT <ls_pohistory>-val_forcur FROM <ls_gr_history_line>-val_forcur.
+              SUBTRACT <ls_pohistory>-quantity FROM <ls_gr_history_line>-quantity.
+              ADD ls_gr_history_line-net_amount TO <ls_gr_history_line>-net_amount.
+              ADD ls_gr_history_line-tax_amount TO <ls_gr_history_line>-tax_amount.
+              ADD ls_gr_history_line-gross_amount TO <ls_gr_history_line>-gross_amount.
+
+              IF ( <ls_pohistory>-hist_type = lc_gr_item_histtype_invoice ).
+                ADD ls_gr_history_line-quantity TO <ls_gr_history_line>-invoiced_quantity.
+                ADD ls_gr_history_line-val_forcur TO <ls_gr_history_line>-invoiced_val_forcur.
+                ADD ls_gr_history_line-net_amount TO <ls_gr_history_line>-invoiced_net_amount.
+                ADD ls_gr_history_line-tax_amount TO <ls_gr_history_line>-invoiced_tax_amount.
+                ADD ls_gr_history_line-gross_amount TO <ls_gr_history_line>-invoiced_gross_amount.
+              ENDIF.
+            ELSE.
+              " Add Quantity & Amounts if return goods are cancelled
+              ADD <ls_pohistory>-val_forcur TO <ls_gr_history_line>-val_forcur.
+              ADD <ls_pohistory>-quantity TO <ls_gr_history_line>-quantity.
+              SUBTRACT ls_gr_history_line-net_amount FROM <ls_gr_history_line>-net_amount.
+              SUBTRACT ls_gr_history_line-tax_amount FROM <ls_gr_history_line>-tax_amount.
+              SUBTRACT ls_gr_history_line-gross_amount FROM <ls_gr_history_line>-gross_amount.
+
+              IF ( <ls_pohistory>-hist_type = lc_gr_item_histtype_invoice ).
+                SUBTRACT ls_gr_history_line-quantity FROM <ls_gr_history_line>-invoiced_quantity.
+                SUBTRACT ls_gr_history_line-val_forcur FROM <ls_gr_history_line>-invoiced_val_forcur.
+                SUBTRACT ls_gr_history_line-net_amount FROM <ls_gr_history_line>-invoiced_net_amount.
+                SUBTRACT ls_gr_history_line-tax_amount FROM <ls_gr_history_line>-invoiced_tax_amount.
+                SUBTRACT ls_gr_history_line-gross_amount FROM <ls_gr_history_line>-invoiced_gross_amount.
+              ENDIF.
+            ENDIF.
+
+            " If GR has been fully invoiced or reversed then remove from "GR History Lines" table
+            IF ( ( ls_vimdoc_header-credit_memo IS INITIAL      ) AND
+                 ( <ls_gr_history_line>-val_forcur = 0          )     ) OR
+               ( ( ls_vimdoc_header-credit_memo = 'X'           ) AND
+                 ( <ls_gr_history_line>-invoiced_val_forcur = 0 )     ).
+              DELETE TABLE lt_gr_history_lines FROM <ls_gr_history_line>.
+            ENDIF.
+          ELSE.
+            " Can't find GR for this Invoice
+          ENDIF.
+        ENDIF.
+      ENDLOOP. " PO History
+
+      " ----
+      " Build PO Item table for displaying on frontend
+      CLEAR: ls_items.
+      ls_items-po_item = <ls_poitem_detail>-detail-po_item.
+      ls_items-short_text = <ls_poitem_detail>-detail-short_text.
+      ls_items-quantity = <ls_poitem_detail>-detail-quantity.
+      ls_items-po_unit = <ls_poitem_detail>-detail-po_unit.
+      ls_items-net_price = <ls_poitem_detail>-detail-net_price.
+      ls_items-tax_code = <ls_poitem_detail>-detail-tax_code.
+      lv_nettotal = ( <ls_poitem_detail>-detail-net_price * <ls_poitem_detail>-detail-quantity ).
+
+      lv_gr_line_taxrate = me->_get_tax_rate( iv_bukrs = lv_poheader-comp_code
+                                                    iv_mwskz = ls_items-tax_code
+                                                    iv_rbkpv = <ls_poitem_detail>-detail-taxjurcode
+                                                    iv_waers = lv_poheader-currency ).
+      IF lv_gr_line_taxrate > 0.
+        ls_items-tax_rate = lv_gr_line_taxrate.
+        lv_taxamount = lv_nettotal * ( ls_items-tax_rate / 100 ).
+      ELSE.
+        lv_taxamount = 0.
+      ENDIF.
+
+      ls_items-effective_value = lv_nettotal + lv_taxamount.
+
+      " Calculate the quantity left for the PO line
+      ls_items-quantity_remaining = <ls_poitem_detail>-detail-quantity - <ls_poitem_detail>-quantity_receipted.
+      ls_items-quantity_delivered = <ls_poitem_detail>-quantity_receipted.
+
+      APPEND ls_items TO gt_items.
+    ENDLOOP. " Active PO Item Details
+
+
+
+    " ----
+    " Convert Goods Receipt list as required for App
+    CLEAR: ls_poitem_detail.
+    REFRESH: gt_goodsreceipts.
+    LOOP AT lt_gr_history_lines ASSIGNING <ls_gr_history_line>.
+
+      CLEAR: ls_goodsreceipt.
+      ls_goodsreceipt-vimdocid = i_vim_doc_id.
+      ls_goodsreceipt-sequence = i_sequence.
+      ls_goodsreceipt-grdocnumber = <ls_gr_history_line>-mat_doc.
+      ls_goodsreceipt-grdocyear = <ls_gr_history_line>-doc_year.
+      ls_goodsreceipt-grdocitem = <ls_gr_history_line>-matdoc_itm.
+      ls_goodsreceipt-po_number = <ls_gr_history_line>-ebeln.
+      ls_goodsreceipt-po_item = <ls_gr_history_line>-po_item.
+      ls_goodsreceipt-entrydate = <ls_gr_history_line>-entry_date.
+      ls_goodsreceipt-deliverydate = <ls_gr_history_line>-pstng_date.
+      ls_goodsreceipt-headertext = <ls_gr_history_line>-bktxt.
+      ls_goodsreceipt-deliverynote = <ls_gr_history_line>-xblnr.
+      ls_goodsreceipt-uom = <ls_gr_history_line>-po_unit.
+      ls_goodsreceipt-unitprice = <ls_gr_history_line>-net_price.
+      ls_goodsreceipt-taxcode = <ls_gr_history_line>-tax_code.
+
+      " Get WEBRE (GR Based IV Flag) from Purchase Order Item
+      IF ( ls_poitem_detail-ebeln          <> <ls_gr_history_line>-ebeln   ) OR
+         ( ls_poitem_detail-detail-po_item <> <ls_gr_history_line>-po_item ).
+        READ TABLE lt_active_poitems_detail INTO ls_poitem_detail
+             WITH KEY ebeln = <ls_gr_history_line>-ebeln
+                      detail-po_item = <ls_gr_history_line>-po_item.
+        IF sy-subrc IS NOT INITIAL.
+          " The PO Item record should always be found.
+          CLEAR: ls_poitem_detail.
+        ENDIF.
+      ENDIF.
+      IF ( ls_poitem_detail IS NOT INITIAL ).
+        ls_goodsreceipt-webre = ls_poitem_detail-detail-gr_basediv.
+      ELSE.
+        CLEAR: ls_goodsreceipt-webre.
+      ENDIF.
+
+      IF ( ls_vimdoc_header-credit_memo = 'X'           ) AND
+         ( ls_goodsreceipt-webre = 'X'                  ) AND
+         ( <ls_gr_history_line>-invoiced_val_forcur = 0 ).
+        " Where VIM Doc is Credit Memo and 'GR Based IV' flagged ON
+        " If the GR is yet to be invoiced, Ignore as this GR can't be reversed.
+      ELSEIF ( ls_vimdoc_header-credit_memo = 'X'                                         ) AND
+             ( ls_goodsreceipt-webre IS INITIAL                                           ) AND
+             ( <ls_gr_history_line>-gross_amount > ls_poitem_detail-amount_invoiced_gross ).
+        " Where VIM Doc is Credit Memo and 'GR Based IV' flagged OFF,
+        " If the GR Gross Amount > total invoiced then this GR is not an option
+      ELSEIF ( ls_vimdoc_header-credit_memo = 'X'    ) AND
+             ( <ls_gr_history_line>-gross_amount < 0 ).
+        " Ignore negative lines (GR reversals) when processign Credit Memos
+      ELSE.
+        " Get Values (differs edpending on whether Credit Memo or 'GR Based IV'
+        IF ( ls_vimdoc_header-credit_memo IS INITIAL ).
+          " Amounts for Invoice
+          ls_goodsreceipt-taxamount = <ls_gr_history_line>-tax_amount.
+          ls_goodsreceipt-valueextax = <ls_gr_history_line>-net_amount.
+          ls_goodsreceipt-quantitydelivered = <ls_gr_history_line>-quantity.
+        ELSE.
+          " Amounts for Credit Memo ( GR Quantity/Amount which have been invoiced
+          IF ( ls_goodsreceipt-webre = 'X').
+            " 'GR Based IV' flagged ON
+            ls_goodsreceipt-taxamount = <ls_gr_history_line>-invoiced_tax_amount.
+            ls_goodsreceipt-valueextax = <ls_gr_history_line>-invoiced_net_amount.
+            ls_goodsreceipt-quantitydelivered = <ls_gr_history_line>-invoiced_quantity.
+
+          ELSE.
+            " 'GR Based IV' flagged OFF.
+            " Can't trust the GR Quantity/Amount have been matched off with Invoice
+            ls_goodsreceipt-taxamount = <ls_gr_history_line>-tax_amount.
+            ls_goodsreceipt-valueextax = <ls_gr_history_line>-net_amount.
+            ls_goodsreceipt-quantitydelivered = <ls_gr_history_line>-quantity.
+          ENDIF.
+        ENDIF.
+
+        IF ( <ls_gr_history_line>-db_cr_ind = zcl_fvim_constants=>gc_debit_indicator ).
+          CLEAR: ls_goodsreceipt-showreversalind.
+        ELSEIF ( <ls_gr_history_line>-db_cr_ind = zcl_fvim_constants=>gc_credit_indicator ).
+          ls_goodsreceipt-quantitydelivered = ls_goodsreceipt-quantitydelivered * -1.
+          ls_goodsreceipt-showreversalind = 'X'.
+        ELSE.
+          " Invalid Debit/credit Indicator
+        ENDIF.
+
+        " Keep line selection when refreshing
+        READ TABLE lt_zvim_gr_app_gr INTO ls_zvim_gr_app_gr
+             WITH KEY vimdocid = i_vim_doc_id
+                      sequence = i_sequence
+                      grdocnumber = ls_goodsreceipt-grdocnumber
+                      grdocyear = ls_goodsreceipt-grdocyear.
+        IF ( sy-subrc IS INITIAL                 ) AND
+           ( ls_zvim_gr_app_gr-selectedgr EQ 'X' ).
+          ls_goodsreceipt-selectedgr = 'X'.
+        ELSE.
+          ls_goodsreceipt-selectedgr = space.
+        ENDIF.
+
+        SHIFT ls_goodsreceipt-po_item LEFT DELETING LEADING '0'.
+
+        APPEND ls_goodsreceipt TO gt_goodsreceipts.
+      ENDIF.
+    ENDLOOP.
+
+    SORT gt_goodsreceipts by grdocnumber DESCENDING selectedgr DESCENDING.
+
+  ENDMETHOD.
+
+
+  METHOD _set_initial_lock.
+*-----------------------------------------------------------------------------------------
+* DESCRIPTION:  Called by the ZVIM_GR UI5 application.  Calculates the balance data for
+*               displaying in the app.
+* NOTES:
+*
+* AUTHOR:       James Southwell
+* CREATE DATE:  23.09.2020
+*
+* ACTIVITY:     AD-11-32-01 - Goods Receipting
+* DEV SCRIPT:   DC-11-32-01-01 - VIM GR UI5 Application
+*-----------------------------------------------------------------------------------------
+* VERSION CONTROL:
+*
+* Date       Author    CTS Req    SCR        Description
+* ---------- --------- ---------- ---------- ---------------------------------------------
+* 23.092020 070667JPS RD2K919880 6000002064 BAR 2020-07 VIM Integration with MyFi.
+*-----------------------------------------------------------------------------------------
+    DATA:
+      ls_lockingaction TYPE zcl_zedm_vim_gr_create_mpc=>ts_lockingaction,
+      lt_lockingaction TYPE STANDARD TABLE OF zcl_zedm_vim_gr_create_mpc=>ts_lockingaction,
+      lv_lock_success  TYPE boolean,
+      lv_message       TYPE bapi_msg,
+      lv_msg_type      TYPE symsgty,
+      lt_return        TYPE bapiret2_t,
+      ls_return        TYPE bapiret2.
+
+    ls_lockingaction-vimdocid = i_vim_doc_id.
+    ls_lockingaction-sequence = i_sequence. "0.
+
+    CALL METHOD me->_check_vim_lock
+      EXPORTING
+        iv_vimdoc = i_vim_doc_id
+      IMPORTING
+        ev_lock   = DATA(lv_vim_lock)
+        ev_user   = DATA(lv_user).
+
+    IF ( lv_vim_lock = abap_true ).
+      ls_return-type = gc_msg_type-error.
+      ls_return-id = 'LK'.  " Set to a value that can be checked in the app
+      ls_return-number = '999'.  " Set to a value that can be checked in the app
+      CLEAR lv_message.
+      MESSAGE e027(zvim_gr_app) WITH lv_user INTO lv_message.
+      ls_return-message = lv_message.
+      APPEND ls_return TO lt_return.
+      gt_return = lt_return.
+    ENDIF.
+
+    IF lt_return IS NOT INITIAL.
+      add_message( EXPORTING msglist = lt_return  ).
+    ENDIF.
+
+
+* Create a UUID (GUID) for the app transaction
+    TRY.
+        CALL METHOD cl_system_uuid=>if_system_uuid_static~create_uuid_c32
+          RECEIVING
+            uuid = ls_lockingaction-app_uuid.
+
+      CATCH cx_uuid_error.
+        MESSAGE e023(zvim_gr_app) INTO lv_message. "Unable to create UUID (GUID) for the locking of the VIM Document.
+        ls_return-type = gc_msg_type-error.
+        ls_return-message = lv_message.
+
+        APPEND ls_return TO lt_return.
+        gt_return = lt_return.
+
+        IF lt_return IS NOT INITIAL.
+          add_message( EXPORTING msglist = lt_return  ).
+        ENDIF.
+    ENDTRY.
+
+
+    IF gt_return IS INITIAL.  "i.e. UUID is OK
+* Create a lock for the VIM document
+      CALL FUNCTION 'Z_VIM_GR_APP_MANAGE_LOCK'
+        EXPORTING
+          iv_vimdocid        = ls_lockingaction-vimdocid
+          iv_app_uuid        = ls_lockingaction-app_uuid
+          iv_action          = gc_lock_action-create
+        IMPORTING
+          ev_return_message  = lv_message
+          ev_return_msg_type = lv_msg_type
+          ev_success         = lv_lock_success.
+
+* If an error occurred, return it to the UI5 application
+      IF ( lv_lock_success = abap_false ).
+        ls_return-type = lv_msg_type.
+        ls_return-id = 'LK'.  " Set to a value that can be checked in the app
+        ls_return-number = '999'.  " Set to a value that can be checked in the app
+        ls_return-message = lv_message.
+
+        APPEND ls_return TO lt_return.
+        gt_return = lt_return.
+      ENDIF.
+
+      IF lt_return IS NOT INITIAL.
+        add_message( EXPORTING msglist = lt_return  ).
+      ENDIF.
+    ENDIF.
+
+* LOCK_ACTION - pass back an initial structure as it is needed in the deep entity in the app
+* for folow-on functions such as "force" and "extend"
+    MOVE-CORRESPONDING ls_lockingaction TO gs_lockingaction.
+
+  ENDMETHOD.
+
+
+  METHOD _set_selected_gr.
+*-----------------------------------------------------------------------------------------
+* DESCRIPTION:  This method is called by the ZVIM_GR application. This method updates
+*               selected GR to table zvim_gr_app_gr
+* NOTES:
+*
+* AUTHOR:       Dathri Yellamarthy
+* CREATE DATE:  24.10.2020
+*
+* ACTIVITY:     AD-11-32-01 - Goods Receipting
+* DEV SCRIPT:   DC-11-32-01-01 - VIM GR UI5 Application
+*-----------------------------------------------------------------------------------------
+* VERSION CONTROL:
+*
+* Date       Author    CTS Req    SCR        Description
+* ---------- --------- ---------- ---------- ---------------------------------------------
+* 24.10.2020 210983DY RD2K919880 6000002064 BAR 2020-07 VIM Integration with MyFi.
+*-----------------------------------------------------------------------------------------
+
+
+    DATA: ls_zvim_gr_app_gr TYPE zvim_gr_app_gr.
+
+    LOOP AT gt_goodsreceipts INTO DATA(ls_goodsreceipts).
+      MOVE-CORRESPONDING ls_goodsreceipts TO ls_zvim_gr_app_gr.
+      IF i_unselect_all = abap_true.
+        ls_zvim_gr_app_gr-selectedgr = abap_false.
+      ENDIF.
+      MODIFY zvim_gr_app_gr FROM ls_zvim_gr_app_gr.
+    ENDLOOP.
+
+  ENDMETHOD.
+ENDCLASS.
