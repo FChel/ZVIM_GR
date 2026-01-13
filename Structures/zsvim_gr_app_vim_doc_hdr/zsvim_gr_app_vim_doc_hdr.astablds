@@ -1,0 +1,30 @@
+@EndUserText.label : 'VIM GR App - VIM Document Header Structure'
+@AbapCatalog.enhancementCategory : #NOT_EXTENSIBLE
+define type zsvim_gr_app_vim_doc_hdr {
+  vimdocid         : /opt/docid;
+  sequence         : zvim_gr_app_sequence;
+  invnumber        : xblnr;
+  compcode         : bukrs;
+  vendorno         : lifnr;
+  vendname         : name1_gp;
+  ponumber         : ebeln;
+  po_is_myfi       : zvim_gr_app_po_is_myfi;
+  currency         : waers;
+  @Semantics.amount.currencyCode : '/opt/vim_1rhead.waers'
+  netamount        : /opt/rmwwr;
+  @Semantics.amount.currencyCode : '/opt/vim_1rhead.waers'
+  taxamount        : /opt/rmwwr;
+  @Semantics.amount.currencyCode : '/opt/vim_1rhead.waers'
+  grossamount      : /opt/rmwwr;
+  creditmemo       : /opt/vim_bl_cm;
+  receiveddt       : bldat;
+  paymentterms     : dzterm;
+  paymenttermsdesc : /opt/pay_term_text;
+  isduedate_passed : boole_d;
+  edi_docnum       : edi_docnum;
+  due_date         : /opt/vim_duedate;
+  late_comment     : zzlate_comment;
+  late_reason      : zzvim_late_reason_code;
+  reject_reason    : zzvim_rejection_code;
+
+}

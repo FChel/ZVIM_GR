@@ -1,0 +1,12 @@
+Transparent Table: ZVIM_GR_APP_LOCK
+Short Description: VIM Create Goods Receipt UI5 Application - VIM Doc ID Lock
+
+
+MANDT	MANDT	CLNT	3	0	Client
+VIMDOCID	/OPT/DOCID	NUMC	12	0	Document Ledger Number
+APP_UUID	SYSUUID_C32	CHAR	32	0	16 Byte UUID in 32 Characters (Hexadecimal Encoded)
+USERID	SYSUNAME	CHAR	30	0	System User Name
+LOCKSTARTDATE	DATS	DATS	8	0	Field of type DATS
+LOCKSTARTTIME	TIMS	TIMS	6	0	Field of type TIMS
+LOCKENDDATE	DATS	DATS	8	0	Field of type DATS
+LOCKENDTIME	TIMS	TIMS	6	0	Field of type TIMS

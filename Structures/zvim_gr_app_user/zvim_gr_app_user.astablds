@@ -1,0 +1,10 @@
+@EndUserText.label : 'VIM GR App - User Structure'
+@AbapCatalog.enhancementCategory : #NOT_EXTENSIBLE
+define type zvim_gr_app_user {
+  user_id      : usnam;
+  full_name    : ad_namtext;
+  @EndUserText.label : 'Full Name from HR Record'
+  full_name_hr : abap.string(0);
+  help_url     : zvim_gr_app_url;
+
+}

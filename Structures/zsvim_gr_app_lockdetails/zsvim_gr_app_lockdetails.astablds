@@ -1,0 +1,9 @@
+@EndUserText.label : 'VIM GR App - Lock Details Structure'
+@AbapCatalog.enhancementCategory : #NOT_EXTENSIBLE
+define type zsvim_gr_app_lockdetails {
+  vimdocid    : /opt/docid;
+  sequence    : zvim_gr_app_sequence;
+  app_uuid    : sysuuid_c32;
+  lock_action : zvim_gr_app_lock_action;
+
+}

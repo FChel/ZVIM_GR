@@ -1,0 +1,23 @@
+@EndUserText.label : 'VIM GR App - Goods Receipts Structure'
+@AbapCatalog.enhancementCategory : #NOT_EXTENSIBLE
+define type zsvim_gr_app_gr_cm_data {
+  entrydate         : cpudt;
+  deliverydate      : bldat;
+  headertext        : bktxt;
+  deliverynote      : xblnr1;
+  @Semantics.quantity.unitOfMeasure : 'ekpo.meins'
+  quantitydelivered : menge_d;
+  uom               : meins;
+  @Semantics.amount.currencyCode : 'ekko.waers'
+  unitprice         : bprei;
+  taxcode           : mwskz;
+  @Semantics.amount.currencyCode : 'ekko.waers'
+  taxamount         : wmwst;
+  valueextax        : bapicurr_d;
+  selectedgr        : zvim_gr_app_selected_gr;
+  @Semantics.quantity.unitOfMeasure : 'ekpo.meins'
+  creditquantity    : menge_d;
+  showreversalind   : zvim_gr_app_show_reversal_ind;
+  webre             : webre;
+
+}

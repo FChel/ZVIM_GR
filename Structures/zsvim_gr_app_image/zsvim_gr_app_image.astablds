@@ -1,0 +1,10 @@
+@EndUserText.label : 'VIM GR App - Image Structure'
+@AbapCatalog.enhancementCategory : #NOT_EXTENSIBLE
+define type zsvim_gr_app_image {
+  vimdocid : /opt/docid;
+  sequence : zvim_gr_app_sequence;
+  mimetype : w3conttype;
+  filename : file;
+  content  : zvim_image_content;
+
+}

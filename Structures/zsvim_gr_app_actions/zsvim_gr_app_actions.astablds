@@ -1,0 +1,11 @@
+@EndUserText.label : 'VIM GR App - Actions Structure'
+@AbapCatalog.enhancementCategory : #NOT_EXTENSIBLE
+define type zsvim_gr_app_actions {
+  vimdocid     : /opt/docid;
+  sequence     : zvim_gr_app_sequence;
+  useraction   : zvim_gr_app_action;
+  actiondate   : sydatum;
+  actiontime   : syuzeit;
+  rejectreason : zvim_gr_app_rejectreason;
+
+}

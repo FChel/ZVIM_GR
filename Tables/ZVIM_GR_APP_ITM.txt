@@ -1,0 +1,23 @@
+Transparent Table: ZVIM_GR_APP_ITM
+Short Description: VIM Create Goods Receipt UI5 Application - Item Table
+
+
+MANDT	MANDT	CLNT	3	0	Client
+VIMDOCID	/OPT/DOCID	NUMC	12	0	Document Ledger Number
+SEQUENCE	INT2	INT2	5	0	2 byte integer (signed)
+EBELN	EBELN	CHAR	10	0	Purchasing Document Number
+EBELP	EBELP	NUMC	5	0	Item Number of Purchasing Document
+ITEMID	/OPT/DOCITEMID	NUMC	5	0	Document Item Id
+LINETEXT	TXZ01	CHAR	40	0	Short Text
+QUANTITYORDERED	BSTMG	QUAN	13	3	Purchase Order Quantity
+UNITPRICE	BPREI	CURR	11	2	Net Price in Purchasing Document (in Document Currency)
+TAXCODE	MWSKZ	CHAR	2	0	Tax on Sales/Purchases Code
+QUANTITYLEFT	BSTMG	QUAN	13	3	Purchase Order Quantity
+QUANTITYRECEIVED	ZVIMQTYRCVDDT	QUAN	13	3	VIM UI5 GR Create application - Quantity Received
+UNITOFMEASURE	MEINS	UNIT	3	0	Base Unit of Measure
+WEBRE	WEBRE	CHAR	1	0	Indicator: GR-Based Invoice Verification
+GRREFDOCID	LFBNR	CHAR	10	0	Document No. of a Reference Document
+GRREFDOCYR	LFGJA	NUMC	4	0	Fiscal Year of Current Period
+GRREFDOCITEM	LFPOS	NUMC	4	0	Item of a Reference Document
+QUANTITYGRD	BSTMG	QUAN	13	3	Purchase Order Quantity
+QUANTITYREVERSED	ZVIMQTYRCVDDT	QUAN	13	3	VIM UI5 GR Create application - Quantity Received

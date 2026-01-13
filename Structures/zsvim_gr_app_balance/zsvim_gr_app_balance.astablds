@@ -1,0 +1,17 @@
+@EndUserText.label : 'VIM GR App - Balance Check Structure'
+@AbapCatalog.enhancementCategory : #NOT_EXTENSIBLE
+define type zsvim_gr_app_balance {
+  vimdocid             : /opt/docid;
+  sequence             : zvim_gr_app_sequence;
+  @Semantics.amount.currencyCode : '/opt/vim_1rhead.waers'
+  calculatednet        : /opt/rmwwr;
+  @Semantics.amount.currencyCode : '/opt/vim_1rhead.waers'
+  calculatedtax        : /opt/rmwwr;
+  @Semantics.amount.currencyCode : '/opt/vim_1rhead.waers'
+  calculatedgross      : /opt/rmwwr;
+  @Semantics.amount.currencyCode : '/opt/vim_1rhead.waers'
+  balance              : /opt/rmwwr;
+  iswithintolerance    : boole_d;
+  iscreditqty_exceeded : boole_d;
+
+}

@@ -1,0 +1,7 @@
+@EndUserText.label : 'Reason Code for VIM Matching app'
+@AbapCatalog.enhancementCategory : #NOT_CLASSIFIED
+define type zsvim_gr_app_reason {
+  reasoncode   : zzvim_late_reason_code;
+  late_comment : zzlate_comment;
+
+}

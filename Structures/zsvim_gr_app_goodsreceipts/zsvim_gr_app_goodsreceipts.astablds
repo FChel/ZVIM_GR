@@ -1,0 +1,13 @@
+@EndUserText.label : 'VIM GR App - Goods Receipts Structure'
+@AbapCatalog.enhancementCategory : #NOT_EXTENSIBLE
+define type zsvim_gr_app_goodsreceipts {
+  vimdocid    : /opt/docid;
+  sequence    : zvim_gr_app_sequence;
+  grdocnumber : mblnr;
+  grdocyear   : mjahr;
+  grdocitem   : mblpo;
+  po_number   : ebeln;
+  po_item     : ebelp;
+  include zsvim_gr_app_gr_cm_data;
+
+}

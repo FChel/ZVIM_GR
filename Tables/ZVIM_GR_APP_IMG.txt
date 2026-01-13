@@ -1,0 +1,10 @@
+Transparent Table: ZVIM_GR_APP_IMG
+Short Description: VIM Create Goods Receipt UI5 Application - Image Table
+
+
+MANDT	MANDT	CLNT	3	0	Client
+VIMDOCID	/OPT/DOCID	NUMC	12	0	Document Ledger Number
+SEQUENCE	INT2	INT2	5	0	2 byte integer (signed)
+MIMETYPE	CHAR100	CHAR	100	0	Character 100
+FILENAME	CHAR100	CHAR	100	0	Character 100
+CONTENT	CFX_XSTRING	RAWSTRING	0	0	xstring
