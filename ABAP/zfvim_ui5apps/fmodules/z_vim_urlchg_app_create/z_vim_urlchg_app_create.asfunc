@@ -1,0 +1,91 @@
+FUNCTION Z_VIM_URLCHG_APP_CREATE
+  IMPORTING
+    VALUE(IV_UNAME) TYPE SYUNAME
+    VALUE(IV_DOCID) TYPE /OPT/DOCID
+    VALUE(IV_GRP_EMAIL) TYPE ZFVIM_EMAIL
+    VALUE(IV_VIMURL) TYPE CHAR255
+  EXPORTING
+    VALUE(EV_SUCCESS) TYPE BOOLEAN
+  EXCEPTIONS
+    DELETEFAILED
+    INSERTFAILED.
+
+
+
+*----------------------------------------------------------------------*
+* PROGRAM ID:         Z_VIM_URLCHG_APP_CREATE
+* DESCRIPTION:        This function is called by the VIM UI5 non-PO
+*                     based invoice approval BSP application.  The
+*                     function is used when users click on the approval
+*                     app link listed in the VIM notification email to
+*                     a group email account.
+*                     The link will take the user to the URL for UI5 app
+*                     VIMURLREDIRECT.  This app will call this function
+*                     module via oData service ZEDM_VIM_URL_REDIRECT_SRV
+*                     to create an entry in table Z_VIM_URLCHG_APP which
+*                     is used to store the userID, VIM Document ID, URL,
+*                     Group email address.  The UI5 app will then
+*                     redirect the user to the VIM approval portal
+*                     Web Dynpro for approval of the VIM Document.
+*                     The entry in the table will be retrieved by the
+*                     VIM approval portal Web Dynpro application so that
+*                     the VIM Doc can be included in the worklist for
+*                     the user.  The Group email account is included
+*                     so that there is an option for the Web Dynpro
+*                     to retrieve all unapproved VIM documents for the
+*                     group email account.
+*
+* AUTHOR:             James Southwell
+* CREATE DATE:        14 Feb 2019
+* R/3 RELEASE VERSION: ECC6
+*
+* ACTIVITY:           AD-11-32-02 - VIM URL Redirection
+* CR Number:          6000001457 - VIM UI5 Applications
+*-----------------------------------------------------------------------
+  data:
+    ls_zvim_urlchg_del    type zvim_urlchg_app,
+    ls_zvim_urlchg_app    type zvim_urlchg_app,
+    lt_zvim_urlchg_app    type zvim_urlchg_app_tt,
+    lf_param_error        type char01,
+    lf_delete_success     type char01.
+
+* store passed in values in the table structure.  Note, a single
+* structre could be ued as the import paramater but individual
+* fields are used to align with the already built oData service.
+  ls_zvim_urlchg_app-uname = sy-uname.
+  ls_zvim_urlchg_app-docid = iv_docid.
+  ls_zvim_urlchg_app-grp_email = iv_grp_email.
+  ls_zvim_urlchg_app-vimurl = iv_vimurl.
+
+* Check if a record already exists.  If so, we need to delete it
+* Can only be one record for a given user.
+  select single *
+    from zvim_urlchg_app
+    into ls_zvim_urlchg_del
+   where uname = sy-uname.
+
+* If a record exists, delete it so that we can insert a new record.
+  if sy-subrc = 0.
+    call function 'Z_VIM_URLCHG_APP_DELETE'
+      exporting
+        iv_uname       = sy-uname
+      importing
+        ev_param_error = lf_param_error
+        ev_success     = lf_delete_success.
+
+    if lf_delete_success ne 'X' or lf_param_error ne space.
+      raise deletefailed.
+    endif.
+  endif.
+
+* Do the insert
+  insert into zvim_urlchg_app values ls_zvim_urlchg_app.
+
+* Return the success flag.
+  if sy-subrc = 0.
+    ev_success = 'X'.
+  else.
+    raise insertfailed.
+  endif.
+
+endfunction.

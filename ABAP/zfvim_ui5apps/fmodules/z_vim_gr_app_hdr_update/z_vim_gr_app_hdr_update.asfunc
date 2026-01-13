@@ -1,0 +1,83 @@
+FUNCTION Z_VIM_GR_APP_HDR_UPDATE
+  IMPORTING
+    VALUE(IS_ZVIM_GR_APP_HDR) TYPE ZVIM_GR_APP_HDR
+  EXPORTING
+    VALUE(EV_SUCCESS) TYPE BOOLEAN.
+
+
+
+*----------------------------------------------------------------------*
+* PROGRAM ID:         Z_VIM_GR_APP_HDR_UPDATE
+* DESCRIPTION:        This function is called by the VIM UI5 BSP
+*                     application to update the audit tables
+*                     via oData service ZEDM_VIM_GR_CREATE_SRV.
+*
+* AUTHOR:             James Southwell
+* CREATE DATE:        14 Feb 2019
+* R/3 RELEASE VERSION: ECC6
+*
+* ACTIVITY:           AD-11-32-01 - Goods Receipting
+* CR Number:          6000001457 - VIM UI5 Applications
+*-----------------------------------------------------------------------
+* VERSION CONTROL
+*
+* Date     Author    CTS Req    Dev Script     Description
+*-----------------------------------------------------------------------
+* 08.05.19 070667JPS RD2K917885 DS-11-32-01-01 S 6000001550: VIM GR UI5
+*                                              Application - Phase  1
+*                                              Def 50_63_85.  Added
+*                                              RECEIVED_DT and PAYMENT_
+*                                              TERMS (comments only)
+* 29.05.19 070667JPS RD2K917931 DS-11-32-01-01 S 6000001564: VIM GR UI5
+*                                              Application - Defect 110
+*                                              Introduce locking for
+*                                              the app.  Added new
+*                                              fields (comments only)
+* 01.08.19 070667JPS RD2K918253 DS-11-32-01-01 S 6000001639: VIM GR UI5
+*                                              Application-Phase 2.3
+*                                              (D157). Added credit memo
+*                                              field (comments only)
+*-----------------------------------------------------------------------
+  data:
+    ls_zvim_gr_app_hdr    type zvim_gr_app_hdr.
+
+* store passed in values in the table structure.
+  ls_zvim_gr_app_hdr = is_zvim_gr_app_hdr.
+
+*  ls_ZVIM_GR_APP_HDR-VIMDOCID
+*  ls_ZVIM_GR_APP_HDR-INVNUMBER
+*  ls_ZVIM_GR_APP_HDR-LIFNR
+*  ls_ZVIM_GR_APP_HDR-VEND_NAME
+*  ls_ZVIM_GR_APP_HDR-NET_AMOUNT
+*  ls_ZVIM_GR_APP_HDR-S_TAX_AMOUNT
+*  ls_ZVIM_GR_APP_HDR-GROSS_AMOUNT
+*  ls_ZVIM_GR_APP_HDR-USERACTION
+  ls_zvim_gr_app_hdr-userid = sy-uname.
+  ls_zvim_gr_app_hdr-actiondate = sy-datum.
+  ls_zvim_gr_app_hdr-actiontime = sy-uzeit.
+*  ls_ZVIM_GR_APP_HDR-RECEIVEDGOODS
+*  ls_ZVIM_GR_APP_HDR-GRDOCNUMBER
+*  ls_ZVIM_GR_APP_HDR-GRDOCYEAR
+*  ls_ZVIM_GR_APP_HDR-REJECTREASON
+*  ls_ZVIM_GR_APP_HDR-CALCULATEDNET
+*  ls_ZVIM_GR_APP_HDR-CALCULATEDTAX
+*  ls_ZVIM_GR_APP_HDR-CALCULATEDGROSS
+*  ls_ZVIM_GR_APP_HDR-BALANCE
+*  ls_ZVIM_GR_APP_HDR-RECEIVED_DT                    "CR 6000001550
+*  ls_ZVIM_GR_APP_HDR-PAYMENT_TERMS                  "CR 6000001550
+*  ls_ZVIM_GR_APP_HDR-LOCK_ACTION                    "CR 6000001564
+*  ls_ZVIM_GR_APP_HDR-MESSAGE                        "CR 6000001564
+*  ls_ZVIM_GR_APP_HDR-MSG_TYPE                       "CR 6000001564
+*  ls_ZVIM_GR_APP_HDR-APP_UUID                       "CR 6000001564
+*  ls_ZVIM_GR_APP_HDR-CREDIT_MEMO                    "CR 6000001639
+
+* Do the update
+  update ZVIM_GR_APP_HDR
+    from ls_zvim_gr_app_hdr.
+
+* Return the success flag.
+  if sy-subrc = 0.
+    ev_success = 'X'.
+  endif.
+
+endfunction.

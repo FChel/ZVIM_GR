@@ -1,0 +1,78 @@
+FUNCTION Z_VIM_GR_APP_ITM_DELETE
+  IMPORTING
+    VALUE(IV_VIMDOCID) TYPE ZVIM_GR_APP_ITM-VIMDOCID
+    VALUE(IV_SEQUENCE) TYPE ZVIM_GR_APP_ITM-SEQUENCE OPTIONAL
+    VALUE(IV_EBELN) TYPE ZVIM_GR_APP_ITM-EBELN OPTIONAL
+    VALUE(IV_EBELP) TYPE ZVIM_GR_APP_ITM-EBELP OPTIONAL
+    VALUE(IV_ITEM) TYPE ZVIM_GR_APP_ITM-ITEMID OPTIONAL
+  EXPORTING
+    VALUE(EV_SUCCESS) TYPE BOOLEAN
+    VALUE(EV_PARAM_ERROR) TYPE CHAR01.
+
+
+
+*----------------------------------------------------------------------*
+* PROGRAM ID:         Z_VIM_GR_APP_ITM_CREATE
+* DESCRIPTION:        This function is used by the oData service
+*                     ZEDM_VIM_GR_CREATE_SRV to delete audit table rows.
+*                     IN reality this function won't be needed by the
+*                     UI5 application (ZVIMGRCREATE) that creates Goods
+*                     Receipts for VIM documents, but it is included
+*                     in the oData service for completeness.
+*
+* AUTHOR:             James Southwell
+* CREATE DATE:        14 Feb 2019
+* R/3 RELEASE VERSION: ECC6
+*
+* ACTIVITY:           AD-11-32-01 - Goods Receipting
+* CR Number:          6000001457 - VIM UI5 Applications
+*-----------------------------------------------------------------------
+* VERSION CONTROL
+*
+* Date     Author    CTS Req    Dev Script     Description
+*-----------------------------------------------------------------------
+* 06.08.19 070667JPS RD2K918253 DS-11-32-01-01 S 6000001639: VIM GR UI5
+*                                              Application-Phase 2.3
+*                                              (D157). Added Item ID for
+*                                              credit memo logic.
+*-----------------------------------------------------------------------
+  data:
+    lw_vimdocid         type zvim_gr_app_itm-vimdocid,
+    lw_sequence         type zvim_gr_app_itm-sequence,
+    lw_ebeln            type zvim_gr_app_itm-ebeln,
+    lw_ebelp            type zvim_gr_app_itm-ebelp,      "CR 6000001639
+    lw_itemid           type zvim_gr_app_itm-itemid.     "CR 6000001639
+
+* store passed in values in the table structure.
+  lw_vimdocid = iv_vimdocid.
+  lw_sequence = iv_sequence.
+  lw_ebeln = iv_ebeln.
+  lw_ebelp = iv_ebelp.
+  lw_itemid = iv_item.                                   "CR 6000001639
+
+* PO and PO line item parameters can be ignored as we would
+* want to delete all items for a VIM Document.
+
+* Check that an input VimDocID was provided or the delete is not
+* possible.
+  if ( iv_vimdocid is initial ).
+    ev_param_error = 'V'.  "VIMDocID missing
+  else.
+    if ( lw_sequence is initial ).  "Delete all records for the VIM Doc
+      delete
+        from zvim_gr_app_itm
+       where vimdocid = lw_vimdocid.
+    else.
+      delete
+        from zvim_gr_app_itm
+       where vimdocid = lw_vimdocid
+         and sequence = lw_sequence.
+    endif.
+  endif.
+
+* Return the success flag.
+  if sy-subrc = 0.
+    ev_success = 'X'.
+  endif.
+
+endfunction.

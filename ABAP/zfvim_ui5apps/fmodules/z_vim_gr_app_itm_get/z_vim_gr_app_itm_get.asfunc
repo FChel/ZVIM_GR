@@ -1,0 +1,392 @@
+FUNCTION Z_VIM_GR_APP_ITM_GET
+  IMPORTING
+    VALUE(IV_VIMDOCID) TYPE ZVIM_GR_APP_ITM-VIMDOCID
+    VALUE(IV_SEQUENCE) TYPE ZVIM_GR_APP_ITM-SEQUENCE OPTIONAL
+    VALUE(IV_EBELN) TYPE ZVIM_GR_APP_ITM-EBELN OPTIONAL
+    VALUE(IV_EBELP) TYPE ZVIM_GR_APP_ITM-EBELP OPTIONAL
+    VALUE(IV_ITEM) TYPE ZVIM_GR_APP_ITM-ITEMID OPTIONAL
+  EXPORTING
+    VALUE(ET_ZVIM_GR_APP_ITM) TYPE ZVIM_GR_APP_ITM_TT
+    VALUE(EV_SUCCESS) TYPE BOOLEAN.
+
+
+
+*----------------------------------------------------------------------*
+* PROGRAM ID:         Z_VIM_GR_APP_ITM_GET
+* DESCRIPTION:        This function is called by the VIM UI5 Create GR
+*                     BSP application.  The function retrieves the PO
+*                     line item data for display in the UI5 app.  The
+*                     app name is ZVIMGRCREATE.  The app will call this
+*                     function module via oData service
+*                     ZEDM_VIM_GR_CREATE.
+*
+* AUTHOR:             James Southwell
+* CREATE DATE:        14 Feb 2019
+* R/3 RELEASE VERSION: ECC6
+*
+* ACTIVITY:           AD-11-32-01 - Goods Receipting
+* CR Number:          6000001457 - VIM UI5 Applications
+*-----------------------------------------------------------------------
+* VERSION CONTROL
+*
+* Date     Author    CTS Req    Dev Script     Description
+*-----------------------------------------------------------------------
+* 14.03.19 070667JPS RD2K917678 DS-11-32-01-01 S 6000001503: VIM GR UI5
+*                                              Application - Phase 1
+*                                              Defect 30.  Added UOM.
+* 21.03.19 070667JPS RD2K917672 DS-11-32-01-01 S 6000001500: VIM GR UI5
+*                                              Application - Phase 1
+*                                              Testing Defects.  Defect
+*                                              25 - don't include PO
+*                                              items which have 0
+*                                              quantity left.
+* 13.05.19 070667JPS RD2K917885 DS-11-32-01-01 S 6000001550: VIM GR UI5
+*                                              Application - Phase  1
+*                                              Def 50_63_85. Check if
+*                                              already posted (def 63),
+*                                              exclude deleted lines
+*                                              (def 85).
+* 19.06.19 070667JPS RD2K917927 DS-11-32-01-01 S 6000001551: BAR 2019-13
+*                                              VIM GR UI5 Application
+*                                              Change. Removed Sequence
+*                                              parameter usage / logic.
+*                                              See version 00005 for
+*                                              this logic.  Excess code
+*                                              has been deleted to make
+*                                              this FM more readable
+*                                              throughout the FM.
+*                                              CR65 - exclude asset
+*                                              account assignment lines.
+* 02.08.19 070667JPS RD2K918253 DS-11-32-01-01 S 6000001639: VIM GR UI5
+*                                              Application-Phase 2.3
+*                                              (D157).  Added WEBRE flag
+*                                              as this is needed in the
+*                                              app to handle credit
+*                                              memos.
+* 06.08.19 070667JPS RD2K918253 DS-11-32-01-01 S 6000001639: VIM GR UI5
+*                                              Application-Phase 2.3
+*                                              (D157). Added credit memo
+*                                              logic.
+*-----------------------------------------------------------------------
+
+  types:
+    begin of ty_gr_totals,
+      ebelp             type ekbe-ebelp,
+      netpr             type ekpo-netpr,
+      bpmng             type ekbe-bpmng,
+    end of ty_gr_totals.
+
+  types:                                                 "CR 6000001550
+    begin of ty_gr_dup,                                  "CR 6000001550
+      mblnr             type mkpf-mblnr,                 "CR 6000001550
+      mjahr             type mkpf-mjahr,                 "CR 6000001550
+    end of ty_gr_dup.                                    "CR 6000001550
+
+* CR 6000001639 - The following type was added
+  types:
+    begin of ty_po_lines,
+     ebeln              type ekpo-ebeln,
+     ebelp              type ekpo-ebelp,
+     txz01              type ekpo-txz01,
+     menge              type ekpo-menge,
+     netpr              type ekpo-netpr,
+     mwskz              type ekpo-mwskz,
+     meins              type ekpo-meins,
+     webre              type ekpo-webre,
+   end of ty_po_lines.
+
+  data:
+    lw_vimdocid         type zvim_gr_app_itm-vimdocid,
+    lw_sequence         type zvim_gr_app_itm-sequence,
+    lw_ebeln            type ekko-ebeln,
+    ls_zvim_gr_app_itm  type zvim_gr_app_itm,
+    lt_zvim_gr_app_itm  type zvim_gr_app_itm_tt.
+
+  data:
+    ls_ekko             type ekko,
+    lw_kursf            type bkpf-kursf,
+    lw_wwert            type bkpf-wwert,
+    lt_goods_receipts   type standard table of ek08rn initial size 0,
+    ls_goods_receipts   type ek08rn,                     "CR 6000001639
+    lt_gr_totals        type standard table of ty_gr_totals,
+    ls_gr_totals        type ty_gr_totals,
+    lw_xblnr            type xblnr1,                     "CR 6000001550
+    lt_gr_dup           type standard table of ty_gr_dup,"CR 6000001550
+    lw_lines            type i,                          "CR 6000001550
+    lw_success          type boolean,                    "CR 6000001551
+    lw_credit_memo      type /opt/vim_1head-credit_memo, "CR 6000001639
+    lt_po_items         type standard table of ty_po_lines, "6000001639
+    ls_po_items         type ty_po_lines,                "CR 6000001639
+    lw_item_counter     type i,                          "CR 6000001639
+    lw_qtyleft          type ekbe-bpmng.
+
+  constants:
+    c_true              type datatype-boolean value 'X'.
+
+* store passed in values in the table structure.
+  lw_vimdocid = iv_vimdocid.
+  lw_sequence = iv_sequence.
+
+  lw_success = abap_true.                                "CR 6000001551
+
+  if ( lw_vimdocid ne '000000000000' ).                  "CR 6000001551
+
+    if ( lw_vimdocid is not initial ).
+* Retrieve data based on passed in VIM Doc ID.  Ignore the PO and PO
+* line item parameters as we want all items for the VIM Doc in the UI5
+* application.
+      select single
+             credit_memo                                 "CR 6000001639
+             ebeln
+        from /opt/vim_1head
+        "into lw_ebeln                                   "CR 6000001639
+        into (lw_credit_memo, lw_ebeln)                  "CR 6000001639
+       where docid = lw_vimdocid.
+
+      if sy-subrc = 0.
+
+        ls_zvim_gr_app_itm-vimdocid = lw_vimdocid.
+
+* Read the PO header
+        call function 'ME_EKKO_SINGLE_READ'
+          exporting
+            pi_ebeln         = lw_ebeln
+          importing
+            po_ekko          = ls_ekko
+          exceptions
+            no_records_found = 1
+            others           = 2.
+
+        if sy-subrc = 0.
+
+          move:
+              syst-datlo     to lw_wwert,
+              ls_ekko-wkurs to lw_kursf.
+
+* read the purchase order history
+          call function 'ME_READ_ITEM_INVOICE'
+            exporting
+              display       = c_true
+              iekko         = ls_ekko
+              re_kursf      = lw_kursf
+              re_waers      = ls_ekko-waers
+              re_wwert      = lw_wwert
+            tables
+              xek08rn       = lt_goods_receipts
+            exceptions
+              not_found_any = 1
+              not_found_one = 2
+              not_valid_any = 3
+              not_valid_one = 4
+              others        = 5.
+
+* If GR documents were found, collate the data.  Ignore if an error
+* occurred as it just means that we can't present a proper calculation
+* of the quantity left for the line items to the user.  The Post GR
+* logic will produce an error if there is not enough quantity left
+* in any case.
+          if syst-subrc = 0.
+            if lw_credit_memo ne abap_true.              "CR 6000001639
+* total goods receipts calculated to ensure we have enough to cover
+* the invoice
+              perform   calculate_gr_totals
+                using   lt_goods_receipts
+               changing lt_gr_totals.
+
+            endif.                                       "CR 6000001639
+
+          else.                                          "CR 6000001551
+            lw_success = abap_false.                     "CR 6000001551
+
+          endif.
+
+          if lw_credit_memo ne abap_true.              "CR 6000001639
+* Not a Credit Memo
+* Get the line items
+            select   ebeln
+                     ebelp
+                     txz01
+                     menge
+                     netpr
+                     mwskz
+                     meins        "Added UOM 6000001503
+                     webre        "Added CR 6000001639
+               from ekpo
+              into (ls_zvim_gr_app_itm-ebeln,
+                     ls_zvim_gr_app_itm-ebelp,
+                     ls_zvim_gr_app_itm-linetext,
+                     ls_zvim_gr_app_itm-quantityordered,
+                     ls_zvim_gr_app_itm-unitprice,
+                     ls_zvim_gr_app_itm-taxcode,      "Added 6000001503
+                     ls_zvim_gr_app_itm-unitofmeasure,"Added 6000001503
+                     ls_zvim_gr_app_itm-webre)        "Added 6000001639
+*                   ls_zvim_gr_app_itm-taxcode)     "Comment 6000001503
+              where ebeln = lw_ebeln
+                and wepos = 'X'   " GR Flag (PO invoice tab)
+                and knttp ne 'A'  " Cant be an asset - Added 6000001551
+                and loekz = space " Deletion Ind - Added 6000001550
+                and ( elikz = space  "Delivery Complete
+                 or erekz = space ). "Final Invoice
+
+* Get total GR amounts for the PO line from the table created earlier
+              clear ls_gr_totals.
+              read table lt_gr_totals
+               with key ebelp = ls_zvim_gr_app_itm-ebelp
+               into ls_gr_totals.
+
+* Calculate the quantity left for the PO line
+              ls_zvim_gr_app_itm-quantityleft =
+              ls_zvim_gr_app_itm-quantityordered - ls_gr_totals-bpmng.
+
+* Set quantity received to zero - this is loaded into the UI5 app
+* as the initial value
+              ls_zvim_gr_app_itm-quantityreceived = 0.
+
+* If statement below added for CR 6000001500 - don't include PO item if
+* there is no quantity left.
+              if ( ls_zvim_gr_app_itm-quantityleft gt 0 ).
+                ls_zvim_gr_app_itm-itemid = '00001'.
+                append ls_zvim_gr_app_itm to et_zvim_gr_app_itm.
+              endif.
+
+            endselect.
+
+          else.                                          "CR 6000001639
+* Credit Memo
+* Get the PO line items
+            select ebeln
+                   ebelp
+                   txz01
+                   menge
+                   netpr
+                   mwskz
+                   meins
+                   webre
+              from ekpo
+              into corresponding fields of table lt_po_items
+             where ebeln = lw_ebeln
+               and wepos = 'X'   " GR Flag (PO invoice tab)
+               and knttp ne 'A'  " Cant be an asset
+               and loekz = space " Deletion Ind
+               and ( elikz = space  "Delivery Complete
+                or erekz = space ). "Final Invoice
+
+            sort lt_po_items ascending by ebeln ebelp.
+
+            sort lt_goods_receipts ascending by ebeln ebelp.
+
+            lw_item_counter = 1.
+
+            loop at lt_goods_receipts into ls_goods_receipts.
+
+* See if the PO item is found in the extracted list of PO items.  If
+* so, we want to display it in the UI5 application.  If not. we will
+* ignore the GRs for the PO line.
+              read table lt_po_items into ls_po_items
+               with key ebeln = ls_goods_receipts-ebeln
+                        ebelp = ls_goods_receipts-ebelp.
+
+              if sy-subrc = 0.
+* Found PO line item
+                ls_zvim_gr_app_itm-ebeln = ls_goods_receipts-ebeln.
+                ls_zvim_gr_app_itm-ebelp = ls_goods_receipts-ebelp.
+                ls_zvim_gr_app_itm-linetext = ls_po_items-txz01.
+                ls_zvim_gr_app_itm-quantityordered = ls_po_items-menge.
+                ls_zvim_gr_app_itm-unitprice = ls_po_items-netpr.
+                ls_zvim_gr_app_itm-taxcode = ls_po_items-mwskz.
+                ls_zvim_gr_app_itm-unitofmeasure = ls_po_items-meins.
+                ls_zvim_gr_app_itm-webre = ls_po_items-webre.
+
+                ls_zvim_gr_app_itm-grrefdocid = ls_goods_receipts-lfbnr.
+                ls_zvim_gr_app_itm-grrefdocyr = ls_goods_receipts-lfgja.
+                ls_zvim_gr_app_itm-grrefdocitem = ls_goods_receipts-lfpos.
+                ls_zvim_gr_app_itm-quantitygrd = ls_goods_receipts-bpwem.
+                ls_zvim_gr_app_itm-quantityreversed = 0.
+
+                if ( ls_zvim_gr_app_itm-quantitygrd gt 0 ).
+                  ls_zvim_gr_app_itm-itemid = lw_item_counter.
+                  lw_item_counter = lw_item_counter + 1.
+
+                  append ls_zvim_gr_app_itm to et_zvim_gr_app_itm.
+                endif.
+
+              endif.
+
+            endloop.
+
+          endif.                                         "CR 6000001639
+
+        else.                                            "CR 6000001551
+          lw_success = abap_false.                       "CR 6000001551
+
+        endif. "sy-subrc on PO Header get
+
+      else.                                              "CR 6000001551
+        lw_success = abap_false.                         "CR 6000001551
+
+      endif. " Select on table /opt/vim_1head
+
+    else.
+* Get all entries if no VIM Doc ID supplied
+* Won't be used by an app - possibly by a report
+      select *
+        from zvim_gr_app_itm
+        into table et_zvim_gr_app_itm.
+
+* CR 6000001551 - Following IF statement added
+      if sy-subrc ne 0.
+        lw_success = abap_false.
+      endif.
+
+    endif.
+
+  else.   "lw_vimdocid ne '000000000000'                 "CR 6000001551
+    lw_success = abap_false.                             "CR 6000001551
+  endif.                                                 "CR 6000001551
+
+* CR 6000001551 - Use lw_success as a test for success
+  if lw_success = abap_true.
+    ev_success = 'X'.
+  else.
+    ev_success = ''.
+  endif.
+
+endfunction.
+
+*&--------------------------------------------------------------------*
+*&      Form  CALCULATE_GR_TOTALS
+*&--------------------------------------------------------------------*
+* Calculate the goods receipt qty totals per item and net price.  Note
+* that net price is not actually used for the GR UI5 application but
+* the code below is a modified copy of the ISIS MM Post job function
+* and leaving the net price in is not a problem.
+*---------------------------------------------------------------------*
+form calculate_gr_totals
+  using
+    lt_p_goods_receipts   type standard table       "ek08rn
+  changing
+    value(lt_p_gr_totals) type standard table.      "ty_gr_totals.
+
+  types:
+    begin of ty_gr_totals,
+      ebelp             type ekbe-ebelp,
+      netpr             type ekpo-netpr,
+      bpmng             type ekbe-bpmng,
+    end of ty_gr_totals.
+
+  data:
+    lw_bpwem            type ek08rn-bpwem,
+    ls_goods_receipts   type ek08rn,
+    ls_gr_totals        type ty_gr_totals.
+
+* calculate the goods receipt quantities totals per item and net price
+  loop at lt_p_goods_receipts into ls_goods_receipts.
+    move:
+      ls_goods_receipts-ebelp to ls_gr_totals-ebelp,
+      ls_goods_receipts-netpr to ls_gr_totals-netpr,
+      ls_goods_receipts-bpwem to ls_gr_totals-bpmng. "BPWEN is GR Qty
+    collect ls_gr_totals into lt_p_gr_totals.
+    clear ls_goods_receipts.
+  endloop.
+
+endform.                    " CALCULATE_GR_TOTALS

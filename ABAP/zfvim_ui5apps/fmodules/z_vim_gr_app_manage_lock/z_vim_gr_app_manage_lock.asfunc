@@ -1,0 +1,553 @@
+FUNCTION Z_VIM_GR_APP_MANAGE_LOCK
+  IMPORTING
+    VALUE(IV_VIMDOCID) TYPE ZVIM_GR_APP_HDR-VIMDOCID
+    VALUE(IV_APP_UUID) TYPE SYSUUID_C32
+    VALUE(IV_ACTION) TYPE CHAR01
+  EXPORTING
+    VALUE(EV_RETURN_MESSAGE) TYPE BAPI_MSG
+    VALUE(EV_RETURN_MSG_TYPE) TYPE SYMSGTY
+    VALUE(EV_SUCCESS) TYPE BOOLEAN.
+
+
+
+*----------------------------------------------------------------------*
+* PROGRAM ID:         Z_VIM_GR_APP_MANAGE_LOCK
+* DESCRIPTION:        This function is called by the VIM UI5 Create GR
+*                     BSP application, ZVIMGRCREATE.  The function
+*                     manages the VIM document ID lock for the
+*                     application to stop multiple users from accessing
+*                     the application for the same VIM document ID at
+*                     the same time.  The app will call this function
+*                     module via oData service ZEDM_VIM_GR_CREATE.
+*                     Locks have a time-out period of 15 minutes. Locks
+*                     are deleted after a user submits a GR, rejects a
+*                     VIM invoice or closes the browser.
+*
+* AUTHOR:             James Southwell
+* CREATE DATE:        31 May 2019
+* R/3 RELEASE VERSION: ECC6
+*
+* ACTIVITY:           AD-11-32-01 - Goods Receipting
+* CR Number:          6000001564 - VIM GR UI5 Application - Defect 110
+*-----------------------------------------------------------------------
+* VERSION CONTROL
+*
+* Date     Author    CTS Req    Dev Script     Description
+*-----------------------------------------------------------------------
+*-----------------------------------------------------------------------
+
+  DATA:
+    lw_vimdocid         TYPE zvim_gr_app_hdr-vimdocid,
+    lw_app_uuid         TYPE sysuuid_c32,
+    lw_action           TYPE char01,
+    ls_zvim_gr_app_lock TYPE zvim_gr_app_lock,
+    lw_lock_default_i   TYPE i,
+    lw_lock_hrs         TYPE p DECIMALS 2,
+    lw_lock_sec         TYPE p DECIMALS 0,
+    lw_end_dt           TYPE endda,
+    lw_end_time         TYPE endti,
+    lw_message          TYPE bapi_msg,
+    lw_msg_type         TYPE symsgty,
+    lw_seconds          TYPE sytabix.
+
+* store passed in values in the table structure.
+  lw_vimdocid = iv_vimdocid.
+  lw_action = iv_action.
+  lw_app_uuid = iv_app_uuid.
+
+* Get the lock default duration parameter from table TVARVC
+  PERFORM get_lock_param CHANGING lw_lock_default_i
+                                  lw_message
+                                  lw_msg_type.
+
+  IF ( lw_message IS NOT INITIAL ).
+    ev_return_message = lw_message.
+    ev_return_msg_type = lw_msg_type.
+    ev_success = abap_false.
+    RETURN.
+  ENDIF.
+
+* Note that a common form is used for create, extend and force, making
+* the case statement below have the same logic for these three action
+* types.  The case statement was left here as it helps to understand
+* the overall logic via the comments under each case.
+  CASE lw_action.
+    WHEN gc_lock_create.  "User has just logged into app.
+* Read table for VIM record and see if anyone has a lock on the VIM
+* document. If a record is found for another user and it is expired,
+* raise a warning message to ask the user if they want to take over
+* the record.  If a record is found that is not expired, raise an
+* error. If no lock is found, create a new lock for the current user.
+      PERFORM check_set_lock USING lw_action
+                                   lw_vimdocid
+                                   lw_app_uuid
+                                   lw_lock_default_i
+                          CHANGING lw_message
+                                   lw_msg_type.
+
+      IF ( lw_message IS NOT INITIAL ).
+        ev_return_message = lw_message.
+        ev_return_msg_type = lw_msg_type.
+        ev_success = abap_false.
+        RETURN.
+      ENDIF.
+
+* No errors / warnings occurred so return the success flag as true.
+      ev_success = abap_true.
+
+    WHEN gc_lock_extend.
+* Extend the lock time. This action value is passed in by the UI5 app
+* when the user presses a button on the web page (Check balance,
+* Submit, Reject).  The lock is extended if it is still in the
+* current user's name.  If another user has taken over the lock, an
+* error will be raised.
+      PERFORM check_set_lock USING lw_action
+                                   lw_vimdocid
+                                   lw_app_uuid
+                                   lw_lock_default_i
+                          CHANGING lw_message
+                                   lw_msg_type.
+
+      IF ( lw_message IS NOT INITIAL ).
+        ev_return_message = lw_message.
+        ev_return_msg_type = lw_msg_type.
+        ev_success = abap_false.
+        RETURN.
+      ENDIF.
+
+* No errors / warnings occurred so return the success flag as true.
+      ev_success = abap_true.
+
+    WHEN gc_lock_force.
+* Create a lock for the current user / VIM document even if an expired
+* one exists in the database.  This action will only occur if a warning
+* was issued and the user has chosen to take over the processing from
+* another user - the other user's lock will have expired.
+* Need to check if an active lock now exists before taking over the
+* existing one.
+      PERFORM check_set_lock USING lw_action
+                                   lw_vimdocid
+                                   lw_app_uuid
+                                   lw_lock_default_i
+                          CHANGING lw_message
+                                   lw_msg_type.
+
+      IF ( lw_message IS NOT INITIAL ).
+        ev_return_message = lw_message.
+        ev_return_msg_type = lw_msg_type.
+        ev_success = abap_false.
+        RETURN.
+      ENDIF.
+
+* No errors / warnings occurred so return the success flag as true.
+      ev_success = abap_true.
+
+    WHEN gc_lock_delete.
+* Delete the lock.  This will occur after the user has submitted a GR
+* or a rejection successfully or they have closed their browser.
+      SELECT SINGLE *
+        FROM zvim_gr_app_lock
+        INTO ls_zvim_gr_app_lock
+       WHERE vimdocid = lw_vimdocid
+         AND userid   = sy-uname.
+
+      IF sy-subrc = 0.
+* Found an entry for the VIM document in the lock table. Delete it.
+        DELETE
+          FROM zvim_gr_app_lock
+         WHERE vimdocid = lw_vimdocid.
+
+        CLEAR ls_zvim_gr_app_lock.
+
+* No need to check the return code as having an entry left over will
+* not be a real problem.  It will time out after the lock default time
+* and if the same user tries to re-open the app, the lock will be
+* updated.  If another user tries to open the app, they will get an
+* error if the lock is still active, or a warning if it is expired.
+
+      ENDIF.
+
+* No errors / warnings occurred so return the success flag as true.
+      ev_success = abap_true.
+
+    WHEN OTHERS.
+* raise error - invalid parameter
+      MESSAGE e011(zvim_gr_app) WITH lw_action
+        INTO lw_message.
+      ev_return_message = lw_message.
+      ev_return_msg_type = gc_error.
+      ev_success = abap_false.
+      RETURN.
+  ENDCASE.
+
+
+ENDFUNCTION.
+
+*&---------------------------------------------------------------------*
+*&      Form  GET_LOCK_PARAM
+*&---------------------------------------------------------------------*
+*       This form retrieves the lock default parameter from TVARVC.
+*----------------------------------------------------------------------*
+*      -->LW_LOCK_DEFAULT_I   Passes in the Lock default duration (int.)
+*      <--LW_MESSAGE  Returns message if error / warning found
+*      <--LW_MSG_TYPE Returns the message type (Error / Warning)
+*----------------------------------------------------------------------*
+
+FORM get_lock_param CHANGING lw_lock_default_i TYPE i
+                             lw_message TYPE bapi_msg
+                             lw_msg_type TYPE symsgty.
+
+  DATA:
+    lw_lock_default TYPE tvarvc-low,
+    lw_param_type   TYPE dd01v-datatype.
+
+* Retrieve the lock time limit parameter ZVIM_GR_APP_LOCK_TIME
+  SELECT SINGLE low
+    FROM tvarvc
+    INTO lw_lock_default
+    WHERE name = 'ZVIM_GR_APP_LOCK_TIME'
+      AND type = 'P'.
+
+  IF sy-subrc NE 0.
+* ZVIM_GR_APP_LOCK_TIME Parameter not found.  Pass error back
+    MESSAGE e002(zvim_gr_app) INTO lw_message.
+    lw_msg_type = gc_error.
+    RETURN.
+  ELSE.
+    IF lw_lock_default IS INITIAL.
+* No value for ZVIM_GR_APP_LOCK_TIME parameter - Pass error back
+      MESSAGE e003(zvim_gr_app) INTO lw_message.
+      lw_msg_type = gc_error.
+      RETURN.
+    ELSE.
+* Parameter ZVIM_GR_APP_LOCK_TIME found & has a value - is it numeric?
+      CALL FUNCTION 'NUMERIC_CHECK'
+        EXPORTING
+          string_in = lw_lock_default
+        IMPORTING
+          htype     = lw_param_type.
+
+      IF ( lw_param_type NE 'NUMC' ).
+* ZVIM_GR_APP_LOCK_TIME parameter not numeric - Pass error back
+        MESSAGE e004(zvim_gr_app) INTO lw_message.
+        lw_msg_type = gc_error.
+        RETURN.
+      ENDIF.
+
+    ENDIF.
+  ENDIF.
+
+* Convert lock default time to type integer
+  MOVE lw_lock_default TO lw_lock_default_i.  "Convert to type i
+
+ENDFORM.                    "get_lock_param
+
+*&---------------------------------------------------------------------*
+*&      Form  CHECK_SET_LOCK
+*&---------------------------------------------------------------------*
+*       This form handles the checking and setting of the lock for the
+*       Create and Extend actions.
+*----------------------------------------------------------------------*
+*      -->LW_ACTION   Passes in action (Create / Extend)
+*      -->LW_VIMDOCID Passes in the VIM document ID
+*      -->LW_APP_UUID Passes in UUID (GUID) for application
+*      -->LW_LOCK_DEFAULT_I   Passes in the Lock default duration (int.)
+*      <--LW_MESSAGE  Returns message if error / warning found
+*      <--LW_MSG_TYPE Returns the message type (Error / Warning)
+*----------------------------------------------------------------------*
+FORM check_set_lock USING lw_action  TYPE char01
+                          lw_vimdocid TYPE zvim_gr_app_hdr-vimdocid
+                          lw_app_uuid TYPE sysuuid_c32
+                          lw_lock_default_i TYPE i
+                 CHANGING lw_message TYPE bapi_msg
+                          lw_msg_type TYPE symsgty.
+
+  DATA:
+    ls_zvim_gr_app_lock TYPE zvim_gr_app_lock,
+    lw_lock_hrs         TYPE p DECIMALS 2,
+    lw_lock_sec         TYPE p DECIMALS 0,
+    lw_end_dt           TYPE endda,
+    lw_end_time         TYPE endti,
+    lw_seconds          TYPE sytabix,
+    lw_param_type       TYPE dd01v-datatype.
+
+* First check if a lock exists already (should exist for an extension
+* and for a "Force" as the Force is to set a lock after an expired one
+* for a different user was found and the user responded to a warning
+* message requesting to take over the VIM document).
+  SELECT SINGLE *
+    FROM zvim_gr_app_lock
+    INTO ls_zvim_gr_app_lock
+   WHERE vimdocid = lw_vimdocid.
+
+  IF sy-subrc = 0.  "Lock entry for the VIM document found
+** Check if it is the current user's name (not expected for a Force)
+* Check if the lock is for the current app session - by app UUID
+    IF ( ls_zvim_gr_app_lock-app_uuid EQ lw_app_uuid ).
+* Record found for the current app session
+* Check if the lock is still active
+* Get the difference in time between the lock end date/time and the
+* current date/time (in seconds) to see if it has expured.
+      CALL FUNCTION 'SWI_DURATION_DETERMINE'
+        EXPORTING
+          start_date = ls_zvim_gr_app_lock-lockenddate
+          end_date   = sy-datum
+          start_time = ls_zvim_gr_app_lock-lockendtime
+          end_time   = sy-uzeit
+        IMPORTING
+          duration   = lw_seconds.
+
+* Get the lock default duration in seconds.
+      lw_lock_sec = lw_lock_default_i * 60. "to seconds
+
+*      IF ( lw_seconds GT 0 ).  "Expired lock
+      IF ( lw_seconds GT lw_lock_sec ).  "Expired lock
+* The lock can be re-started - i.e. updated with a current lock.
+        PERFORM set_lock_data USING lw_vimdocid
+                                    lw_app_uuid
+                                    lw_lock_default_i
+                           CHANGING ls_zvim_gr_app_lock.
+
+        UPDATE zvim_gr_app_lock
+          FROM ls_zvim_gr_app_lock.
+
+        IF sy-subrc NE 0.
+* Couldn't set lock for re-set of lock - pass error back
+          CLEAR ls_zvim_gr_app_lock.
+          IF ( ( lw_action = gc_lock_create ) OR
+               ( lw_action = gc_lock_force ) ).
+            MESSAGE e007(zvim_gr_app) INTO lw_message.
+          ELSE. " can only be gc_lock_extend
+* Couldn't extend lock - pass error back
+            MESSAGE e008(zvim_gr_app) INTO lw_message.
+          ENDIF.
+          lw_msg_type = gc_error.
+          RETURN.
+        ENDIF.
+
+      ELSE.  " Not an expired lock - same app session has it locked
+* Extend the lock anyway
+        PERFORM set_lock_data USING lw_vimdocid
+                                    lw_app_uuid
+                                    lw_lock_default_i
+                           CHANGING ls_zvim_gr_app_lock.
+
+        UPDATE zvim_gr_app_lock
+          FROM ls_zvim_gr_app_lock.
+
+        IF sy-subrc NE 0.
+* Couldn't set lock for re-set of lock - pass error back
+          CLEAR ls_zvim_gr_app_lock.
+          IF ( ( lw_action = gc_lock_create ) OR
+               ( lw_action = gc_lock_force ) ).
+            MESSAGE e007(zvim_gr_app) INTO lw_message.
+          ELSE. " can only be gc_lock_extend
+* Couldn't extend lock - pass error back
+            MESSAGE e008(zvim_gr_app) INTO lw_message.
+          ENDIF.
+          lw_msg_type = gc_error.
+          RETURN.
+        ENDIF.
+
+      ENDIF.
+    ELSE.
+* Lock found for another app session. Check if the lock is still active
+* Get the difference in time between the lock end date/time and the
+* current date/time (in seconds) to see if it has expured.
+      CALL FUNCTION 'SWI_DURATION_DETERMINE'
+        EXPORTING
+          start_date = ls_zvim_gr_app_lock-lockstartdate
+          end_date   = sy-datum
+          start_time = ls_zvim_gr_app_lock-lockstarttime
+          end_time   = sy-uzeit
+        IMPORTING
+          duration   = lw_seconds.
+
+* Get the lock default duration in seconds.
+      lw_lock_sec = lw_lock_default_i * 60. "to seconds
+
+*      IF ( lw_seconds GT 0 ).  "Another user has an expired lock
+      IF ( lw_seconds GT lw_lock_sec ).  ""Another user has an expired lock
+
+        CASE lw_action.
+          WHEN gc_lock_create.
+* Raise a warning message to the the user to see if they want to take
+* over the VIM document or not.
+            MESSAGE e006(zvim_gr_app) WITH ls_zvim_gr_app_lock-userid
+              INTO lw_message.
+            lw_msg_type = gc_warning.
+            CLEAR ls_zvim_gr_app_lock.
+            RETURN.
+          WHEN gc_lock_extend.
+* For gc_lock_extend, this means that another user took over but now
+* has an expired lock. The user will be asked if they want to take
+* over the VIM document "again".
+            MESSAGE e010(zvim_gr_app) WITH ls_zvim_gr_app_lock-userid
+              INTO lw_message.
+            lw_msg_type = gc_warning.
+            CLEAR ls_zvim_gr_app_lock.
+            RETURN.
+          WHEN gc_lock_force.
+* Another user has an expired lock. Take over the lock.
+            PERFORM set_lock_data USING lw_vimdocid
+                                        lw_app_uuid
+                                        lw_lock_default_i
+                               CHANGING ls_zvim_gr_app_lock.
+
+            UPDATE zvim_gr_app_lock
+              FROM ls_zvim_gr_app_lock.
+
+            IF sy-subrc NE 0.
+* Couldn't set lock for creation of a new lock - pass error back
+              CLEAR ls_zvim_gr_app_lock.
+              MESSAGE e007(zvim_gr_app) INTO lw_message.
+              lw_msg_type = gc_error.
+              RETURN.
+            ENDIF.
+        ENDCASE.
+
+      ELSE.
+* Lock has not expired. Another app session has the lock (or taken
+* it over while the first user was responding to the warning about the
+* previously expired lock of another user).
+
+* If same user
+        IF ( ls_zvim_gr_app_lock-userid EQ sy-uname ).
+
+* When navigating back from Created Purchase receipt App, Lock has to be forced
+          IF lw_action = gc_lock_create.
+            lw_action = gc_lock_force.
+          ENDIF.
+
+
+          IF ( lw_action = gc_lock_force ).
+* Take over the lock.
+            PERFORM set_lock_data USING lw_vimdocid
+                                        lw_app_uuid
+                                        lw_lock_default_i
+                               CHANGING ls_zvim_gr_app_lock.
+
+            UPDATE zvim_gr_app_lock
+              FROM ls_zvim_gr_app_lock.
+
+            IF sy-subrc NE 0.
+* Couldn't set lock for creation of a new lock - pass error back
+              CLEAR ls_zvim_gr_app_lock.
+              MESSAGE e007(zvim_gr_app) INTO lw_message.
+              lw_msg_type = gc_error.
+              RETURN.
+            ENDIF.
+
+          ELSE.  "Not Force (i.e. Create or Extend)
+* Pass back warning to ask if they want to take over the lock
+            MESSAGE e012(zvim_gr_app) INTO lw_message.
+            lw_msg_type = gc_warning.
+            CLEAR ls_zvim_gr_app_lock.
+            RETURN.
+          ENDIF.
+        ELSE.
+* Pass an error message back.  In the case of an extension, the
+* message is advising the user that control has been lost.
+          IF ( ( lw_action = gc_lock_create ) OR
+               ( lw_action = gc_lock_force ) ).
+            MESSAGE e005(zvim_gr_app) WITH ls_zvim_gr_app_lock-userid
+              INTO lw_message.
+          ELSE. " can only be gc_lock_extend
+            MESSAGE e009(zvim_gr_app) WITH ls_zvim_gr_app_lock-userid
+              INTO lw_message.
+          ENDIF.
+          lw_msg_type = gc_error.
+          CLEAR ls_zvim_gr_app_lock.
+          RETURN.
+        ENDIF.
+      ENDIF.
+
+    ENDIF.
+  ELSE.  "No lock entry found (as expected for gc_lock_create)
+* Create a new lock entry for the current user
+    PERFORM set_lock_data USING lw_vimdocid
+                                lw_app_uuid
+                                lw_lock_default_i
+                       CHANGING ls_zvim_gr_app_lock.
+
+    INSERT INTO zvim_gr_app_lock
+      VALUES ls_zvim_gr_app_lock.
+
+    IF sy-subrc NE 0.
+* Couldn't set lock for creation of a new lock - pass error back
+      CLEAR ls_zvim_gr_app_lock.
+      IF ( ( lw_action = gc_lock_create ) OR
+           ( lw_action = gc_lock_force ) ).
+        MESSAGE e007(zvim_gr_app) INTO lw_message.
+      ELSE. " can only be gc_lock_extend
+* Couldn't extend lock - pass error back.  This could occur if user A
+* had opened the application and a lock had been set.  If they took
+* a long time (longer than the default lock duration) to process the
+* GR without pressing any buttons and another user (user B) takes over
+* processing and completes processing, user B's lock will then be
+* deleted so no lock entry exists in the lock table.  User A cannot
+* then extend their lock so they will not be able to do any further
+* processing.  Re-opening the GR app may result in an error that a
+* GR already exists or the VIM document's status is not available for
+* processing (because user B could have either created a GR or
+* rejected the invoice).  User B could also have just closed the app
+* in which case, user A will be able to start processing the VIM
+* document again - and a new lock will be created.
+        MESSAGE e008(zvim_gr_app) INTO lw_message.
+      ENDIF.
+      lw_msg_type = gc_error.
+      RETURN.
+    ENDIF.
+
+  ENDIF.
+
+ENDFORM.                    "check_set_lock
+
+*&---------------------------------------------------------------------*
+*&      Form  SET_LOCK_DATA
+*&---------------------------------------------------------------------*
+*       This form populates the LS_ZVIM_GR_APP_LOCK structure for use
+*       in the creation of a new lock or for updating an existing lock.
+*----------------------------------------------------------------------*
+*      -->LW_VIMDOCID         Passes in the VIM document ID
+*      -->LW_APP_UUID         Passes in the app UUID (GUID)
+*      -->LW_LOCK_DEFAULT_I   Passes in the Lock default duration (int.)
+*      <--LS_ZVIM_GR_APP_LOCK Passes back populated structure
+*----------------------------------------------------------------------*
+FORM set_lock_data USING lw_vimdocid TYPE zvim_gr_app_hdr-vimdocid
+                         lw_app_uuid TYPE sysuuid_c32
+                         lw_lock_default_i TYPE i
+                CHANGING ls_zvim_gr_app_lock TYPE zvim_gr_app_lock.
+
+  DATA:
+    lw_lock_hrs TYPE p2012-anzhl,
+    lw_end_dt   TYPE endda,
+    lw_end_time TYPE endti.
+
+* Create a new lock entry for the VIM document / user ID
+  ls_zvim_gr_app_lock-vimdocid = lw_vimdocid.
+  ls_zvim_gr_app_lock-app_uuid = lw_app_uuid.
+  ls_zvim_gr_app_lock-userid = sy-uname.
+
+* Set the new lock times
+  ls_zvim_gr_app_lock-lockstartdate = sy-datum.
+  ls_zvim_gr_app_lock-lockstarttime = sy-uzeit.
+
+* Get the lock default duration in hours.
+  lw_lock_hrs = lw_lock_default_i / 60. "to hours
+
+* Calculate the end date and time for the lock based on the
+* default parameter value (e.g. 15 minutes lock default).
+  CALL FUNCTION 'CATT_ADD_TO_TIME'
+    EXPORTING
+      idate = sy-datum
+      itime = sy-uzeit
+      stdaz = lw_lock_hrs
+    IMPORTING
+      edate = lw_end_dt
+      etime = lw_end_time.
+
+  ls_zvim_gr_app_lock-lockenddate = lw_end_dt.
+  ls_zvim_gr_app_lock-lockendtime = lw_end_time.
+
+ENDFORM.                    "set_lock_data

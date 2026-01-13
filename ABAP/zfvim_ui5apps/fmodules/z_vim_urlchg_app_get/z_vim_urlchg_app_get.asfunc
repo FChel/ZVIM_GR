@@ -1,0 +1,133 @@
+FUNCTION Z_VIM_URLCHG_APP_GET
+  IMPORTING
+    VALUE(IV_UNAME) TYPE SYUNAME OPTIONAL
+  EXPORTING
+    VALUE(ET_ZVIM_URLCHG_APP) TYPE ZVIM_URLCHG_APP_TT
+    VALUE(EV_SUCCESS) TYPE BOOLEAN
+  EXCEPTIONS
+    NOHOSTORPORT.
+
+
+
+*----------------------------------------------------------------------*
+* PROGRAM ID:         Z_VIM_URLCHG_APP_GET
+* DESCRIPTION:        This function is called by the VIM UI5 non-PO
+*                     based invoice approval BSP application
+*                     VIMURLREDIRECT.  The function is expected to only
+*                     be used when users click on the approval app link
+*                     listed in the VIM notification email to a group
+*                     email account.  The link will take the user to
+*                     the URL for UI5 app vimurlredirect.
+*                     This app will call this function module via oData
+*                     service ZEDM_VIM_URL_REDIRECT_SRV to create an
+*                     entry in table Z_VIM_URLCHG_APP which
+*                     is used to store the userID, VIM Document ID and
+*                     Group email address.  The "GET" function is used
+*                     by the app to retrieve a header key which is
+*                     used in the create process (see function module
+*                     Z_VIM_URLCHG_APP_CREATE for details on the VIM
+*                     URL redirect process.)
+*
+* AUTHOR:             James Southwell
+* CREATE DATE:        05 Feb 2019
+* R/3 RELEASE VERSION: ECC6
+*
+* ACTIVITY:           AD-11-32-02 - VIM URL Redirection
+* CR Number:          6000001457 - VIM UI5 Applications
+*-----------------------------------------------------------------------
+
+  data:
+    ls_zvim_urlchg_app  type zvim_urlchg_app,
+    lw_idm_host         type zvim_idm_host,
+    lw_idm_port         type zvim_idm_port.
+
+  if ( iv_uname is not initial ).
+    if ( iv_uname = 'DUMMY' ).
+* Return dummy information including the username which is needed in
+* the VIM UI5 app.
+      ls_zvim_urlchg_app-mandt = sy-mandt.
+      ls_zvim_urlchg_app-uname = sy-uname.
+      ls_zvim_urlchg_app-docid = ''.
+      ls_zvim_urlchg_app-grp_email = 'DUMMY'.
+
+* Build the VIM Approval Portal URL based on the IDM server and port
+* details stored in a custom mapping table by system ID (e.g. RD2).
+* Example URL
+*https://sapid21.dcb.defence.gov.au:53001/irj/portal?
+*NavigationTarget=pcd:portal_content/gov.defence.
+*idm_defence_portal/end_user_content/ecc/iviews/
+*OT_Approvals&NavMode=10
+      select single
+             idm_host
+             idm_port
+        into (lw_idm_host, lw_idm_port)
+        from zvim_idm_sys_map
+       where sysid = sy-sysid.
+
+      if sy-subrc ne 0.
+        raise nohostorport.
+      else.
+        translate lw_idm_host to lower case. "Same as rest of URL
+
+        concatenate
+          'https://' lw_idm_host ':' lw_idm_port '/irj/portal?'
+          'NavigationTarget=pcd:portal_content/gov.defence.'
+          'idm_defence_portal/end_user_content/ecc/iviews/'
+          'OT_Approvals&NavMode=10'
+        into
+          ls_zvim_urlchg_app-vimurl.
+
+        condense ls_zvim_urlchg_app-vimurl no-gaps.
+
+      endif.
+
+      append ls_zvim_urlchg_app to et_zvim_urlchg_app.
+
+      ev_success = 'X'.
+
+* The following no longer needed (identified during unit testing).
+* It has been commented out and left here for reference.
+*    elseif ( iv_uname = 'SYUNAME' ).
+** Retrieve data based on user that is logged in.
+*      select *
+*        from zvim_urlchg_app
+*        into table et_zvim_urlchg_app
+*       where uname = sy-uname.
+*
+*      if sy-subrc <> 0.
+** Return a value that tells calling program that no entry exists
+*        ls_zvim_urlchg_app-mandt = sy-mandt.
+*        ls_zvim_urlchg_app-uname = 'NOENTRY'.
+*        ls_zvim_urlchg_app-docid = ''.
+*        ls_zvim_urlchg_app-grp_email = ''.
+*        append ls_zvim_urlchg_app to et_zvim_urlchg_app.
+*
+*      endif.
+*
+*      ev_success = 'X'.
+
+    else.
+* Retrieve data based on other passed in value.  There can only be one
+* entry for each user name in the table.
+      select *
+        from zvim_urlchg_app
+        into table et_zvim_urlchg_app
+       where uname = iv_uname.
+
+      if sy-subrc = 0.
+        ev_success = 'X'.
+      endif.
+    endif.
+  else.
+* Get all entries if no user name supplied
+    select *
+      from zvim_urlchg_app
+      into table et_zvim_urlchg_app.
+
+    if sy-subrc = 0.
+      ev_success = 'X'.
+    endif.
+
+  endif.
+
+endfunction.

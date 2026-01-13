@@ -1,0 +1,20 @@
+* regenerated at 08.02.2019 11:14:40
+*******************************************************************
+*   System-defined Include-files.                                 *
+*******************************************************************
+  INCLUDE LZFVIM_UI5APPSTOP.                 " Global Data
+  INCLUDE LZFVIM_UI5APPSUXX.                 " Function Modules
+
+*******************************************************************
+*   User-defined Include-files (if necessary).                    *
+*******************************************************************
+* INCLUDE LZFVIM_UI5APPSF...                 " Subroutines
+* INCLUDE LZFVIM_UI5APPSO...                 " PBO-Modules
+* INCLUDE LZFVIM_UI5APPSI...                 " PAI-Modules
+* INCLUDE LZFVIM_UI5APPSE...                 " Events
+* INCLUDE LZFVIM_UI5APPSP...                 " Local class implement.
+  INCLUDE LZFVIM_UI5APPSF00                       . " subprograms
+  INCLUDE LZFVIM_UI5APPSI00                       . " PAI modules
+  INCLUDE LSVIMFXX                                . " subprograms
+  INCLUDE LSVIMOXX                                . " PBO modules
+  INCLUDE LSVIMIXX                                . " PAI modules

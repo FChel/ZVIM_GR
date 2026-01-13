@@ -1,0 +1,138 @@
+FUNCTION Z_VIM_GR_APP_CHECK_DUPLICATE
+  IMPORTING
+    VALUE(IV_VIMDOCID) TYPE ZVIM_GR_APP_HDR-VIMDOCID
+  EXPORTING
+    VALUE(EV_RETURN_MESSAGE) TYPE BAPI_MSG.
+
+
+
+*----------------------------------------------------------------------*
+* PROGRAM ID:         Z_VIM_GR_APP_CHECK_DUPLICATE
+* DESCRIPTION:        This function checks if any duplicate material
+*                     documents exist in the MKPF table for the VIM
+*                     document number and invoice reference number.
+*                     The function is used by the VIM UI5 application
+*                     and returns an error message containing duplicate
+*                     GR details of any documents found.  The app name
+*                     is ZVIMGRCREATE.
+*
+* AUTHOR:             James Southwell
+* CREATE DATE:        29 May 2019
+* R/3 RELEASE VERSION: ECC6
+*
+* ACTIVITY:           AD-11-32-01 - Goods Receipting
+* CR Number:          6000001564 - VIM GR UI5 Application - Defect 110.
+*-----------------------------------------------------------------------
+* VERSION CONTROL
+*
+* Date     Author    CTS Req    Dev Script     Description
+*-----------------------------------------------------------------------
+*
+*-----------------------------------------------------------------------
+
+  types:
+    begin of ty_gr_dup,
+      mblnr             type mkpf-mblnr,
+      mjahr             type mkpf-mjahr,
+    end of ty_gr_dup.
+
+  data:
+    lw_vimdocid         type zvim_gr_app_hdr-vimdocid,
+    lw_xblnr            type xblnr1,
+    lw_gr_dup           type i,
+    lt_gr_dup           type standard table of ty_gr_dup,
+    ls_gr_dup           type ty_gr_dup,
+    lw_lines            type i,
+    lw_year             type char5,
+    lw_message          type bapi_msg.
+
+* Store passed in variable in local variable
+  lw_vimdocid = iv_vimdocid.
+
+* Get the reference value so that we can use a secondary index on MKPF.
+  select single
+         xblnr
+    into lw_xblnr
+    from /opt/vim_1head
+   where docid = lw_vimdocid.
+
+  if sy-subrc = 0.
+* We have the invoice reference - see if there are any duplicate GRs
+    select mblnr
+           mjahr
+      from mkpf
+      into table lt_gr_dup
+     where xblnr = lw_xblnr
+       and bktxt = lw_vimdocid.  "VIM Doc in GR header text if exists
+
+    describe table lt_gr_dup lines lw_lines.
+
+    if lw_lines eq 1.  "Only one duplicate(s) GR found
+      loop at lt_gr_dup into ls_gr_dup.
+* CR 6000001564 - concat - write into lw_message, not lw_dup_msg
+        concatenate
+         'GR document:'
+         ls_gr_dup-mblnr
+         '/ FY:'
+         ls_gr_dup-mjahr
+         'already exists for the VIM Document ID.'
+        into lw_message
+        separated by space.
+
+      endloop.
+
+    elseif lw_lines gt 1.  "More than one duplicate(s) found
+
+      loop at lt_gr_dup into ls_gr_dup.
+
+        if sy-tabix = 1.
+* CR 6000001564 - write into lw_message, not lw_dup_msg
+*         lw_dup_msg = 'Duplicate GRs exist for the VIM document - '.
+          lw_message = 'Duplicate GRs exist for the VIM document - '.
+        endif.
+
+        if sy-tabix = lw_lines.  " last one
+* CR 6000001564 - concat - write into lw_message, not lw_dup_msg
+          concatenate
+           lw_message
+           'GR document:'
+           ls_gr_dup-mblnr
+           '/ FY:'
+           ls_gr_dup-mjahr
+          into lw_message
+          separated by space.
+
+* CR 6000001564 - concat - write into lw_message, not lw_dup_msg
+          concatenate
+           lw_message
+           '.'
+          into lw_message.
+
+        else.  " Not the last record
+
+          concatenate
+           ls_gr_dup-mjahr
+           ','
+           into
+            lw_year.
+
+* CR 6000001564 - concat - write into lw_message, not lw_dup_msg
+          concatenate
+           lw_message
+           'GR document:'
+           ls_gr_dup-mblnr
+           '/ FY:'
+           lw_year
+          into lw_message
+          separated by space.
+
+        endif.
+      endloop.
+
+    endif.
+
+  endif.
+
+  ev_return_message = lw_message.
+
+endfunction.

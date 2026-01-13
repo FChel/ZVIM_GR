@@ -1,0 +1,49 @@
+FUNCTION Z_VIM_URLCHG_APP_DELETE
+  IMPORTING
+    VALUE(IV_UNAME) TYPE SYUNAME OPTIONAL
+  EXPORTING
+    VALUE(EV_PARAM_ERROR) TYPE CHAR01
+    VALUE(EV_SUCCESS) TYPE BOOLEAN.
+
+
+
+*----------------------------------------------------------------------*
+* PROGRAM ID:         Z_VIM_URLCHG_APP_DELETE
+* DESCRIPTION:        This function was called to be used by the VIM UI5
+*                     non-PO based invoice approval BSP application
+*                     VIMURLREDIRECT.  It deletes entry for a user ID
+*                     from table ZVIM_URLCHG_APP.
+*                     The function was created to be included in the
+*                     oData service ZEDM_VIM_URL_REDIRECT_SRV. The
+*                     deletion of records is done by the app as a first
+*                     step before creating a new entry in the
+*                     ZVIM_URLCHG_APP table for use in the VIM approval
+*                     portal.
+*                     See function module Z_VIM_URLCHG_APP_CREATE for
+*                     details on the VIM URL redirect process.
+*
+* AUTHOR:             James Southwell
+* CREATE DATE:        14 Feb 2019
+* R/3 RELEASE VERSION: ECC6
+*
+* ACTIVITY:           AD-11-32-02 - VIM URL Redirection
+* CR Number:          6000001457 - VIM UI5 Applications
+*-----------------------------------------------------------------------
+
+* Check that an input UserId was provided or the delete is not
+* possible.
+  if ( iv_uname is initial ).
+    ev_param_error = 'U'.
+  else.
+* Otherwise, a user name has been passed in
+    delete
+      from zvim_urlchg_app
+     where uname = iv_uname.
+  endif.
+
+* Just pass back a success flag.  The UI5 app can use this if required.
+  if sy-subrc = 0.
+    ev_success = 'X'.
+  endif.
+
+endfunction.

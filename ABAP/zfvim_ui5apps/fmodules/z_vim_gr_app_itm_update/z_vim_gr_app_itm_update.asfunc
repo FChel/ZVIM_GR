@@ -1,0 +1,71 @@
+FUNCTION Z_VIM_GR_APP_ITM_UPDATE
+  IMPORTING
+    VALUE(IS_ZVIM_GR_APP_ITM) TYPE ZVIM_GR_APP_ITM
+  EXPORTING
+    VALUE(EV_SUCCESS) TYPE BOOLEAN.
+
+
+
+*----------------------------------------------------------------------*
+* PROGRAM ID:         Z_VIM_GR_APP_ITM_UPDATE
+* DESCRIPTION:        This function is called by the VIM UI5 BSP
+*                     application to update the audit tables
+*                     via oData service ZEDM_VIM_GR_CREATE_SRV.
+*
+* AUTHOR:             James Southwell
+* CREATE DATE:        14 Feb 2019
+* R/3 RELEASE VERSION: ECC6
+*
+* ACTIVITY:           AD-11-32-01 - Goods Receipting
+* CR Number:          6000001457 - VIM UI5 Applications
+*-----------------------------------------------------------------------
+* VERSION CONTROL
+*
+* Date     Author    CTS Req    Dev Script     Description
+*-----------------------------------------------------------------------
+* 14.03.19 070667JPS RD2K917678 DS-11-32-01-01 S 6000001503: VIM GR UI5
+*                                              Application - Phase 1
+*                                              Defect 30.  Added UOM.
+*                                              For this FM, just a
+*                                              comment was added.
+* 09.08.19 070667JPS RD2K918253 DS-11-32-01-01 S 6000001639: VIM GR UI5
+*                                              Application-Phase 2.3
+*                                              (D157).  Added credit
+*                                              memo fields (as
+*                                              comments).
+*-----------------------------------------------------------------------
+
+  data:
+    ls_zvim_gr_app_itm    type zvim_gr_app_itm.
+
+* store passed in values in the table structure.
+  ls_zvim_gr_app_itm = is_zvim_gr_app_itm.
+
+*  ls_ZVIM_GR_APP_itm-VIMDOCID
+*  ls_ZVIM_GR_APP_itm-SEQUENCE       "Comment added CR6000001503
+*  ls_ZVIM_GR_APP_itm-EBELN
+*  ls_ZVIM_GR_APP_itm-EBELP
+*  ls_ZVIM_GR_APP_itm-ITEMID         "Comment added CR6000001503
+*  ls_ZVIM_GR_APP_itm-LINETEXT
+*  ls_ZVIM_GR_APP_itm-QUANTITYORDERED
+*  ls_ZVIM_GR_APP_itm-UNITPRICE
+*  ls_ZVIM_GR_APP_itm-TAXCODE
+*  ls_ZVIM_GR_APP_itm-QUANTITYLEFT
+*  ls_ZVIM_GR_APP_itm-QUANTITYRECEIVED
+*  ls_ZVIM_GR_APP_itm-UNITOFMEASURE  "Comment added CR6000001503
+*  ls_ZVIM_GR_APP_itm-WEBRE          "Comment added CR6000001639
+*  ls_ZVIM_GR_APP_itm-GRREFDOCID     "Comment added CR6000001639
+*  ls_ZVIM_GR_APP_itm-GRREFDOCYR     "Comment added CR6000001639
+*  ls_ZVIM_GR_APP_itm-GRREFDOCITEM   "Comment added CR6000001639
+*  ls_ZVIM_GR_APP_itm-QUANTITYGRD    "Comment added CR6000001639
+
+* Do the update
+  update zvim_gr_app_itm
+    from ls_zvim_gr_app_itm.
+
+* Return the success flag.
+  if sy-subrc = 0.
+    ev_success = 'X'.
+  endif.
+
+endfunction.

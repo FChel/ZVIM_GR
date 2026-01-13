@@ -1,0 +1,438 @@
+FUNCTION Z_VIM_GR_APP_UPD_MATCHED_ITMS
+  IMPORTING
+    VALUE(IV_VIMDOCID) TYPE ZVIM_GR_APP_HDR-VIMDOCID
+    VALUE(IV_SEQUENCE) TYPE ZVIM_GR_APP_SEQUENCE
+    VALUE(IV_TEST_MODE) TYPE CHECKBOX
+    IS_LATE_COMMENT TYPE ZVIM_LATE_CMNT OPTIONAL
+  EXPORTING
+    VALUE(ET_RETURN) TYPE BAPIRET2_T.
+
+
+
+*----------------------------------------------------------------------*
+* PROGRAM ID:         Z_VIM_GR_APP_UPD_MATCHED_ITMS
+* DESCRIPTION:        This function is called by the VIM UI5 Create GR
+*                     BSP application, ZVIM_GR.  The function updates
+*                     the VIM document line items data based on the GRs
+*                     that have been selected by the users to match
+*                     against the VIM invoice.  This matching data is
+*                     stored in the ZVIM_GR_APP_GR table by the UI5 app.
+*
+* AUTHOR:             James Southwell / Kim Schell
+* CREATE DATE:        25 Sept 2020
+* R/3 RELEASE VERSION: ECC6
+*
+* ACTIVITY:           AD-11-32-01 - Goods Receipting
+* CR Number:          RD2K919880 - BAR 2020-07 VIM Integration with MyFi
+*-----------------------------------------------------------------------
+* VERSION CONTROL
+*
+* Date     Author    CTS Req    Dev Script     Description
+*-----------------------------------------------------------------------
+* 14.08.2020 180876KNS RD2K919880  CR 6000002064 / VIM MyFi Integration (Phase 2)
+* 27.05.2021 180876KNS RD2K921111  CR 6000002334 / e-Invoicing for SAP
+*  Update VIM comments section with new POC late reason.
+*-----------------------------------------------------------------------
+
+
+* DATA : Source date containing user selected GR lines which have been matched
+  DATA: lt_zvim_gr_app_gr            TYPE STANDARD TABLE OF zvim_gr_app_gr,
+        ls_zvim_gr_app_gr            TYPE zvim_gr_app_gr,
+* DATA : Error messages to return to the UI5 app if unable to correctly perfrom VIM line update
+        ls_return                    TYPE bapiret2,
+* DATA : New VIM lines as generated from the user selected UI5 lines
+        lt_new_vim_lines             TYPE TABLE OF /opt/vim_1item,
+        ls_new_vim_line              TYPE /opt/vim_1item,
+        lv_new_vim_line_itemid       TYPE /opt/vim_1item-itemid,
+* DATA : Purchase Order Details (from BAPI)
+        ls_po_getdetail_header       TYPE bapimepoheader,
+        lt_po_getdetail_return       TYPE TABLE OF bapiret2,
+        lt_po_getdetail_poitems      TYPE TABLE OF bapimepoitem,
+        ls_po_getdetail_poitem       TYPE bapimepoitem,
+* DATA : Material Document details (from BAPI)
+        ls_goodsmvt_header           TYPE bapi2017_gm_head_02,
+        lt_goodsmvt_detail_items     TYPE TABLE OF bapi2017_gm_item_show,
+        ls_goodsmvt_detail_item      TYPE bapi2017_gm_item_show,
+        lt_goodsmvt_detail_return    TYPE TABLE OF bapiret2,
+* DATA : VIM Document Object for updaign VIM Document (lines & history log)
+        lo_vim_doc_processor         TYPE REF TO /opt/cl_vim_doc_processor,
+* DATA :  VIM History Log
+        lv_reasoncode_domvalue       TYPE dd07v-domvalue_l,
+        lv_reasoncode_text_ddtext    TYPE dd07v-ddtext,
+        lv_reasoncode_commentline    TYPE tline-tdline,
+        ls_user_option               TYPE /opt/vim_t802,
+        lv_cancelled                 TYPE /opt/optcancel,
+        lo_log_handler               TYPE REF TO /opt/cl_c_log_handler,
+        lv_begin_timestamp           TYPE timestamp,
+        lt_comments_converted        TYPE tlinetab,
+        lt_comments                  TYPE tlinetab,
+        ls_comment_line              TYPE tline,
+        ls_comments_mem              TYPE /opt/vim_comments_de,
+* DATA : Trigger event to automatically re-run VIM business rules
+        ls_event                     TYPE swr_struct,
+        lt_event_container           TYPE TABLE OF swr_cont,
+        ls_container_line            TYPE swr_cont,
+        lt_event_messages            TYPE TABLE OF swr_messag,
+        lv_receiver_count            TYPE swedumevid-evtid,
+        lv_event_returncode          TYPE sy-subrc,
+* DATA : Exception handling
+        lo_cx_root_vim_doc_proc      TYPE REF TO cx_root,
+        lv_error_message             TYPE string,
+* DATA : Convert Currency from external format to internal format
+*        (for currencies with exotic decimal notation - i.e. JPY & BHD)
+        lv_new_vim_line_amt_external TYPE bapicurr-bapicurr,
+        lv_new_vim_line_amt_internal TYPE bapicurr-bapicurr,
+        lv_currency_convert_return   TYPE bapireturn.
+
+* FIELD-SYMBOLS : GR App line as used for Merging lines where 'GR Based IV' flagged OFF
+  FIELD-SYMBOLS: <ls_zvim_gr_app_gr>      TYPE zvim_gr_app_gr,
+                 <ls_last_zvim_gr_app_gr> TYPE zvim_gr_app_gr.
+
+*
+  " Store passed in values in local variables.
+  SELECT * FROM zvim_gr_app_gr
+       INTO TABLE lt_zvim_gr_app_gr
+       WHERE vimdocid = iv_vimdocid
+         AND selectedgr = 'X'.  " Get the entries that the user selected
+
+  IF sy-subrc IS INITIAL.
+    " --
+    " If GR Based IV flagged OFF, need to merge lines which have the same PO Item
+    LOOP AT lt_zvim_gr_app_gr ASSIGNING <ls_zvim_gr_app_gr>.
+      IF ( <ls_last_zvim_gr_app_gr> IS ASSIGNED ).
+        IF ( <ls_zvim_gr_app_gr>-po_number = <ls_last_zvim_gr_app_gr>-po_number ) AND
+           ( <ls_zvim_gr_app_gr>-po_item = <ls_last_zvim_gr_app_gr>-po_item     ) AND
+           ( <ls_zvim_gr_app_gr>-webre IS INITIAL                               ). " IF 'GR Based IV' flagged OFF
+          ADD <ls_last_zvim_gr_app_gr>-taxamount TO <ls_zvim_gr_app_gr>-taxamount.
+          ADD <ls_last_zvim_gr_app_gr>-valueextax TO <ls_zvim_gr_app_gr>-valueextax.
+          IF ( <ls_last_zvim_gr_app_gr>-showreversalind = <ls_zvim_gr_app_gr>-showreversalind ).
+            ADD <ls_last_zvim_gr_app_gr>-quantitydelivered TO <ls_zvim_gr_app_gr>-quantitydelivered.
+            ADD <ls_last_zvim_gr_app_gr>-creditquantity TO <ls_zvim_gr_app_gr>-creditquantity.
+          ELSE.
+            IF ( <ls_last_zvim_gr_app_gr>-showreversalind = 'X' ).
+              ADD <ls_last_zvim_gr_app_gr>-quantitydelivered TO <ls_zvim_gr_app_gr>-quantitydelivered.
+              ADD <ls_last_zvim_gr_app_gr>-creditquantity TO <ls_zvim_gr_app_gr>-creditquantity.
+            ELSE.
+              ADD <ls_zvim_gr_app_gr>-quantitydelivered TO <ls_last_zvim_gr_app_gr>-quantitydelivered.
+              ADD <ls_zvim_gr_app_gr>-creditquantity TO <ls_last_zvim_gr_app_gr>-creditquantity.
+              <ls_zvim_gr_app_gr>-quantitydelivered = <ls_last_zvim_gr_app_gr>-quantitydelivered.
+              <ls_zvim_gr_app_gr>-creditquantity = <ls_last_zvim_gr_app_gr>-creditquantity.
+            ENDIF.
+          ENDIF.
+          CLEAR: <ls_last_zvim_gr_app_gr>.
+        ENDIF.
+      ENDIF.
+      ASSIGN <ls_zvim_gr_app_gr> TO <ls_last_zvim_gr_app_gr>.
+    ENDLOOP.
+    UNASSIGN <ls_last_zvim_gr_app_gr>.
+
+    " --
+    " Instantiate VIM Processor Object
+    " (Update VIM Doc : Replace VIM Items & record in history log)
+    CREATE OBJECT lo_vim_doc_processor
+      EXPORTING
+        docid         = iv_vimdocid
+      EXCEPTIONS
+        invalid_docid = 1
+        OTHERS        = 2.
+    IF sy-subrc IS INITIAL.
+
+      CLEAR: ls_goodsmvt_header.
+      REFRESH: lt_new_vim_lines, lt_comments.
+      LOOP AT lt_zvim_gr_app_gr INTO ls_zvim_gr_app_gr
+           WHERE selectedgr = 'X'.
+        lv_new_vim_line_itemid = sy-tabix.
+        CLEAR: ls_new_vim_line.
+
+        " --
+        " Read Purchase Order Item
+        IF ( ls_po_getdetail_header-po_number <> ls_zvim_gr_app_gr-po_number ).
+          CLEAR: ls_po_getdetail_header.
+          CALL FUNCTION 'BAPI_PO_GETDETAIL1'
+            EXPORTING
+              purchaseorder = ls_zvim_gr_app_gr-po_number
+            IMPORTING
+              poheader      = ls_po_getdetail_header
+            TABLES
+              return        = lt_po_getdetail_return
+              poitem        = lt_po_getdetail_poitems.
+          IF ls_po_getdetail_header IS INITIAL.
+            " Record Error Message : Error reading details for Purchase Order &
+            CLEAR: ls_return.
+            ls_return-type = gc_error.
+            MESSAGE e017(zvim_gr_app) INTO ls_return-message WITH ls_zvim_gr_app_gr-po_number.
+            APPEND ls_return TO et_return.
+          ENDIF.
+        ENDIF.
+        READ TABLE lt_po_getdetail_poitems INTO ls_po_getdetail_poitem
+           WITH KEY po_item = ls_zvim_gr_app_gr-po_item.
+        IF sy-subrc IS NOT INITIAL.
+          " Record Error Message : Error reading details for Purchase Order Item & &
+          CLEAR: ls_return.
+          ls_return-type = gc_error.
+          MESSAGE e018(zvim_gr_app) INTO ls_return-message WITH ls_zvim_gr_app_gr-po_number ls_zvim_gr_app_gr-po_item.
+          APPEND ls_return TO et_return.
+        ENDIF.
+
+        " --
+        " Read Goods Receipt Item
+        IF ( ls_goodsmvt_header-mat_doc  <> ls_zvim_gr_app_gr-grdocnumber ) OR
+           ( ls_goodsmvt_header-doc_year <> ls_zvim_gr_app_gr-grdocyear   ).
+          REFRESH: lt_goodsmvt_detail_items, lt_goodsmvt_detail_return.
+          CALL FUNCTION 'BAPI_GOODSMVT_GETDETAIL'
+            EXPORTING
+              materialdocument = ls_zvim_gr_app_gr-grdocnumber
+              matdocumentyear  = ls_zvim_gr_app_gr-grdocyear
+            IMPORTING
+              goodsmvt_header  = ls_goodsmvt_header
+            TABLES
+              goodsmvt_items   = lt_goodsmvt_detail_items
+              return           = lt_goodsmvt_detail_return.
+          IF ls_goodsmvt_header IS INITIAL.
+            " Record Error Message : Error reading details for Goods Receipt & &
+            CLEAR: ls_return.
+            ls_return-type = gc_error.
+            MESSAGE e019(zvim_gr_app) INTO ls_return-message WITH ls_zvim_gr_app_gr-grdocnumber ls_zvim_gr_app_gr-grdocyear.
+            APPEND ls_return TO et_return.
+          ENDIF.
+        ENDIF.
+        READ TABLE lt_goodsmvt_detail_items INTO ls_goodsmvt_detail_item
+        WITH KEY mat_doc = ls_zvim_gr_app_gr-grdocnumber
+                 doc_year = ls_zvim_gr_app_gr-grdocyear
+                 matdoc_itm = ls_zvim_gr_app_gr-grdocitem.
+        IF sy-subrc IS NOT INITIAL.
+          " Record Error Message : Error reading details for Goods Receipt Item & & &
+          CLEAR: ls_return.
+          ls_return-type = gc_error.
+          MESSAGE e020(zvim_gr_app) INTO ls_return-message
+               WITH ls_zvim_gr_app_gr-grdocnumber ls_zvim_gr_app_gr-grdocyear ls_zvim_gr_app_gr-grdocitem.
+          APPEND ls_return TO et_return.
+        ENDIF.
+
+        " --
+        " Compile new VIM lines
+        ls_new_vim_line-itemid = lv_new_vim_line_itemid.
+        ls_new_vim_line-mandt = sy-mandt.
+        ls_new_vim_line-docid = ls_zvim_gr_app_gr-vimdocid.
+        ls_new_vim_line-bukrs = ls_po_getdetail_header-comp_code. " Company Code
+        ls_new_vim_line-ebeln = ls_zvim_gr_app_gr-po_number.
+        ls_new_vim_line-ebelp = ls_zvim_gr_app_gr-po_item.
+        ls_new_vim_line-sgtxt = ls_po_getdetail_poitem-short_text.
+        ls_new_vim_line-maktx = ls_po_getdetail_poitem-short_text.
+
+        " Set Quantity
+        IF ( lo_vim_doc_processor->index_header-credit_memo IS INITIAL ).
+          ls_new_vim_line-shkzg = zcl_fvim_constants=>gc_debit_indicator.
+          ls_new_vim_line-menge = ls_zvim_gr_app_gr-quantitydelivered.
+        ELSE.
+          ls_new_vim_line-shkzg = zcl_fvim_constants=>gc_credit_indicator.
+          ls_new_vim_line-menge = ls_zvim_gr_app_gr-creditquantity.
+        ENDIF.
+        ls_new_vim_line-bstme = ls_zvim_gr_app_gr-uom. " Unit of Measure
+        ls_new_vim_line-netpr = ls_zvim_gr_app_gr-unitprice. " Net Unit Price
+        ls_new_vim_line-txjcd = ls_po_getdetail_poitem-taxjurcode. " Tax Jurisdiction
+        ls_new_vim_line-tax_code1 = ls_new_vim_line-mwskz = ls_zvim_gr_app_gr-taxcode.
+        ls_new_vim_line-zzmatched = zcl_fvim_constants=>gc_matched_ui5_app.
+
+        " Convert line net amount to internal format (for exotic currencies like JPY & BHD)
+        lv_new_vim_line_amt_external = ls_zvim_gr_app_gr-valueextax.
+        CALL FUNCTION 'BAPI_CURRENCY_CONV_TO_INTERNAL'
+          EXPORTING
+            currency             = ls_po_getdetail_header-currency
+            amount_external      = lv_new_vim_line_amt_external
+            max_number_of_digits = 15
+          IMPORTING
+            amount_internal      = lv_new_vim_line_amt_internal
+            return               = lv_currency_convert_return.
+        ls_new_vim_line-wrbtr = lv_new_vim_line_amt_internal.
+        " Convert line tax amount to internal format (for exotic currencies like JPY & BHD)
+        lv_new_vim_line_amt_external = ls_zvim_gr_app_gr-taxamount.
+        CALL FUNCTION 'BAPI_CURRENCY_CONV_TO_INTERNAL'
+          EXPORTING
+            currency             = ls_po_getdetail_header-currency
+            amount_external      = lv_new_vim_line_amt_external
+            max_number_of_digits = 15
+          IMPORTING
+            amount_internal      = lv_new_vim_line_amt_internal
+            return               = lv_currency_convert_return.
+        ls_new_vim_line-tax_amount = lv_new_vim_line_amt_internal.
+
+        " Set GR Reference if 'GR Based IV' flagged ON
+        IF ls_po_getdetail_poitem-gr_basediv = 'X'.
+          " PO Item's 'GR Based IV' flagged ON
+          " Include Goods Receipt Item reference in VIM document item
+          ls_new_vim_line-lfsnr = ls_zvim_gr_app_gr-deliverynote.
+          ls_new_vim_line-ref_doc = ls_zvim_gr_app_gr-grdocnumber.
+          ls_new_vim_line-ref_doc_year = ls_zvim_gr_app_gr-grdocyear.
+          ls_new_vim_line-ref_doc_it = ls_zvim_gr_app_gr-grdocitem.
+        ELSE.
+          " PO Item's 'GR Based IV' flagged OFF
+          " Exclude Goods Receipt Item reference from VIM document item
+        ENDIF.
+
+        " compile new VIM line
+        APPEND ls_new_vim_line TO lt_new_vim_lines.
+
+        " Compile Selected Goods Receipts to be included in VIM History Log's comments
+        CLEAR: ls_comment_line.
+        ls_comment_line-tdformat = ''.
+        CONCATENATE 'Matched GR Ref' ls_zvim_gr_app_gr-grdocnumber '/' ls_zvim_gr_app_gr-grdocyear '/'
+             ls_zvim_gr_app_gr-grdocitem '.' INTO ls_comment_line-tdline SEPARATED BY space.
+        APPEND ls_comment_line TO lt_comments.
+      ENDLOOP.
+
+      " Replace new VIM lines in VIM Document
+      lo_vim_doc_processor->index_item[] = lt_new_vim_lines[].
+
+      IF ( iv_test_mode IS INITIAL ).
+        TRY.
+            " --
+            " Update VIM History Log to show manual matching
+            CLEAR: ls_user_option.
+            ls_user_option-proc_type = lo_vim_doc_processor->log_header-curr_proc_type.
+            ls_user_option-optionid = '9005'. " POC Manually Matched GRs to VIM Doc
+            ls_user_option-from_actor = 'ZPOC'.
+            ls_user_option-to_actor = 'ZPOC'.
+
+            lo_vim_doc_processor->log_header = lo_vim_doc_processor->index_header.
+            IF et_return[] IS INITIAL.
+              CLEAR: lv_cancelled.
+            ELSE.
+              lv_cancelled = 'X'.
+            ENDIF.
+
+            CALL METHOD lo_vim_doc_processor->logdata
+              EXPORTING
+                user_option     = ls_user_option
+                comments        = lt_comments
+                cancelled       = lv_cancelled
+                begin_timestamp = lv_begin_timestamp.
+
+            " --
+            " Update VIM History Log to show POC Late Matching Explanation
+            IF ( is_late_comment-reason_code IS NOT INITIAL ).
+              CLEAR: ls_user_option.
+              ls_user_option-proc_type = lo_vim_doc_processor->log_header-curr_proc_type.
+              ls_user_option-optionid = '9006'. " Explanation POC Processed Late
+              ls_user_option-from_actor = 'ZPOC'.
+              ls_user_option-to_actor = 'ZPOC'.
+
+              lo_vim_doc_processor->log_header = lo_vim_doc_processor->index_header.
+              IF et_return[] IS INITIAL.
+                CLEAR: lv_cancelled.
+              ELSE.
+                lv_cancelled = 'X'.
+              ENDIF.
+
+              " First comment line will be the text from comment reason code
+              "  - Get Text for Reason Code to include in comment
+              lv_reasoncode_domvalue = is_late_comment-reason_code.
+              CALL FUNCTION 'DOMAIN_VALUE_GET'
+                EXPORTING
+                  i_domname  = 'ZZVIM_LATE_REASON_CODE'
+                  i_domvalue = lv_reasoncode_domvalue
+                IMPORTING
+                  e_ddtext   = lv_reasoncode_text_ddtext
+                EXCEPTIONS
+                  not_exist  = 1
+                  OTHERS     = 2.
+              IF ( sy-subrc IS INITIAL                    ) AND
+                 ( is_late_comment-zzlate_cmnt IS INITIAL ).
+                lv_reasoncode_commentline = lv_reasoncode_text_ddtext.
+              ELSEIF ( sy-subrc IS NOT INITIAL            ).
+                lv_reasoncode_commentline = lv_reasoncode_domvalue.
+              ENDIF.
+              " First comment line will be the text from comment reason code
+              REFRESH:  lt_comments.
+              CLEAR: ls_comment_line.
+              ls_comment_line-tdformat = ''.
+              ls_comment_line-tdline = lv_reasoncode_commentline.
+              APPEND ls_comment_line TO lt_comments.
+              " Second and further comment lines will be the explantion text
+              IF is_late_comment-zzlate_cmnt IS NOT INITIAL.
+                CALL FUNCTION 'SWA_STRING_TO_TABLE'
+                  EXPORTING
+                    character_string           = is_late_comment-zzlate_cmnt
+                  IMPORTING
+                    character_table            = lt_comments_converted
+                  EXCEPTIONS
+                    no_flat_charlike_structure = 1
+                    OTHERS                     = 2.
+                IF sy-subrc IS INITIAL.
+                  LOOP AT lt_comments_converted INTO ls_comment_line.
+                    APPEND ls_comment_line TO lt_comments.
+                  ENDLOOP.
+                ELSE.
+                  " Unable to convert String to Comments Table, don't add explanation text
+                ENDIF.
+              ENDIF.
+
+              CALL METHOD lo_vim_doc_processor->logdata
+                EXPORTING
+                  user_option     = ls_user_option
+                  comments        = lt_comments
+                  cancelled       = lv_cancelled
+                  begin_timestamp = lv_begin_timestamp.
+
+            ELSE.
+              " No late comment entered.
+            ENDIF.
+
+            " --
+            " Update VIM Document with POC Late Matching Explanation & commit work
+            CALL METHOD lo_vim_doc_processor->update( EXPORTING do_commit = 'X').
+            COMMIT WORK AND WAIT.
+
+          CATCH cx_root INTO lo_cx_root_vim_doc_proc.
+            lv_error_message = lo_cx_root_vim_doc_proc->if_message~get_longtext( ).
+            " Record Error Message : Exception raised attempting to update VIM Document: & & & &
+            CLEAR: ls_return.
+            ls_return-type = gc_error.
+            MESSAGE e023(zvim_gr_app) INTO ls_return-message WITH lv_error_message.
+            APPEND ls_return TO et_return.
+        ENDTRY.
+
+        IF et_return[] IS INITIAL.
+          " As VIM document has been updated with new VIM line matching data
+          " Trigger event to rerun VIM business rules
+          CLEAR: ls_event.
+          ls_event-object_typ = '/OPT/V1001'.
+          ls_event-object_key = iv_vimdocid.
+          ls_event-event = 'PROCESSCOMPLETEDEXTERNALLY'.
+          REFRESH: lt_event_container.  CLEAR: ls_container_line.
+          ls_container_line-element = 'INDICATOR'.
+          ls_container_line-value = 'C'. " Request Check Rules run (for binding FM /OPT/VIM_DASHBOARD_BINDING)
+          APPEND ls_container_line TO lt_event_container.
+          CALL FUNCTION 'SAP_WAPI_CREATE_EVENT'
+            EXPORTING
+              object_type     = ls_event-object_typ
+              object_key      = ls_event-object_key
+              event           = ls_event-event
+            IMPORTING
+              return_code     = lv_event_returncode
+              event_id        = ls_event-event_id
+            TABLES
+              input_container = lt_event_container
+              message_lines   = lt_event_messages.
+
+        ENDIF.
+      ELSE.
+        " Running in Test mode.  Don't attempt to update VIM Doc
+      ENDIF.
+    ELSE.
+      " Record Error Message : Unable to update VIM Document(can't create VIM object instance) VIM Doc &
+      CLEAR: ls_return.
+      ls_return-type = gc_error.
+      MESSAGE e022(zvim_gr_app) INTO ls_return-message WITH iv_vimdocid.
+      APPEND ls_return TO et_return.
+    ENDIF.
+
+  ELSE.
+    " Record Error Message : Error getting matched GRs (ZVIM_GR_APP_GR). Could not update VIM items.
+    CLEAR: ls_return.
+    ls_return-type = gc_error.
+    MESSAGE e016(zvim_gr_app) INTO ls_return-message.
+    APPEND ls_return TO et_return.
+  ENDIF.
+
+ENDFUNCTION.

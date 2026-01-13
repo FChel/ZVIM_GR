@@ -1,0 +1,329 @@
+FUNCTION Z_VIM_GR_APP_HDR_GET
+  IMPORTING
+    VALUE(IV_VIMDOCID) TYPE ZVIM_GR_APP_HDR-VIMDOCID
+    VALUE(IV_SEQUENCE) TYPE ZVIM_GR_APP_HDR-SEQUENCE OPTIONAL
+  EXPORTING
+    VALUE(ET_ZVIM_GR_APP_HDR) TYPE ZVIM_GR_APP_HDR_TT
+    VALUE(EV_SUCCESS) TYPE BOOLEAN.
+
+
+
+*----------------------------------------------------------------------*
+* PROGRAM ID:         Z_VIM_GR_APP_HDR_CREATE
+* DESCRIPTION:        This function is called by the VIM UI5 Create GR
+*                     BSP application.  The function retrieves the VIM
+*                     header data for display in the UI5 app.  The
+*                     app name is ZVIMGRCREATE.  The app will call this
+*                     function module via oData service
+*                     ZEDM_VIM_GR_CREATE.
+*
+* AUTHOR:             James Southwell
+* CREATE DATE:        14 Feb 2019
+* R/3 RELEASE VERSION: ECC6
+*
+* ACTIVITY:           AD-11-32-01 - Goods Receipting
+* CR Number:          6000001457 - VIM UI5 Applications
+*-----------------------------------------------------------------------
+* VERSION CONTROL
+*
+* Date     Author    CTS Req    Dev Script     Description
+*-----------------------------------------------------------------------
+* 27.03.19 070667JPS RD2K917700 DS-11-32-01-01 S 6000001500: VIM GR UI5
+*                                              App - Phase 1 Testing
+*                                              Defects.  Added VIM doc
+*                                              status check - Defect 29.
+* 14.05.19 070667JPS RD2K917885 DS-11-32-01-01 S 6000001550: VIM GR UI5
+*                                              Application - Phase  1
+*                                              Def 50_63_85.  Added
+*                                              RECEIVED_DT and PAYMENT_
+*                                              TERMS.
+* 31.05.19 070667JPS RD2K917931 DS-11-32-01-01 S 6000001564: VIM GR UI5
+*                                              Application - Defect 110
+*                                              Introduce locking for
+*                                              the app.  Stop duplicate
+*                                              GRs if two users somehow
+*                                              happen to both be in the
+*                                              app and post at the same
+*                                              time, although the
+*                                              locking should stop this.
+* 19.06.19 070667JPS RD2K917927 DS-11-32-01-01 S 6000001551: BAR 2019-13
+*                                              VIM GR UI5 Application
+*                                              Change. Removed Sequence
+*                                              parameter usage / logic.
+*                                              See version 00004 for
+*                                              this logic.  Excess code
+*                                              has been deleted to make
+*                                              this FM more readable
+*                                              throughout the FM.
+* 13.08.19 070667JPS RD2K918253 DS-11-32-01-01 S 6000001639: VIM GR UI5
+*                                              Application-Phase 2.3
+*                                              (D157). Added credit memo
+*                                              logic.
+*-----------------------------------------------------------------------
+
+  constants:
+    lc_error            type symsgty value 'E',          "CR 6000001551
+    lc_non_lock_error   type symsgty value 'O'.          "CR 6000001639
+
+  data:
+    lw_vimdocid         type zvim_gr_app_hdr-vimdocid,
+    lw_sequence         type zvim_gr_app_hdr-sequence,
+    ls_zvim_gr_app_hdr  type zvim_gr_app_hdr,
+    lw_curr_proc_type   type /opt/process_type,          "CR 6000001500
+    lw_archive_id       type /opt/saeardoid,
+    lw_arc_doc_id       type /opt/saeardoid,
+    lw_received_dt      type zvim_received_date,         "CR 6000001550
+    lw_xblnr            type xblnr1,                     "CR 6000001550
+*   lw_dup_msg          type char255,                    "CR 6000001564
+    lw_message          type bapi_msg,                   "CR 6000001564
+    lw_msg_type         type symsgty,                    "CR 6000001564
+    lw_lock_success     type boolean,                    "CR 6000001564
+    lw_status           type /opt/vim_1head-status,      "CR 6000001551
+    lw_vimdoc_status    type char20,                     "CR 6000001551
+    lw_subrc            type char3,                      "CR 6000001551
+    lw_success          type boolean,                    "CR 6000001551
+    lw_sameuser         type boolean,                    "CR 6000001639
+    lt_ekpo             type standard table of ekpo,
+    ls_ekpo             type ekpo.
+
+* store passed in values in the table structure.
+  lw_vimdocid = iv_vimdocid.
+  lw_sequence = iv_sequence.
+
+  lw_success = abap_true.                                "CR 6000001551
+
+  if ( lw_vimdocid ne '000000000000' ).                  "CR 6000001551
+
+    if ( lw_vimdocid is not initial ).
+* Retrieve data based on passed in VIM Doc ID.
+      select single
+              docid
+              status                                     "CR 6000001551
+              curr_proc_type                             "CR 6000001500
+              xblnr
+              lifnr
+              vend_name
+              ebeln
+              waers
+              net_amount
+              vat_amount
+              gross_amount
+              zzreceived_date                            "CR 6000001550
+              pymnt_terms                                "CR 6000001550
+              archiv_id
+              arc_doc_id
+              credit_memo                                "CR 6000001639
+        from /opt/vim_1head
+        into (ls_zvim_gr_app_hdr-vimdocid,
+              lw_status,                                 "CR 6000001551
+              lw_curr_proc_type,                         "CR 6000001500
+              ls_zvim_gr_app_hdr-invnumber,
+              ls_zvim_gr_app_hdr-lifnr,
+              ls_zvim_gr_app_hdr-vend_name,
+              ls_zvim_gr_app_hdr-ebeln,
+              ls_zvim_gr_app_hdr-currency,
+              ls_zvim_gr_app_hdr-net_amount,
+              ls_zvim_gr_app_hdr-tax_amount,
+              ls_zvim_gr_app_hdr-gross_amount,
+              lw_received_dt,                            "CR 6000001550
+              ls_zvim_gr_app_hdr-payment_terms,          "CR 6000001550
+              lw_archive_id,
+              lw_arc_doc_id,                             "CR 6000001639
+              ls_zvim_gr_app_hdr-credit_memo)            "CR 6000001639
+        where docid = lw_vimdocid.                       "CR 6000001551
+* CR 6000001551 the following line was commented as the status is now
+* checked separately in case an error message needs to be sent back to
+* the UI5 application.
+*          and status not in ('06', '08', '10', '15', '16', '18').
+
+      if sy-subrc = 0.
+* CR 6000001551 - Check the status to see if it has changed.
+* Statuses that we can't process are:
+* 06 Rescan Complete
+* 08 Confirmed Duplicate
+* 10 Obsolete
+* 15 Posted
+* 16 Deleted
+* 18 Blocked
+* We also can't process records that are rejected (see below).
+        case lw_status.
+          when '06'.
+            lw_vimdoc_status = 'Rescan Complete'.
+          when '08'.
+            lw_vimdoc_status = 'Confirmed Duplicate'.
+          when '10'.
+            lw_vimdoc_status = 'Obsolete'.
+          when '15'.
+            lw_vimdoc_status = 'Posted'.
+          when '16'.
+            lw_vimdoc_status = 'Deleted'.
+          when '18'.
+            lw_vimdoc_status = 'Blocked'.
+          when others.  "check if rejected.
+* Could be rejected by a POC (Point Of Contact) - check this
+            if lw_curr_proc_type = '932'.
+              lw_vimdoc_status = 'Rejected'.
+            endif.
+        endcase.
+
+        if lw_vimdoc_status ne ''.
+* Return the status error to the UI5 application.
+* CR 6000001551 - changed to message class message
+*        concatenate 'Status = '
+*                    lw_vimdoc_status
+*               into lw_message
+*                    separated by space.
+          message e013(zvim_gr_app) with lw_vimdoc_status
+                  into lw_message.
+          ls_zvim_gr_app_hdr-message = lw_message.
+          ls_zvim_gr_app_hdr-msg_type = lc_error.
+
+          lw_success = abap_false.                       "CR 6000001551
+
+        else.
+
+* CR 6000001550 - following block added to check for duplicate GRs
+* CR 6000001564 - Changed to use new message fields, not rejectreason
+* and changed form call to a new function module call.
+* CR 6000001639 - Only check for duplicates if not a credit memo
+          if ( ls_zvim_gr_app_hdr-credit_memo eq abap_false ).
+            call function 'Z_VIM_GR_APP_CHECK_DUPLICATE'
+              exporting
+                iv_vimdocid       = lw_vimdocid
+              importing
+                ev_return_message = lw_message.
+          endif.                                         "CR 6000001639
+
+          if lw_message is not initial.  "Have found duplicate(s)
+            ls_zvim_gr_app_hdr-message = lw_message.
+            ls_zvim_gr_app_hdr-msg_type = gc_error.
+
+            lw_success = abap_false.                     "CR 6000001551
+          else.                                          "CR 6000001564
+* CR 6000001550 - end of added block to check for duplicate GRs
+
+* CR 6000001564 - start of added block
+* Create a UUID (GUID) for the app transaction
+            try.
+                call method
+                  cl_system_uuid=>if_system_uuid_static~create_uuid_c32
+                  receiving
+                    uuid = ls_zvim_gr_app_hdr-app_uuid.
+
+              catch cx_uuid_error.
+                ls_zvim_gr_app_hdr-message =
+                  'Unable to create unique transaction UUID.'.
+                lw_message = ls_zvim_gr_app_hdr-message.
+                ls_zvim_gr_app_hdr-msg_type = gc_error.
+                lw_success = abap_false.                 "CR 6000001551
+            endtry.
+
+            if lw_message is initial. "UUID creation OK
+* create a lock for the VIM document
+              call function 'Z_VIM_GR_APP_MANAGE_LOCK'
+                exporting
+                  iv_vimdocid        = lw_vimdocid
+                  iv_app_uuid        = ls_zvim_gr_app_hdr-app_uuid
+                  iv_action          = gc_lock_create
+                importing
+                  ev_return_message  = lw_message
+                  ev_return_msg_type = lw_msg_type
+                  ev_success         = lw_lock_success.
+
+* If an error occurred, return it to the UI5 application
+              if ( lw_lock_success = abap_false ).
+                ls_zvim_gr_app_hdr-message = lw_message.
+                ls_zvim_gr_app_hdr-msg_type = lw_msg_type.
+                lw_success = abap_false.                 "CR 6000001551
+              endif.
+
+            endif.
+          endif.  "Duplicate check error message not initial check
+* CR 6000001564 - end of added block
+        endif.                                           "CR 6000001500
+
+* CR 6000001551 - Following "else" and its logic added
+      else.
+        move sy-subrc to lw_subrc.
+
+        message e014(zvim_gr_app) with lw_subrc
+                into lw_message.
+        ls_zvim_gr_app_hdr-message = lw_message.
+        ls_zvim_gr_app_hdr-msg_type = lc_error.
+
+        lw_success = abap_false.                         "CR 6000001551
+
+      endif.
+
+* CR 6000001639 - Start of added block
+* If no errors, check if the user released the PO.
+* No errors at this point means that the lock was created for the user
+* and the data has been gathered correctly for the UI5 app display.
+* If a lock warning has been found at this point and the user chooses
+* to force the lock in the app, this PO release by check will be
+* performed in the force lock logic.
+      if ( ls_zvim_gr_app_hdr-message eq '' ).
+        call function 'Z_VIM_GR_APP_PO_REL_BY_CHECK'
+          exporting
+            iv_ebeln    = ls_zvim_gr_app_hdr-ebeln
+          importing
+            ev_sameuser = lw_sameuser.
+
+        if ( lw_sameuser = abap_true ).
+* This &1 cannot be entered by the person who released the Purchase Order.
+          if ( ls_zvim_gr_app_hdr-credit_memo eq abap_true ).
+            message e015(zvim_gr_app) with 'Credit Memo'
+               into ls_zvim_gr_app_hdr-message.
+          else.
+            message e015(zvim_gr_app) with 'Goods Receipt'
+               into ls_zvim_gr_app_hdr-message.
+          endif.
+
+          ls_zvim_gr_app_hdr-msg_type = lc_non_lock_error.
+
+          lw_success = abap_true.  " This is not an actual error
+
+        endif.
+
+      endif.
+* CR 6000001639 - End of added block
+
+      ls_zvim_gr_app_hdr-sequence = 0. "just to be sure it gets set
+      ls_zvim_gr_app_hdr-calculatednet = 0.
+      ls_zvim_gr_app_hdr-calculatedtax = 0.
+      ls_zvim_gr_app_hdr-calculatedgross = 0.
+      ls_zvim_gr_app_hdr-balance = 0.
+
+* Following added CR 6000001550 - format Received Date into DD.MM.YYYY.
+      ls_zvim_gr_app_hdr-received_dt =
+        |{ lw_received_dt date = environment }|.
+
+      append ls_zvim_gr_app_hdr to et_zvim_gr_app_hdr.
+*      endif.                                            "CR 6000001500
+
+    else.  "No VIM document supplied - get all VIM records
+* Get all entries if no VIM Doc ID supplied
+* Won't be used by an app - possibly by a report
+      select *
+        from zvim_gr_app_hdr
+        into table et_zvim_gr_app_hdr.
+
+* CR 6000001551 - Following IF statement added
+      if sy-subrc ne 0.
+        lw_success = abap_false.
+      endif.
+
+    endif.
+
+  else.   "lw_vimdocid ne '000000000000'                 "CR 6000001551
+    lw_success = abap_false.                             "CR 6000001551
+  endif.                                                 "CR 6000001551
+
+* CR 6000001551 - Use lw_success as a test for success
+  if lw_success = abap_true.
+    ev_success = 'X'.
+  else.
+    ev_success = ''.
+  endif.
+
+endfunction.

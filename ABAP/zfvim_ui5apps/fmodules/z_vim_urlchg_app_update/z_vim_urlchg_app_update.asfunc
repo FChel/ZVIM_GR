@@ -1,0 +1,52 @@
+FUNCTION Z_VIM_URLCHG_APP_UPDATE
+  IMPORTING
+    VALUE(IV_UNAME) TYPE SYUNAME
+    VALUE(IV_DOCID) TYPE /OPT/DOCID
+    VALUE(IV_GRP_EMAIL) TYPE ZFVIM_EMAIL
+    VALUE(IV_VIMURL) TYPE CHAR255
+  EXPORTING
+    VALUE(EV_SUCCESS) TYPE BOOLEAN.
+
+
+
+*----------------------------------------------------------------------*
+* PROGRAM ID:         Z_VIM_URLCHG_APP_UPDATE
+* DESCRIPTION:        This function was created to be used by the VIM
+*                     UI5 non-PO based invoice approval BSP application
+*                     VIMURLREDIRECT.
+*                     The function was created to be included in the
+*                     oData service ZEDM_VIM_URL_REDIRECT_SRV although
+*                     it is unlikely to be needed by the app or service
+*                     as the updating of records is not required by the
+*                     VIM approval portal Web Dynpro for approval of
+*                     the VIM Document.
+*                     See function module Z_VIM_URLCHG_APP_CREATE for
+*                     details on the VIM URL redirect process.
+*
+* AUTHOR:             James Southwell
+* CREATE DATE:        14 Feb 2019
+* R/3 RELEASE VERSION: ECC6
+*
+* ACTIVITY:           AD-11-32-02 - VIM URL Redirection
+* CR Number:          6000001457 - VIM UI5 Applications
+*-----------------------------------------------------------------------
+
+  data:
+    ls_zvim_urlchg_app    type zvim_urlchg_app.
+
+* store passed in values in the table structure.
+  ls_zvim_urlchg_app-uname = iv_uname.
+  ls_zvim_urlchg_app-docid = iv_docid.
+  ls_zvim_urlchg_app-grp_email = iv_grp_email.
+  ls_zvim_urlchg_app-vimurl = iv_vimurl.
+
+* Do the update
+  update zvim_urlchg_app
+    from ls_zvim_urlchg_app.
+
+* Return the success flag.
+  if sy-subrc = 0.
+    ev_success = 'X'.
+  endif.
+
+endfunction.

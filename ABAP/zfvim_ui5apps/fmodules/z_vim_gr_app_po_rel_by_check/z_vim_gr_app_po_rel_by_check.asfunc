@@ -1,0 +1,66 @@
+FUNCTION Z_VIM_GR_APP_PO_REL_BY_CHECK
+  IMPORTING
+    VALUE(IV_EBELN) TYPE EBELN
+  EXPORTING
+    VALUE(EV_SAMEUSER) TYPE BOOLEAN.
+
+
+
+*----------------------------------------------------------------------*
+* PROGRAM ID:         Z_VIM_GR_APP_PO_REL_BY_CHECK
+* DESCRIPTION:        This function is called by the VIM UI5 Create GR
+*                     BSP application.  It checks if the user that is
+*                     running the app also released the PO and returns
+*                     a flag indicating this to the calling program.
+*                     The UI5 app name is ZVIMGRCREATE.  The app will
+*                     call this function module via oData service
+*                     ZEDM_VIM_GR_CREATE.
+*
+* AUTHOR:             James Southwell
+* CREATE DATE:        13 Aug 2019
+* R/3 RELEASE VERSION: ECC6
+*
+* ACTIVITY:           AD-11-32-01 - Goods Receipting
+* CR Number:          6000001639 - VIM GR UI5 Application-Phase 2.3.
+*                     Added credit memo logic.
+*-----------------------------------------------------------------------
+* VERSION CONTROL
+*
+* Date     Author    CTS Req    Dev Script     Description
+*-----------------------------------------------------------------------
+*-----------------------------------------------------------------------
+  data:
+    lw_ebeln            type ebeln,
+    lt_ausg             type standard table of cdred_mmpur,
+    ls_ausg             type cdred_mmpur,
+    lw_sameuser         type boolean.
+
+* Store passed in PO in local variable.
+  lw_ebeln = iv_ebeln.
+
+  call function 'ME_CHANGEDOC_READ2'
+    exporting
+      i_document_category = 'F'
+      i_document_number   = lw_ebeln
+*     I_DOCUMENT_ITEM     =
+*     I_ALL_ITEMS         =
+*     I_ARCHIVE_HANDLE    =
+    tables
+      t_ausg              = lt_ausg.
+
+  sort lt_ausg descending by udate utime.
+
+  lw_sameuser = abap_false.
+
+  loop at lt_ausg into ls_ausg
+    where fname = 'FRGKE'.
+    if ( ls_ausg-username eq sy-uname ).
+      lw_sameuser = abap_true.
+    endif.
+    exit.  " Only want to read one record tht has the relese info
+  endloop.
+
+* Store output variable
+  ev_sameuser = lw_sameuser.
+
+endfunction.
